@@ -1,0 +1,17 @@
+{% from "components/icons.njk" import icon %}
+
+{% macro toolCard(tool) %}
+    <article class="tool-card" aria-labelledby="tool-{{ tool.slug }}">
+        <div class="tool-card-main">
+            <div class="icon-tile">{{ icon(tool.icon) }}</div>
+            <div class="tool-card-copy">
+                <div class="tool-card-meta"><span class="eyebrow">{{ tool.category }}</span><span class="badge">Coming Soon</span></div>
+                <h3 id="tool-{{ tool.slug }}">{{ tool.name }}</h3>
+                <p>{{ tool.description }}</p>
+            </div>
+        </div>
+        <ul class="tag-list" aria-label="{{ tool.name }} features">
+            {% for tag in tool.tags %}<li class="tag">{{ tag }}</li>{% endfor %}
+        </ul>
+    </article>
+{% endmacro %}

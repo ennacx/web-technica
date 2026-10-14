@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="{{ site.language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ description or site.description }}">
+
+    <title>{% if title %}{{ title }} | {% endif %}{{ site.name }}</title>
+
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | url }}">
+
+    {% if pageStylesheet %}
+        <link rel="stylesheet" href="{{ pageStylesheet | url }}">
+    {% endif %}
+
+    <script>
+        if(location.hostname !== 'localhost' && location.protocol !== 'https:'){
+            alert("安全な接続 (HTTPS) を推奨します。");
+        }
+    </script>
+</head>
+
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="site-shell">
+        {% include "components/header.njk" %}
+
+        <main id="main-content" class="container{% if pageClass %} {{ pageClass }}{% endif %}" tabindex="-1">
+            {{ content | safe }}
+        </main>
+
+        {% include "components/footer.njk" %}
+    </div>
+</body>
+</html>

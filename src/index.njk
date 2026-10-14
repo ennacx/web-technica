@@ -1,0 +1,54 @@
+---
+layout: layouts/base.njk
+permalink: /index.html
+pageStylesheet: /assets/css/home.css
+pageClass: home
+---
+
+{% from "components/icons.njk" import icon %}
+{% from "components/tool-card.njk" import toolCard %}
+<section class="home-hero" aria-labelledby="home-heading">
+    <img class="home-watermark" src="{{ '/assets/img/logo.svg' | url }}" alt="" width="420" height="420" aria-hidden="true">
+    <div class="home-hero-copy">
+        <p class="eyebrow home-eyebrow" lang="en">Developer tools, right in your browser</p>
+        <h1 id="home-heading">{{ site.name }}</h1>
+        <p class="home-lead">A collection of lightweight, privacy-friendly web utilities<br>for everyday development and operations.</p>
+    </div>
+    <ul class="home-principles" aria-label="Web-Technica design principles">
+        <li><span class="home-principle-icon">{{ icon('shield-check') }}</span><div><h2>Privacy First</h2><p>Designed for browser-local processing.</p></div></li>
+        <li><span class="home-principle-icon">{{ icon('window') }}</span><div><h2>No Installation</h2><p>Built to run in your web browser.</p></div></li>
+        <li><span class="home-principle-icon">{{ icon('code') }}</span><div><h2>Open Source</h2><p>Published under the MIT License.</p></div></li>
+    </ul>
+</section>
+
+<section id="tools" class="home-tools" aria-labelledby="tools-heading">
+    <div class="home-section-heading">
+        <div><h2 id="tools-heading">Tools</h2><p>Everyday web utilities, together in one place.</p></div>
+        <span class="home-tool-count">{{ tools | length }} tools</span>
+    </div>
+    <div class="home-tool-grid">
+        {% for tool in tools %}
+            {{ toolCard(tool) }}
+        {% endfor %}
+
+        <article class="home-contribute" aria-labelledby="contribute-heading">
+            <div class="tool-card-main">
+                <div class="icon-tile">{{ icon('plus') }}</div>
+                <div class="tool-card-copy">
+                    <p class="eyebrow">Open source</p>
+                    <h3 id="contribute-heading">Let's build what's next.</h3>
+                    <p>Suggest a tool or share an improvement on GitHub.</p>
+                </div>
+            </div>
+
+            <a class="home-contribute-link" href="{{ site.repositoryUrl }}" target="_blank" rel="noopener noreferrer">View the project on GitHub {{ icon('arrow') }}<span class="visually-hidden"> (opens in a new tab)</span></a>
+        </article>
+    </div>
+
+    <p class="home-availability">These tools are being prepared for release. Stay tuned.</p>
+</section>
+
+<aside class="home-project-note" aria-label="About the project">
+    <span class="home-project-icon">{{ icon('layers') }}</span>
+    <div><h2>Simple. Lightweight. Focused.</h2><p>Thoughtful tools that help you focus on the task at hand.</p></div>
+</aside>

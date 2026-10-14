@@ -1,0 +1,16 @@
+{% from "components/icons.njk" import icon %}
+
+<header class="site-header">
+    <div class="container header-content">
+        <a class="brand" href="{{ '/' | url }}">
+            <img class="brand-symbol" src="{{ '/assets/img/logo.svg' | url }}" alt="" width="36" height="36">
+            <span>{{ site.name }}</span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+            <a class="site-nav-link{% if page.url == '/' %} is-current{% endif %}" href="{{ '/' | url }}#tools"{% if page.url == '/' %} aria-current="page"{% endif %}>Tools</a>
+        </nav>
+        <a class="github-link" href="{{ site.repositoryUrl }}" target="_blank" rel="noopener noreferrer">
+            {{ icon('github') }}<span>GitHub</span><span class="visually-hidden"> (opens in a new tab)</span>
+        </a>
+    </div>
+</header>

@@ -1,0 +1,33 @@
+/*
+ * 最小限のリセット。標準の操作・フォーカス・リストの意味を維持する。
+ */
+
+*,
+*::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body, h1, h2, h3, p {
+    margin: 0;
+}
+
+img, svg {
+    vertical-align: middle;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+button, input, textarea, select {
+    font: inherit;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}

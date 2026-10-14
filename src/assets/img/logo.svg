@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Web-Technica symbol</title>
+  <desc id="desc">A geometric teal W monogram built from angular strokes.</desc>
+  <path fill="#8ACCC3" d="M12 31h17l13 42 13-30 9 20-21 37H30z"/>
+  <path fill="#69B1AD" d="M48 31h16l18 43 17-43h17L90 99H77z"/>
+  <path fill="#B0DDD5" d="M60 31h16l-8 20-8-19z"/>
+  <path fill="#4F8E90" d="M56 73l8-19 13 31-8 15z"/>
+</svg>

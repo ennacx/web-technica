@@ -1,0 +1,423 @@
+@charset "UTF-8";
+/*
+ * 共通の寸法・フォント。テーマ色はCSSカスタムプロパティで公開する。
+ */
+/*
+ * 最小限のリセット。標準の操作・フォーカス・リストの意味を維持する。
+ */
+*,
+*::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body, h1, h2, h3, p {
+  margin: 0;
+}
+
+img, svg {
+  vertical-align: middle;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/*
+ * ツール詳細ページでも使える、共通の基本部品。
+ */
+.icon {
+  display: inline-block;
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+.icon-tile {
+  display: grid;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
+  color: var(--color-accent);
+}
+.icon-tile .icon {
+  width: 38px;
+  height: 38px;
+}
+
+.eyebrow {
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badge, .tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.badge {
+  background: var(--color-surface-raised);
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tool-card {
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+
+.tool-card-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.tool-card-copy {
+  flex: 1;
+  min-width: 0;
+}
+.tool-card-copy h3 {
+  margin-block: 8px;
+  font-size: 20px;
+  letter-spacing: -0.025em;
+}
+.tool-card-copy > p:not(.eyebrow) {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.tool-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 26px;
+}
+
+/*
+ * 全ページに共通する外枠・ヘッダー・フッター。
+ */
+/*
+ * 共通の mixin。
+ */
+.site-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 32px);
+  max-width: 1280px;
+  margin: 16px auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  overflow: clip;
+}
+
+.container {
+  width: min(100% - 64px, var(--content-width));
+  margin-inline: auto;
+}
+
+main.container {
+  flex: 1;
+  padding-block: 48px;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  min-height: 80px;
+}
+
+.brand {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text);
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand-symbol {
+  width: 36px;
+  height: 36px;
+}
+
+.site-nav {
+  display: flex;
+  align-self: stretch;
+  align-items: stretch;
+}
+
+.site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 16px;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+.site-nav-link.is-current {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-inline-start: auto;
+  color: var(--color-text);
+  font-size: 14px;
+  text-decoration: none;
+}
+.github-link .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.site-footer {
+  border-top: 1px solid var(--color-border);
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+  min-height: 72px;
+  padding-block: 12px;
+}
+
+.brand-small {
+  gap: 8px;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+.brand-small .brand-symbol {
+  width: 24px;
+  height: 24px;
+}
+
+.footer-copyright {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.footer-nav {
+  display: flex;
+  gap: 24px;
+  margin-inline-start: auto;
+}
+.footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+@media (max-width: 1312px) {
+  .site-shell {
+    margin-inline: 16px;
+  }
+}
+@media (max-width: 767.98px) {
+  .site-shell {
+    min-height: 100vh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  main.container {
+    padding-block: 32px;
+  }
+  .container {
+    width: calc(100% - 40px);
+  }
+  .header-content {
+    flex-wrap: wrap;
+    gap: 0 16px;
+    padding-block-start: 16px;
+  }
+  .brand {
+    gap: 8px;
+    font-size: 19px;
+  }
+  .brand-small {
+    font-size: 14px;
+  }
+  .brand-symbol {
+    width: 32px;
+    height: 32px;
+  }
+  .github-link {
+    font-size: 12px;
+  }
+  .site-nav {
+    order: 3;
+    width: 100%;
+    margin-block-start: 8px;
+  }
+  .site-nav-link {
+    min-height: 44px;
+    padding-inline: 0;
+  }
+  .footer-content {
+    gap: 4px 16px;
+    padding-block: 20px;
+  }
+  .footer-nav {
+    width: 100%;
+    margin: 0;
+  }
+}
+:root {
+  color-scheme: dark;
+  --color-bg: #151a20;
+  --color-surface: #202730;
+  --color-surface-raised: #29323d;
+  --color-border: #39434e;
+  --color-text: #e4e9ed;
+  --color-text-muted: #a9b5c0;
+  --color-accent: #73b8aa;
+  --color-accent-hover: #91d3c4;
+  --color-accent-soft: #203438;
+  --color-danger: #e49a9a;
+  --color-success: #86cfa4;
+  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Noto Sans JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, Liberation Mono, monospace;
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --content-width: 1120px;
+}
+
+html {
+  scroll-padding-top: 24px;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 0.25em;
+}
+a:hover {
+  color: var(--color-accent-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-hover);
+  outline-offset: 5px;
+}
+
+h1, h2, h3 {
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+h3 {
+  font-size: 1.125rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 16px;
+  z-index: 10;
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  color: var(--color-bg);
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*# sourceMappingURL=style.css.map */
