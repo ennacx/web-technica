@@ -18,6 +18,20 @@ Generate random passwords, hexadecimal strings, or version 4 UUIDs in your brows
 
 Generation runs locally. Generated values are not uploaded or saved by the site. Clipboard and downloads are used only when you request them.
 
+## SRI Hasher
+
+[Open SRI Hasher](https://ennacx.github.io/web-technica/sri-hasher/)
+
+Generate SHA-256, SHA-384, or SHA-512 integrity values and HTML tags for JavaScript and CSS resources.
+
+1. Choose **CDN URL** or **Local File**, then enter the resource URL or select a `.js` or `.css` file.
+2. Choose a hash algorithm and select **Generate SRI**.
+3. Copy the integrity value or HTML tag. For a local file, adjust the generated relative path to its published location.
+
+URL mode contacts the resource host and requires CORS support. Local files are read and hashed on your device without being uploaded. If a remote resource cannot be fetched, download it yourself and use **Local File**.
+
+Use a trusted, versioned resource. Regenerate the integrity value whenever its contents change.
+
 ## License
 
 [MIT](LICENSE)

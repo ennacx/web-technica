@@ -27,6 +27,7 @@ pageClass: home
         <div><h2 id="tools-heading">Tools</h2><p>Everyday web utilities, together in one place.</p></div>
         <span class="home-tool-count">{{ tools | length }} tools</span>
     </div>
+
     <div class="home-tool-grid">
         {% for tool in tools %}
             {{ toolCard(tool) }}

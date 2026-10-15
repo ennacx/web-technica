@@ -11,8 +11,11 @@ export default function (eleventyConfig) {
     eleventyConfig.addWatchTarget("src/tools/pwdgen/css/**/*.scss");
     eleventyConfig.watchIgnores.add("src/tools/pwdgen/css/**/*.css");
     eleventyConfig.watchIgnores.add("src/tools/pwdgen/css/**/*.css.map");
+    eleventyConfig.addWatchTarget("src/tools/sri-hasher/css/**/*.scss");
+    eleventyConfig.watchIgnores.add("src/tools/sri-hasher/css/**/*.css");
+    eleventyConfig.watchIgnores.add("src/tools/sri-hasher/css/**/*.css.map");
     eleventyConfig.on("eleventy.before", () => {
-        for (const entry of ["src/assets/css/style", "src/assets/css/home", "src/tools/pwdgen/css/pwdgen"]) {
+        for (const entry of ["src/assets/css/style", "src/assets/css/home", "src/tools/pwdgen/css/pwdgen", "src/tools/sri-hasher/css/sri-hasher"]) {
             const directory = path.dirname(entry);
             const name = path.basename(entry);
             const result = compile(`${directory}/${name}.scss`, { style: "expanded", sourceMap: true });
@@ -43,11 +46,13 @@ export default function (eleventyConfig) {
         "src/assets/img": "assets/img",
         "src/tools/pwdgen/css/*.css": "pwdgen/css",
         "src/tools/pwdgen/css/*.css.map": "pwdgen/css",
-        "src/tools/pwdgen/js/*.js": "pwdgen/js"
+        "src/tools/pwdgen/js/*.js": "pwdgen/js",
+        "src/tools/sri-hasher/css/*.css": "sri-hasher/css",
+        "src/tools/sri-hasher/css/*.css.map": "sri-hasher/css",
+        "src/tools/sri-hasher/js/*.js": "sri-hasher/js"
     });
     // Original tool sources are retained until their migration is complete.
     eleventyConfig.ignores.add("src/tools/keygen/**");
-    eleventyConfig.ignores.add("src/tools/sri-hasher/**");
 
     return {
         dir: {

@@ -18,6 +18,7 @@
     },
     {
         "slug": "sri-hasher",
+        "url": "/sri-hasher/",
         "name": "SRI Hasher",
         "category": "Security",
         "icon": "code",

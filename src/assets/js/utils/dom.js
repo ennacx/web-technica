@@ -1,9 +1,9 @@
-export function getById(id, root = document, expectedType = HTMLElement) {
+export function getById(id, root = document, expectedType = root.defaultView?.HTMLElement ?? globalThis.HTMLElement) {
     const elem = root?.getElementById(id);
 
-    if(!(elem instanceof expectedType)){
+    if(!expectedType || !(elem instanceof expectedType)){
         throw new TypeError(
-            `Expected #${id} to be ${expectedType.name}`
+            `Expected #${id} to be ${expectedType?.name ?? 'HTMLElement'}`
         );
     }
 
