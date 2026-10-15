@@ -15,7 +15,7 @@ export default function (eleventyConfig) {
     eleventyConfig.watchIgnores.add("src/tools/sri-hasher/css/**/*.css");
     eleventyConfig.watchIgnores.add("src/tools/sri-hasher/css/**/*.css.map");
     eleventyConfig.on("eleventy.before", () => {
-        for (const entry of ["src/assets/css/style", "src/assets/css/home", "src/tools/pwdgen/css/pwdgen", "src/tools/sri-hasher/css/sri-hasher"]) {
+        for (const entry of ["src/assets/css/style", "src/assets/css/home", "src/assets/css/error", "src/tools/pwdgen/css/pwdgen", "src/tools/sri-hasher/css/sri-hasher"]) {
             const directory = path.dirname(entry);
             const name = path.basename(entry);
             const result = compile(`${directory}/${name}.scss`, { style: "expanded", sourceMap: true });

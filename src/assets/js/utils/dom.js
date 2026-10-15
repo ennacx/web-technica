@@ -1,4 +1,12 @@
-export function getById(id, root = document, expectedType = root.defaultView?.HTMLElement ?? globalThis.HTMLElement) {
+/**
+ * IDからDOM要素を取得する。
+ *
+ * @param {string} id - DOMのID
+ * @param {Document} [root=globalThis.document] - 操作を行うDocument
+ * @param [expectedType=root.defaultView?.HTMLElement ?? globalThis.HTMLElement] expectedType
+ * @return {HTMLElement&expectedType}
+ */
+export function getById(id, root = globalThis.document, expectedType = root.defaultView?.HTMLElement ?? globalThis.HTMLElement) {
     const elem = root?.getElementById(id);
 
     if(!expectedType || !(elem instanceof expectedType)){
@@ -14,10 +22,10 @@ export function getById(id, root = document, expectedType = root.defaultView?.HT
  * CSSセレクターでDOM要素を取得する。
  *
  * @param {string} selector
- * @param {ParentNode} root
+ * @param {Document} [root=globalThis.document] - 操作を行うDocument
  * @returns {Element|null}
  */
-export function querySel(selector, root = document) {
+export function querySel(selector, root = globalThis.document) {
     return root.querySelector(selector);
 }
 
@@ -25,9 +33,9 @@ export function querySel(selector, root = document) {
  * CSSセレクターで複数のDOM要素を取得する。
  *
  * @param {string} selector
- * @param {ParentNode} root
+ * @param {Document} [root=globalThis.document] - 操作を行うDocument
  * @returns {NodeListOf<Element>}
  */
-export function querySelAll(selector, root = document) {
+export function querySelAll(selector, root = globalThis.document) {
     return root.querySelectorAll(selector);
 }

@@ -1,0 +1,51 @@
+@charset "UTF-8";
+/**
+ * 404専用の配置。パネル・ボタン・配色は共通スタイルを使う。
+ */
+/*
+ * 共通の mixin。
+ */
+/*
+ * 共通の寸法・フォント。テーマ色はCSSカスタムプロパティで公開する。
+ */
+main.not-found {
+  display: grid;
+  align-items: center;
+}
+
+.error-page {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  padding: 48px 32px;
+  text-align: center;
+}
+.error-page__code {
+  margin-block-end: 16px;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: clamp(64px, 12vw, 96px);
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+.error-page__description {
+  max-width: 42ch;
+  margin: 16px auto 24px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+.error-page .button {
+  text-decoration: none;
+}
+.error-page .button:hover {
+  color: var(--color-surface);
+}
+
+@media (max-width: 767.98px) {
+  .error-page {
+    padding: 32px 20px;
+  }
+}
+
+/*# sourceMappingURL=error.css.map */
