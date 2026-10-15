@@ -20,10 +20,10 @@ main {
 .home-watermark {
     position: absolute;
     z-index: -1;
-    top: -32px;
-    right: -64px;
-    width: 420px;
-    height: 420px;
+    top: 0;
+    right: 0;
+    width: 380px;
+    height: 380px;
     opacity: 0.055;
     pointer-events: none;
 }
