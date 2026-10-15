@@ -101,6 +101,7 @@
     border-radius: var(--radius-panel);
     background: var(--color-surface);
 }
+
 .breadcrumbs {
     display: flex;
     flex-wrap: wrap;
@@ -109,9 +110,22 @@
     margin-block-end: 24px;
     color: var(--color-text-muted);
     font-size: 12px;
-    a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: inherit; text-decoration: none; }
-    .icon { width: 16px; height: 16px; }
+
+    a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .icon {
+        width: 16px;
+        height: 16px;
+    }
 }
+
 .tool-heading {
     display: flex;
     flex-wrap: wrap;
@@ -119,8 +133,16 @@
     justify-content: space-between;
     gap: 24px;
     margin-block-end: 32px;
-    h1 { font-size: clamp(24px, 4vw, 32px); }
-    p { margin-block-start: 8px; color: var(--color-text-muted); font-size: 14px; }
+
+    h1 {
+        font-size: clamp(24px, 4vw, 32px);
+    }
+
+    p {
+        margin-block-start: 8px;
+        color: var(--color-text-muted);
+        font-size: 14px;
+    }
 }
 .tool-heading-copy { display: flex; align-items: flex-start; gap: 16px; }
 .tool-heading-icon { padding-block-start: 4px; color: var(--color-accent); .icon { width: 32px; height: 32px; } }
@@ -140,6 +162,7 @@
 .field-title { display: block; margin-block-end: 16px; padding: 0; font-size: 16px; font-weight: 600; }
 .field-label { display: block; margin-block: 12px 8px; font-size: 13px; }
 .field-help { color: var(--color-text-muted); font-size: 12px; line-height: 1.7; }
+
 .input {
     width: 100%;
     min-height: 44px;

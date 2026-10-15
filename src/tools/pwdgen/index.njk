@@ -1,34 +1,24 @@
 ---
-layout: layouts/base.njk
-title: Password Generator
+toolSlug: pwdgen
 description: Generate customizable random passwords, hexadecimal strings, or UUIDs locally in your browser.
 permalink: /pwdgen/index.html
 pageClass: pwdgen
 pageStylesheet: /pwdgen/css/pwdgen.css
 pageScript: /pwdgen/js/index.js
+toolIntro:
+    - Generate customizable random passwords.
+    - All processing is done locally in your browser.
+processingNotice:
+    icon: lock
+    title: Processed locally
+    description: Your data stays in your browser.
+javascriptNotice: Enable JavaScript to generate passwords. No data is sent to a server.
 ---
 
 {% from "components/icons.njk" import icon %}
-
-<nav class="breadcrumbs" aria-label="Breadcrumb">
-    <a href="{{ '/' | url }}#tools">{{ icon('arrow-left') }} Tools</a>
-    {{ icon('chevron-right') }} <span aria-current="page">{{ title }}</span>
-</nav>
-
-<header class="tool-heading">
-    <div class="tool-heading-copy">
-        <span class="tool-heading-icon">{{ icon('key') }}</span>
-        <div>
-            <h1>{{ title }}</h1>
-            <p>Generate customizable random passwords.<br>All processing is done locally in your browser.</p>
-        </div>
-    </div>
-
-    <div class="local-processing">{{ icon('lock') }}<div><strong>Processed locally</strong><span>Your data stays in your browser.</span></div></div>
-</header>
+{% from "components/tool-controls.njk" import copyButton, errorMessage, statusMessage %}
 
 <div data-pwdgen>
-    <noscript><p class="notice notice-error">Enable JavaScript to generate passwords. No data is sent to a server.</p></noscript>
     <form id="pwdgen-form" class="panel" novalidate>
         <fieldset id="pwdgen-settings" class="pwdgen-settings">
             <legend class="visually-hidden">Generation settings</legend>
@@ -43,6 +33,7 @@ pageScript: /pwdgen/js/index.js
 
                     <p id="length-help" class="field-help">4–256 characters.</p>
                 </div>
+
                 <fieldset class="field">
                     <legend class="field-title">Character Types</legend>
                     <label class="checkbox"><input id="alpha_u" type="checkbox" checked><span>Uppercase (A–Z)</span></label>
@@ -50,6 +41,7 @@ pageScript: /pwdgen/js/index.js
                     <label class="checkbox"><input id="num" type="checkbox" checked><span>Numbers (0–9)</span></label>
                     <label class="checkbox"><input id="symbol" type="checkbox"><span>Symbols (!@#$…)</span></label>
                 </fieldset>
+
                 <div id="symbol-info" class="field" hidden>
                     <p class="field-help">Available symbols</p>
                     <p id="symbol-samples" class="code-sample"></p>
@@ -85,7 +77,8 @@ pageScript: /pwdgen/js/index.js
 
         <p id="crypto-unavailable" class="notice notice-error" hidden>Web Crypto is unavailable. Use a supported browser. Math must be selected explicitly for non-sensitive strings.</p>
         <p id="algorithm-warning" class="notice notice-warning" role="status" hidden>Math randomness is not suitable for passwords or other secrets.</p>
-        <p id="validation-error" class="notice notice-error" role="alert" tabindex="-1" hidden></p>
+
+        {{ errorMessage('validation-error') }}
 
         <div class="pwdgen-actions">
             <button id="generate" class="button button-primary" type="submit">{{ icon('refresh') }} Generate Password</button>
@@ -99,9 +92,7 @@ pageScript: /pwdgen/js/index.js
             <div id="generate-result" hidden>
                 <div class="result-output pwdgen-password-row">
                     <output id="generate-password" aria-label="Generated password"></output>
-                    <button id="password-copy" class="button button-icon" type="button" aria-label="Copy generated password" disabled>
-                        <span data-icon-copy>{{ icon('copy') }}</span><span data-icon-check hidden>{{ icon('check') }}</span>
-                    </button>
+                    {{ copyButton('password-copy', 'Copy generated password', true) }}
                 </div>
 
                 <div class="pwdgen-entropy-row">
@@ -119,7 +110,7 @@ pageScript: /pwdgen/js/index.js
                 <p class="field-help pwdgen-entropy-note">Estimated entropy describes the possible outputs, not a guarantee of password security.</p>
             </div>
 
-            <p id="single-status" class="field-help" role="status" aria-live="polite" aria-atomic="true"></p>
+            {{ statusMessage('single-status') }}
         </section>
     </form>
 
@@ -145,10 +136,10 @@ pageScript: /pwdgen/js/index.js
 
         <div class="pwdgen-batch-actions">
             <button id="batch-generate" class="button button-secondary" type="button">{{ icon('refresh') }} Generate Batch</button>
-            <button id="batch-copy" class="button button-secondary" type="button" disabled><span data-icon-copy>{{ icon('copy') }}</span><span data-icon-check hidden>{{ icon('check') }}</span> Copy All</button>
+            {{ copyButton('batch-copy', 'Copy All') }}
             <button id="batch-download" class="button button-secondary" type="button" disabled>{{ icon('download') }} Download .txt</button>
         </div>
 
-        <p id="bulk-status" class="field-help" role="status" aria-live="polite" aria-atomic="true"></p>
+        {{ statusMessage('bulk-status') }}
     </section>
 </div>

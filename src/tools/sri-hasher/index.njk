@@ -1,28 +1,21 @@
 ---
-layout: layouts/base.njk
-title: SRI Hasher
+toolSlug: sri-hasher
 description: Generate SHA-256, SHA-384, or SHA-512 Subresource Integrity hashes and HTML tags from a CDN URL or local JavaScript and CSS files.
 permalink: /sri-hasher/index.html
 pageClass: sri-hasher
 pageStylesheet: /sri-hasher/css/sri-hasher.css
 pageScript: /sri-hasher/js/index.js
+toolIntro:
+    - Generate integrity hashes and ready-to-use HTML tags.
+processingNotice:
+    icon: shield-check
+    title: Hashing in your browser
+    description: URL mode contacts the resource host.
+javascriptNotice: Enable JavaScript to generate SRI hashes. Local files are processed in your browser.
 ---
 
 {% from "components/icons.njk" import icon %}
-
-<nav class="breadcrumbs" aria-label="Breadcrumb">
-    <a href="{{ '/' | url }}#tools">{{ icon('arrow-left') }} Tools</a>
-    {{ icon('chevron-right') }} <span aria-current="page">{{ title }}</span>
-</nav>
-
-<header class="tool-heading">
-    <div class="tool-heading-copy">
-        <span class="tool-heading-icon">{{ icon('code') }}</span>
-        <div><h1>{{ title }}</h1><p>Generate integrity hashes and ready-to-use HTML tags.</p></div>
-    </div>
-
-    <div class="local-processing">{{ icon('shield-check') }}<div><strong>Hashing in your browser</strong><span>URL mode contacts the resource host.</span></div></div>
-</header>
+{% from "components/tool-controls.njk" import copyButton, errorMessage, statusMessage %}
 
 <div data-sri-hasher class="sri-layout">
     <form id="sri-form" class="panel" novalidate>
@@ -59,11 +52,11 @@ pageScript: /sri-hasher/js/index.js
             <p class="field-help sri-form-note">Supported resources: JavaScript (.js) and CSS (.css).</p>
         </fieldset>
 
-        <p id="sri-error" class="notice notice-error" role="alert" tabindex="-1" hidden></p>
+        {{ errorMessage('sri-error') }}
 
         <button id="sri-generate" class="button button-primary" type="submit">{{ icon('refresh') }} <span>Generate SRI</span></button>
 
-        <p id="sri-progress" class="field-help" role="status" aria-live="polite"></p>
+        {{ statusMessage('sri-progress') }}
     </form>
 
     <section id="sri-result-panel" class="panel" aria-labelledby="sri-result-heading" aria-busy="false">
@@ -71,15 +64,16 @@ pageScript: /sri-hasher/js/index.js
         <p id="sri-empty" class="field-help">Choose a resource and generate its integrity hash.</p>
 
         <div id="sri-results" hidden>
-            <div class="sri-result-heading"><h3 id="sri-value-heading">Integrity value</h3><button id="sri-copy" class="button" type="button" disabled>{{ icon('copy') }} Copy SRI</button></div>
+            <div class="sri-result-heading"><h3 id="sri-value-heading">Integrity value</h3>{{ copyButton('sri-copy', 'Copy SRI') }}</div>
             <pre id="sri-value" class="result-output" tabindex="0" aria-labelledby="sri-value-heading"></pre>
 
-            <div class="sri-result-heading"><h3 id="sri-tag-heading">HTML tag</h3><button id="sri-tag-copy" class="button" type="button" disabled>{{ icon('copy') }} Copy Tag</button></div>
+            <div class="sri-result-heading"><h3 id="sri-tag-heading">HTML tag</h3>{{ copyButton('sri-tag-copy', 'Copy Tag') }}</div>
             <pre id="sri-tag" class="result-output" tabindex="0" aria-labelledby="sri-tag-heading"></pre>
 
             <p id="sri-result-note" class="field-help"></p>
         </div>
-        <p id="sri-copy-status" class="field-help" role="status" aria-live="polite" aria-atomic="true"></p>
+
+        {{ statusMessage('sri-copy-status') }}
     </section>
 </div>
 
@@ -88,5 +82,3 @@ pageScript: /sri-hasher/js/index.js
     <p>Use a versioned resource URL and verify that the content comes from a trusted source. SRI checks that the served bytes match the hash; it does not establish whether the code is safe. If the resource changes, regenerate the hash.</p>
     <p>Cross-origin resources need CORS support. For local files, update the generated relative path to match the file's published location.</p>
 </aside>
-
-<noscript><p class="notice notice-warning">Enable JavaScript to generate SRI hashes. Local files are processed in your browser.</p></noscript>

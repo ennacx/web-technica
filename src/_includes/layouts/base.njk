@@ -34,6 +34,7 @@
 
 <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
+
     <div class="site-shell">
         {% include "components/header.njk" %}
 
@@ -43,6 +44,7 @@
 
         {% include "components/footer.njk" %}
     </div>
+
     {% if pageScript %}<script type="module" src="{{ pageScript | url }}"></script>{% endif %}
 </body>
 </html>

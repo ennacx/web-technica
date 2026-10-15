@@ -1,6 +1,7 @@
 {% from "components/icons.njk" import icon %}
+
 {% set currentTools = tools | selectattr('url') | selectattr('url', 'equalto', page.url) | list %}
-{% set toolsActive = page.url == '/' or currentTools.length > 0 %}
+{% set toolsActive = (page.url == '/' or currentTools.length > 0) %}
 
 <header class="site-header">
     <div class="container header-content">
