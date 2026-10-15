@@ -16,9 +16,9 @@ pageClass: home
         <p class="home-lead">A collection of lightweight, privacy-friendly web utilities<br>for everyday development and operations.</p>
     </div>
     <ul class="home-principles" aria-label="Web-Technica design principles">
-        <li><span class="home-principle-icon">{{ icon('shield-check') }}</span><div><h2>Privacy First</h2><p>Designed for browser-local processing.</p></div></li>
-        <li><span class="home-principle-icon">{{ icon('window') }}</span><div><h2>No Installation</h2><p>Built to run in your web browser.</p></div></li>
-        <li><span class="home-principle-icon">{{ icon('code') }}</span><div><h2>Open Source</h2><p>Published under the MIT License.</p></div></li>
+        {% for priciple in principles %}
+            <li><span class="home-principle-icon">{{ icon(priciple.icon) }}</span><div><h2>{{ priciple.title }}</h2><p>{{ priciple.description }}</p></div></li>
+        {% endfor %}
     </ul>
 </section>
 

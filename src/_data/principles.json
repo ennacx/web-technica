@@ -1,0 +1,17 @@
+[
+    {
+        "icon": "shield-check",
+        "title": "Privacy First",
+        "description": "Designed for browser-local processing."
+    },
+    {
+        "icon": "window",
+        "title": "No Installation",
+        "description": "Built to run in your web browser."
+    },
+    {
+        "icon": "code",
+        "title": "Open Source",
+        "description": "Published under the MIT License."
+    }
+]
