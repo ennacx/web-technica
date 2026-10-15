@@ -13,9 +13,18 @@
         <link rel="stylesheet" href="{{ pageStylesheet | url }}">
     {% endif %}
 
+    <script type="importmap">
+    {
+        "imports": {
+            "#utils/": "{{ '/assets/js/utils/' | url }}",
+            "#components/": "{{ '/assets/js/components/' | url }}"
+        }
+    }
+    </script>
+
     <script>
         if(location.hostname !== 'localhost' && location.protocol !== 'https:'){
-            alert("安全な接続 (HTTPS) を推奨します。");
+            alert("A secure (HTTPS) connection is recommended.");
         }
     </script>
 </head>
@@ -31,5 +40,6 @@
 
         {% include "components/footer.njk" %}
     </div>
+    {% if pageScript %}<script type="module" src="{{ pageScript | url }}"></script>{% endif %}
 </body>
 </html>

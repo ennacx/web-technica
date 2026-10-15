@@ -1,4 +1,6 @@
 {% from "components/icons.njk" import icon %}
+{% set currentTools = tools | selectattr('url') | selectattr('url', 'equalto', page.url) | list %}
+{% set toolsActive = page.url == '/' or currentTools.length > 0 %}
 
 <header class="site-header">
     <div class="container header-content">
@@ -7,7 +9,7 @@
             <span>{{ site.name }}</span>
         </a>
         <nav class="site-nav" aria-label="Main navigation">
-            <a class="site-nav-link{% if page.url == '/' %} is-current{% endif %}" href="{{ '/' | url }}#tools"{% if page.url == '/' %} aria-current="page"{% endif %}>Tools</a>
+            <a class="site-nav-link{% if toolsActive %} is-current{% endif %}" href="{{ '/' | url }}#tools"{% if page.url == '/' %} aria-current="page"{% elif toolsActive %} aria-current="location"{% endif %}>Tools</a>
         </nav>
         <a class="github-link" href="{{ site.repositoryUrl }}" target="_blank" rel="noopener noreferrer">
             {{ icon('github') }}<span>GitHub</span><span class="visually-hidden"> (opens in a new tab)</span>

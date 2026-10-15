@@ -1,6 +1,7 @@
 [
     {
         "slug": "pwdgen",
+        "url": "/pwdgen/",
         "name": "Password Generator",
         "category": "Generate",
         "icon": "key",
@@ -10,7 +11,7 @@
     {
         "slug": "keygen",
         "name": "Keypair Generator",
-        "category": "Security",
+        "category": "Generate",
         "icon": "shield",
         "description": "Generate cryptographic key pairs, including RSA, Ed25519, and EC.",
         "tags": ["RSA", "Ed25519", "EC", "Passphrase"]

@@ -1,0 +1,60 @@
+@use "../../../assets/css/mixin";
+
+// pwdgen独自の配置。部品の配色・基本形状は共通SCSSに置く。
+main.pwdgen { width: min(100% - 64px, 960px); padding-block: 24px 48px; }
+
+.pwdgen-settings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.pwdgen-character-settings { min-width: 0; .field + .field { margin-block-start: 24px; } }
+.pwdgen-other-settings { min-width: 0; padding-inline-start: 32px; border-inline-start: 1px solid var(--color-border); }
+.pwdgen-length { display: flex; align-items: center; gap: 24px; .input { flex: none; width: 80px; } }
+.pwdgen .range {
+    --range-progress: 0%;
+    flex: 1;
+    min-width: 0;
+    height: 6px;
+    margin: 0;
+    border-radius: 3px;
+    appearance: none;
+    background: linear-gradient(to right, var(--color-accent) var(--range-progress), var(--color-surface-raised) var(--range-progress));
+    cursor: pointer;
+    &::-webkit-slider-thumb { width: 18px; height: 18px; border: 0; border-radius: 6px; appearance: none; background: var(--color-text); }
+    &::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 6px; background: var(--color-text); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+.pwdgen .code-sample { margin-block: 8px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
+.pwdgen-advanced {
+    margin-block-start: 12px;
+    font-size: 13px;
+    summary { min-height: 44px; padding-block: 10px; color: var(--color-text-muted); cursor: pointer; }
+    .field { margin-block-start: 8px; }
+}
+.pwdgen-actions { display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; margin-block-start: 24px; padding-block-start: 24px; border-top: 1px solid var(--color-border); }
+.pwdgen-single-output { margin-block-start: 24px; h2 { margin-block-end: 12px; font-size: 16px; } [role="status"] { margin-block-start: 12px; } }
+.pwdgen-empty { padding: 16px; border: 1px dashed var(--color-border); border-radius: var(--radius-control); color: var(--color-text-muted); font-size: 14px; }
+.pwdgen-password-row { display: flex; align-items: flex-start; gap: 16px; padding: 10px 12px 10px 16px; output { flex: 1; min-width: 0; padding-block: 5px; overflow-wrap: anywhere; white-space: pre-wrap; font-size: 22px; line-height: 1.5; } }
+.pwdgen-entropy-row { display: flex; align-items: center; gap: 24px; margin-block-start: 16px; .entropy-meter { flex: 1; } p { font-size: 12px; white-space: nowrap; color: var(--color-text-muted); } }
+.pwdgen-entropy-note { margin-block-start: 12px; }
+.pwdgen-batch { margin-block-start: 20px; }
+.pwdgen-batch-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-block-end: 8px; h2 { font-size: 18px; } p { margin-block-start: 4px; color: var(--color-text-muted); font-size: 13px; } }
+.pwdgen-quantity { display: flex; align-items: center; gap: 12px; font-size: 13px; input { width: 100px; } select { width: 100px; } }
+.pwdgen-batch textarea { display: block; min-height: 160px; max-height: 480px; margin-block: 12px; resize: vertical; font-size: 14px; line-height: 1.6; white-space: pre; overflow-wrap: normal; }
+.pwdgen-batch-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 16px 12px; }
+
+@include mixin.mobile {
+    main.pwdgen { width: calc(100% - 40px); padding-block: 16px 32px; }
+    .pwdgen .panel { padding: 20px; }
+    .pwdgen-settings { grid-template-columns: 1fr; gap: 24px; }
+    .pwdgen-other-settings { padding: 24px 0 0; border-inline-start: 0; border-top: 1px solid var(--color-border); }
+    .pwdgen-actions { grid-template-columns: 1fr; gap: 12px; }
+    .pwdgen-password-row output { font-size: 18px; }
+    .pwdgen-entropy-row { flex-wrap: wrap; gap: 12px; .entropy-meter { flex-basis: 100%; } }
+    .pwdgen-quantity { flex-wrap: wrap; }
+    .pwdgen-batch-actions .button { flex: 1 1 120px; }
+}

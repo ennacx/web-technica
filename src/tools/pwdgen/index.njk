@@ -1,0 +1,130 @@
+---
+layout: layouts/base.njk
+title: Password Generator
+description: Generate customizable random passwords, hexadecimal strings, or UUIDs locally in your browser.
+permalink: /pwdgen/index.html
+pageClass: pwdgen
+pageStylesheet: /pwdgen/css/pwdgen.css
+pageScript: /pwdgen/js/index.js
+---
+{% from "components/icons.njk" import icon %}
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{{ '/' | url }}#tools">{{ icon('arrow-left') }} Tools</a>
+    {{ icon('chevron-right') }} <span aria-current="page">Password Generator</span>
+</nav>
+
+<header class="tool-heading">
+    <div class="tool-heading-copy">
+        <span class="tool-heading-icon">{{ icon('key') }}</span>
+        <div>
+            <h1>Password Generator</h1>
+            <p>Generate customizable random passwords.<br>All processing is done locally in your browser.</p>
+        </div>
+    </div>
+    <div class="local-processing">{{ icon('lock') }}<div><strong>Processed locally</strong><span>Your data stays in your browser.</span></div></div>
+</header>
+
+<div data-pwdgen>
+    <noscript><p class="notice notice-error">Enable JavaScript to generate passwords. No data is sent to a server.</p></noscript>
+    <form id="pwdgen-form" class="panel" novalidate>
+        <fieldset id="pwdgen-settings" class="pwdgen-settings">
+            <legend class="visually-hidden">Generation settings</legend>
+            <div class="pwdgen-character-settings">
+                <div class="field">
+                    <label for="pwd_len_input" class="field-title">Password Length</label>
+                    <div class="pwdgen-length">
+                        <input id="pwd_len_slider" class="range" type="range" min="4" max="256" step="1" value="16" aria-label="Password length">
+                        <input id="pwd_len_input" class="input" type="number" min="4" max="256" step="1" value="16" required aria-describedby="length-help">
+                    </div>
+                    <p id="length-help" class="field-help">4–256 characters.</p>
+                </div>
+                <fieldset class="field">
+                    <legend class="field-title">Character Types</legend>
+                    <label class="checkbox"><input id="alpha_u" type="checkbox" checked><span>Uppercase (A–Z)</span></label>
+                    <label class="checkbox"><input id="alpha_l" type="checkbox" checked><span>Lowercase (a–z)</span></label>
+                    <label class="checkbox"><input id="num" type="checkbox" checked><span>Numbers (0–9)</span></label>
+                    <label class="checkbox"><input id="symbol" type="checkbox"><span>Symbols (!@#$…)</span></label>
+                </fieldset>
+                <div id="symbol-info" class="field" hidden>
+                    <p class="field-help">Available symbols</p>
+                    <p id="symbol-samples" class="code-sample"></p>
+                    <label for="ignore_symbols" class="field-label">Exclude these symbols</label>
+                    <input id="ignore_symbols" class="input" type="text" autocomplete="off" spellcheck="false" aria-describedby="symbols-help">
+                    <p id="symbols-help" class="field-help">Excluded symbols will not appear in generated strings.</p>
+                </div>
+            </div>
+            <div class="pwdgen-other-settings">
+                <fieldset class="field">
+                    <legend class="field-title">Options</legend>
+                    <label class="checkbox"><input id="mislead" type="checkbox"><span>Exclude ambiguous characters<br><small id="mislead-samples" class="field-help"></small></span></label>
+                    <label class="checkbox"><input id="unique" type="checkbox"><span>Do not repeat characters</span></label>
+                    <label class="checkbox"><input id="hex" type="checkbox"><span>Generate as a hex string</span></label>
+                    <label class="checkbox"><input id="uuid" type="checkbox" aria-describedby="uuid-help"><span>Generate UUID (v4)</span></label>
+                    <p id="uuid-help" class="field-help">UUIDs use a fixed length of 36 characters.</p>
+                </fieldset>
+                <details class="pwdgen-advanced">
+                    <summary>Randomness source</summary>
+                    <fieldset class="field">
+                        <legend class="visually-hidden">Randomness source</legend>
+                        <label class="checkbox"><input id="algorithm_crypt" name="algorithm" type="radio" value="crypt" checked><span>Web Crypto (recommended)</span></label>
+                        <label class="checkbox"><input id="algorithm_math" name="algorithm" type="radio" value="math"><span>Math (non-sensitive strings only)</span></label>
+                    </fieldset>
+                </details>
+            </div>
+        </fieldset>
+        <p id="crypto-unavailable" class="notice notice-error" hidden>Web Crypto is unavailable. Use a supported browser. Math must be selected explicitly for non-sensitive strings.</p>
+        <p id="algorithm-warning" class="notice notice-warning" role="status" hidden>Math randomness is not suitable for passwords or other secrets.</p>
+        <p id="validation-error" class="notice notice-error" role="alert" tabindex="-1" hidden></p>
+        <div class="pwdgen-actions">
+            <button id="generate" class="button button-primary" type="submit">{{ icon('refresh') }} Generate Password</button>
+            <button id="generate-multiple" class="button button-secondary" type="button">{{ icon('document') }} Generate Multiple</button>
+        </div>
+
+        <section class="pwdgen-single-output" aria-labelledby="result-heading">
+            <h2 id="result-heading">Generated Password</h2>
+            <p id="single-empty" class="pwdgen-empty">Generate a password to see your result here.</p>
+            <div id="generate-result" hidden>
+                <div class="result-output pwdgen-password-row">
+                    <output id="generate-password" aria-label="Generated password"></output>
+                    <button id="password-copy" class="button button-icon" type="button" aria-label="Copy generated password" disabled>
+                        <span data-icon-copy>{{ icon('copy') }}</span><span data-icon-check hidden>{{ icon('check') }}</span>
+                    </button>
+                </div>
+                <div class="pwdgen-entropy-row">
+                    <div id="entropy-meter" class="entropy-meter" role="meter" aria-label="Estimated entropy" aria-valuemin="0" aria-valuemax="128" aria-valuenow="0"><span id="entropy-bar"></span></div>
+                    <p>Entropy level: <strong id="entropy-label"></strong></p>
+                </div>
+                <dl class="result-stats">
+                    <div><dt>Length</dt><dd id="result-length"></dd></div>
+                    <div><dt>Entropy</dt><dd><span id="entropy-value"></span> bits</dd></div>
+                    <div><dt>Character pool</dt><dd id="charset-size"></dd></div>
+                    <div><dt>Generation time</dt><dd><span id="gen-ms-value"></span> ms</dd></div>
+                </dl>
+                <p class="field-help pwdgen-entropy-note">Estimated entropy describes the possible outputs, not a guarantee of password security.</p>
+            </div>
+            <p id="single-status" class="field-help" role="status" aria-live="polite" aria-atomic="true"></p>
+        </section>
+    </form>
+
+    <section id="batch-section" class="panel pwdgen-batch" aria-labelledby="batch-heading">
+        <div class="pwdgen-batch-heading">
+            <div><h2 id="batch-heading">Batch Generation</h2><p>Generate multiple passwords at once.</p></div>
+            <div class="pwdgen-quantity">
+                <label for="batch-count">Quantity</label>
+                <input id="batch-count" class="input" type="number" min="1" max="10000" step="1" value="5" required aria-describedby="batch-help">
+                <label for="batch-preset" class="visually-hidden">Batch size preset</label>
+                <select id="batch-preset" class="input" aria-describedby="batch-help"><option value="">Custom</option><option value="100">100</option><option value="1000">1,000</option><option value="10000">10,000</option></select>
+            </div>
+        </div>
+        <p id="batch-help" class="field-help">1–10,000 results, using the options above.</p>
+        <label for="bulk-passwords" class="visually-hidden">Generated batch</label>
+        <textarea id="bulk-passwords" class="input result-output" rows="5" readonly autocomplete="off" spellcheck="false" placeholder="Your generated passwords will appear here."></textarea>
+        <p id="bulk-stats" class="field-help" hidden></p>
+        <div class="pwdgen-batch-actions">
+            <button id="batch-generate" class="button button-secondary" type="button">{{ icon('refresh') }} Generate Batch</button>
+            <button id="batch-copy" class="button button-secondary" type="button" disabled><span data-icon-copy>{{ icon('copy') }}</span><span data-icon-check hidden>{{ icon('check') }}</span> Copy All</button>
+            <button id="batch-download" class="button button-secondary" type="button" disabled>{{ icon('download') }} Download .txt</button>
+        </div>
+        <p id="bulk-status" class="field-help" role="status" aria-live="polite" aria-atomic="true"></p>
+    </section>
+</div>

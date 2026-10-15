@@ -4,12 +4,17 @@ import { fileURLToPath } from "node:url";
 import { compile } from "sass";
 
 export default function (eleventyConfig) {
+    eleventyConfig.addWatchTarget("src/assets/js/**/*.js");
     eleventyConfig.addWatchTarget("src/assets/css/**/*.scss");
     eleventyConfig.watchIgnores.add("src/assets/css/**/*.css");
     eleventyConfig.watchIgnores.add("src/assets/css/**/*.css.map");
+    eleventyConfig.addWatchTarget("src/tools/pwdgen/css/**/*.scss");
+    eleventyConfig.watchIgnores.add("src/tools/pwdgen/css/**/*.css");
+    eleventyConfig.watchIgnores.add("src/tools/pwdgen/css/**/*.css.map");
     eleventyConfig.on("eleventy.before", () => {
-        for (const name of ["style", "home"]) {
-            const directory = "src/assets/css";
+        for (const entry of ["src/assets/css/style", "src/assets/css/home", "src/tools/pwdgen/css/pwdgen"]) {
+            const directory = path.dirname(entry);
+            const name = path.basename(entry);
             const result = compile(`${directory}/${name}.scss`, { style: "expanded", sourceMap: true });
             const sourceMap = {
                 ...result.sourceMap,
@@ -31,12 +36,18 @@ export default function (eleventyConfig) {
         }
     });
     eleventyConfig.addPassthroughCopy({
+        "src/assets/js/utils/*.js": "assets/js/utils",
+        "src/assets/js/components/*.js": "assets/js/components",
         "src/assets/css/*.css": "assets/css",
         "src/assets/css/*.css.map": "assets/css",
-        "src/assets/img": "assets/img"
+        "src/assets/img": "assets/img",
+        "src/tools/pwdgen/css/*.css": "pwdgen/css",
+        "src/tools/pwdgen/css/*.css.map": "pwdgen/css",
+        "src/tools/pwdgen/js/*.js": "pwdgen/js"
     });
     // Original tool sources are retained until their migration is complete.
-    eleventyConfig.ignores.add("src/tools/**");
+    eleventyConfig.ignores.add("src/tools/keygen/**");
+    eleventyConfig.ignores.add("src/tools/sri-hasher/**");
 
     return {
         dir: {
@@ -48,6 +59,6 @@ export default function (eleventyConfig) {
         templateFormats: ["njk", "html", "md"],
         htmlTemplateEngine: "njk",
         markdownTemplateEngine: "njk",
-        pathPrefix: "/web-technica/"
+        pathPrefix: "/"
     };
 }
