@@ -1,13 +1,13 @@
 {% from "components/icons.njk" import icon %}
 
 {% macro toolCard(tool) %}
-    <article class="tool-card{% if tool.url %} is-available{% endif %}" aria-labelledby="tool-{{ tool.slug }}">
+    <article class="tool-card{% if tool.status == "published" %} is-available{% endif %}" aria-labelledby="tool-{{ tool.slug }}">
         <div class="tool-card-main">
             <div class="icon-tile">{{ icon(tool.icon) }}</div>
             <div class="tool-card-copy">
                 <div class="tool-card-meta">
                     <span class="eyebrow">{{ tool.category }}</span>
-                    {% if not tool.url %}
+                    {% if tool.status != "published" %}
                         <span class="badge">Coming Soon</span>
                     {% endif %}
                 </div>

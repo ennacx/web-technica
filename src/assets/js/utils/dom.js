@@ -22,7 +22,7 @@ export function getById(id, root = globalThis.document, expectedType = root.defa
  * CSSセレクターでDOM要素を取得する。
  *
  * @param {string} selector
- * @param {Document} [root=globalThis.document] - 操作を行うDocument
+ * @param {Element|Document} [root=globalThis.document] - 操作を行うDocument
  * @returns {Element|null}
  */
 export function querySel(selector, root = globalThis.document) {
@@ -33,7 +33,7 @@ export function querySel(selector, root = globalThis.document) {
  * CSSセレクターで複数のDOM要素を取得する。
  *
  * @param {string} selector
- * @param {Document} [root=globalThis.document] - 操作を行うDocument
+ * @param {Element|Document} [root=globalThis.document] - 操作を行うDocument
  * @returns {NodeListOf<Element>}
  */
 export function querySelAll(selector, root = globalThis.document) {

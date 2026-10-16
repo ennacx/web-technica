@@ -45,6 +45,7 @@
         {% include "components/footer.njk" %}
     </div>
 
-    {% if pageScript %}<script type="module" src="{{ pageScript | url }}"></script>{% endif %}
+    <script src="{{ '/assets/js/components/tool-navigation.js' | url }}" type="module"></script>
+    {% if pageScript %}<script src="{{ pageScript | url }}" type="module"></script>{% endif %}
 </body>
 </html>

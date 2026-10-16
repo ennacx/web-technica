@@ -1,7 +1,7 @@
 {% from "components/icons.njk" import icon %}
 
-{% set currentTools = tools | selectattr('url') | selectattr('url', 'equalto', page.url) | list %}
-{% set toolsActive = (page.url == '/' or currentTools.length > 0) %}
+{% set categories = tools | groupPublishedTools %}
+{% set toolsActive = (page.url == '/') %}
 
 <header class="site-header">
     <div class="container header-content">
@@ -9,9 +9,25 @@
             <img class="brand-symbol" src="{{ '/assets/img/brand/logo.svg' | url }}" alt="" width="36" height="36">
             <span>{{ site.name }}</span>
         </a>
-        <nav class="site-nav" aria-label="Main navigation">
-            <a class="site-nav-link{% if toolsActive %} is-current{% endif %}" href="{{ '/' | url }}#tools"{% if page.url == '/' %} aria-current="page"{% elif toolsActive %} aria-current="location"{% endif %}>Tools</a>
+
+        <nav class="site-nav" aria-label="Main navigation" data-tool-navigation>
+            <ul class="site-nav-list" role="list">
+                <li><a href="{{ '/' | url }}#tools" class="site-nav-link{% if toolsActive %} is-current{% endif %}"{% if toolsActive %} aria-current="page"{% endif %}>All Tools</a></li>
+                {% for category in categories %}
+                    <li class="site-nav-category">
+                        <button class="site-nav-link site-nav-toggle{% if tool and tool.category == category.name %} is-current{% endif %}" type="button" aria-expanded="false" aria-controls="tool-category-{{ loop.index }}">
+                            {{ category.name }} {{ icon('chevron-right') }}
+                        </button>
+                        <ul id="tool-category-{{ loop.index }}" class="site-nav-dropdown" role="list" hidden>
+                            {% for tool in category.tools %}
+                                <li><a href="{{ tool.url | url }}"{% if tool.url == page.url %} aria-current="page"{% endif %}>{{ icon(tool.icon) }}<span>{{ tool.name }}</span></a></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
         </nav>
+
         <a class="github-link" href="{{ site.repositoryUrl }}" target="_blank" rel="noopener noreferrer">
             {{ icon('github') }}<span>GitHub</span><span class="visually-hidden"> (opens in a new tab)</span>
         </a>

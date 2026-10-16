@@ -3,27 +3,30 @@
         "slug": "pwdgen",
         "url": "/pwdgen/",
         "name": "Password Generator",
+        "description": "Generate random passwords with customizable length and character sets.",
         "category": "Generate",
         "icon": "key",
-        "description": "Generate random passwords with customizable length and character sets.",
+        "status": "published",
         "tags": ["Password", "Random", "Security"]
     },
     {
         "slug": "keygen",
         "url": "/keygen/",
         "name": "Keypair Generator",
+        "description": "Generate cryptographic key pairs, including RSA, Ed25519, and EC.",
         "category": "Generate",
         "icon": "shield",
-        "description": "Generate cryptographic key pairs, including RSA, Ed25519, and EC.",
+        "status": "published",
         "tags": ["RSA", "Ed25519", "EC", "Passphrase"]
     },
     {
         "slug": "sri-hasher",
         "url": "/sri-hasher/",
         "name": "SRI Hasher",
+        "description": "Generate Subresource Integrity (SRI) hashes for CDN resources or local files.",
         "category": "Security",
         "icon": "code",
-        "description": "Generate Subresource Integrity (SRI) hashes for CDN resources or local files.",
+        "status": "published",
         "tags": ["SHA-256", "SHA-384", "SHA-512"]
     }
 ]
