@@ -1,0 +1,110 @@
+---
+toolSlug: keygen
+description: Generate RSA, Ed25519, Ed448, or ECDSA key pairs and export PEM, OpenSSH, and PuTTY PPK files locally in your browser.
+permalink: /keygen/index.html
+pageClass: keygen
+pageStylesheet: /keygen/css/keygen.css
+pageScript: /keygen/js/app.js
+toolIntro:
+    - Generate key pairs for development and administration.
+    - Export public and private keys in the format you need.
+processingNotice:
+    icon: lock
+    title: Processed locally
+    description: Keys and passphrases stay in your browser.
+javascriptNotice: Enable JavaScript to generate key pairs. No keys are sent to a server.
+---
+{% from "components/icons.njk" import icon %}
+{% from "components/tool-controls.njk" import copyButton, errorMessage, statusMessage %}
+
+<div data-keygen aria-busy="false" class="keygen-layout">
+    <form id="keygen-form" class="panel" novalidate>
+        <fieldset id="keygen-settings" class="field">
+            <legend class="field-title">Key Settings</legend>
+            <label for="algo" class="field-label">Algorithm</label>
+            <select id="algo" class="input" name="algo"><option value="RSA">RSA (RSA-PSS)</option><option value="EdDSA">EdDSA</option><option value="ECDSA">ECDSA</option></select>
+
+            <fieldset id="rsa-length-radio" class="field keygen-choices">
+                <legend class="field-label">Key size</legend>
+                {% for size in [2048, 3072, 4096] %}<label class="checkbox"><input type="radio" name="rsalen" value="{{ size }}"{% if loop.first %} checked{% endif %}><span>{{ size }} bits</span></label>{% endfor %}
+            </fieldset>
+            <fieldset id="eddsa-length-radio" class="field keygen-choices" hidden disabled>
+                <legend class="field-label">Curve</legend>
+                {% for curve in ['Ed25519', 'Ed448'] %}<label class="checkbox"><input type="radio" name="edval" value="{{ curve }}"{% if loop.first %} checked{% endif %}><span>{{ curve }}</span></label>{% endfor %}
+            </fieldset>
+            <fieldset id="ecdsa-nist-radio" class="field keygen-choices" hidden disabled>
+                <legend class="field-label">Curve</legend>
+                {% for curve in ['P-256', 'P-384', 'P-521'] %}<label class="checkbox"><input type="radio" name="nist" value="{{ curve }}"{% if loop.first %} checked{% endif %}><span>{{ curve }}</span></label>{% endfor %}
+            </fieldset>
+
+            <label for="comment" class="field-label">Comment <span class="field-help">(optional)</span></label>
+            <input id="comment" name="comment" class="input" type="text" autocomplete="off" spellcheck="false" aria-describedby="comment-help">
+            <p id="comment-help" class="field-help">Use printable ASCII. Spaces are converted to hyphens.</p>
+
+            <div class="keygen-option">
+                <label class="checkbox"><input id="use-passphrase" type="checkbox"><span>Encrypt the private key with a passphrase</span></label>
+                <fieldset id="passphrase-field" class="field" hidden disabled>
+                    <legend class="visually-hidden">Private key encryption</legend>
+                    <label for="passphrase" class="field-label">Passphrase</label>
+                    <div class="keygen-passphrase"><input id="passphrase" class="input" type="password" autocomplete="new-password" aria-describedby="passphrase-help error-alert"><button type="button" class="button" data-toggle-passphrase="passphrase" aria-controls="passphrase" aria-pressed="false" aria-label="Show or hide passphrase">Show</button></div>
+                    <label for="passphrase_c" class="field-label">Confirm passphrase</label>
+                    <div class="keygen-passphrase"><input id="passphrase_c" class="input" type="password" autocomplete="new-password" aria-describedby="passphrase-help error-alert"><button type="button" class="button" data-toggle-passphrase="passphrase_c" aria-controls="passphrase_c" aria-pressed="false" aria-label="Show or hide confirmation passphrase">Show</button></div>
+                    <p id="passphrase-help" class="field-help">Both entries must match. Passphrase fields are cleared after generation. Keep your passphrase separately; it cannot be recovered here.</p>
+                    <fieldset class="field keygen-formats">
+                        <legend class="field-label">Private key format</legend>
+                        <label class="checkbox"><input type="radio" name="enc-type" value="aes256ctr" checked><span>OpenSSH <small class="field-help">bcrypt-PBKDF + AES-256-CTR</small></span></label>
+                        <label class="checkbox"><input type="radio" name="enc-type" value="pkcs8"><span>PKCS#8 <small class="field-help">PBKDF2 + AES-256-CBC</small></span></label>
+                        <label class="checkbox"><input type="radio" name="enc-type" value="cc20p1305"><span>Custom ChaCha20-Poly1305 <small class="field-help">Legacy IETF variant; not an OpenSSH-compatible format</small></span></label>
+                    </fieldset>
+                    <p id="custom-format-warning" class="notice notice-warning" hidden>This legacy format requires a compatible custom reader. Standard OpenSSH clients cannot read it.</p>
+                    <p class="field-help">PPK v3 downloads use Argon2id + AES-256-CBC independently of the format selected above.</p>
+                </fieldset>
+            </div>
+
+            <details class="keygen-advanced">
+                <summary>Optional pointer sampling</summary>
+                <label class="checkbox"><input id="guri2view" type="checkbox" aria-describedby="sampling-help"><span>Choose a key using pointer samples</span></label>
+                <p id="sampling-help" class="field-help">This optional interaction selects one of seven independently generated key pairs. Keys still use cryptographic randomness. The sample count is not an entropy estimate.</p>
+                <div id="guri2-field" hidden>
+                    <button id="guri2-zone" class="button keygen-pointer-zone" type="button" aria-describedby="sampling-help">Click, tap, or press Space to start</button>
+                    <label for="guri2-progress" class="visually-hidden">Pointer samples collected</label>
+                    <progress id="guri2-progress" class="keygen-progress" value="0" max="128"></progress>
+                    {{ statusMessage('guri2-status') }}
+                    <details><summary>Selection digest (SHA-256)</summary><pre id="guri2-out" class="result-output" tabindex="0" aria-label="Pointer selection digest"></pre></details>
+                </div>
+            </details>
+        </fieldset>
+
+        {{ errorMessage('error-alert') }}
+        <div class="keygen-actions"><button id="generate-button" class="button button-primary" type="submit">{{ icon('refresh') }} <span data-label>Generate Key Pair</span></button><button id="gen-reset-button" class="button" type="button">Reset</button></div>
+        <label for="generate-progress" class="visually-hidden">Key generation progress</label>
+        <progress id="generate-progress" class="keygen-progress" value="0" max="1"></progress>
+        <p class="field-help">Changing settings clears the generated output. Reset clears keys and passphrases.</p>
+    </form>
+
+    <section class="panel keygen-output" aria-labelledby="keygen-output-heading">
+        <h2 id="keygen-output-heading">Generated Keys</h2>
+        <p id="keygen-empty" class="field-help">Generate a key pair to see your results here.</p>
+        <div id="keygen-results" hidden>
+            <div class="keygen-result-heading"><h3 id="fingerprint-heading">OpenSSH fingerprint</h3>{{ copyButton('copy-fp', 'Copy fingerprint', true) }}</div>
+            <pre id="pub-fp" class="result-output" tabindex="0" aria-labelledby="fingerprint-heading"></pre>
+            <div class="keygen-result-heading"><h3 id="openssh-heading">OpenSSH public key</h3>{{ copyButton('copy-openssh', 'Copy public key', true) }}</div>
+            <pre id="pub-openssh" class="result-output" tabindex="0" aria-labelledby="openssh-heading"></pre>
+            <details class="keygen-key-details" open><summary>Public Key (PEM)</summary>
+                <div class="keygen-result-heading"><h3 id="public-heading" class="visually-hidden">Public key PEM</h3>{{ copyButton('copy-public', 'Copy public key PEM') }}</div>
+                <pre id="pub" class="result-output" tabindex="0" aria-labelledby="public-heading"></pre>
+            </details>
+            <div class="keygen-downloads"><button id="dlPubOpenSSH" class="button" type="button" disabled>{{ icon('download') }} OpenSSH</button><button id="dlPub" class="button" type="button" disabled>{{ icon('download') }} Public PEM</button></div>
+
+            <details id="private-key-details" class="keygen-key-details"><summary>Private Key</summary>
+                <p class="notice notice-warning">Keep your private key secret. Copy or download it only to a trusted location.</p>
+                <div class="keygen-result-heading"><h3 id="private-heading" class="visually-hidden">Private key</h3>{{ copyButton('copy-private', 'Copy private key') }}</div>
+                <pre id="priv" class="result-output" tabindex="0" aria-labelledby="private-heading"></pre>
+            </details>
+            <div class="keygen-downloads"><button id="dlPriv" class="button" type="button" disabled>{{ icon('download') }} Private Key</button><button id="dlPrivPpk" class="button" type="button" disabled>{{ icon('download') }} PPK v3</button></div>
+            <p class="field-help">Ed448 support varies between SSH clients. Check that your target application supports the selected algorithm and format.</p>
+        </div>
+    </section>
+    <div class="keygen-status">{{ statusMessage('keygen-status') }}</div>
+</div>
+<p class="field-help keygen-license"><a href="{{ '/keygen/js/THIRD-PARTY-LICENSES.txt' | url }}">Third-party licenses</a></p>

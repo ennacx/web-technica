@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { compile } from "sass";
+import { buildKeygen } from "./src/tools/keygen/scripts/build.mjs";
 
 export default function (eleventyConfig) {
     eleventyConfig.addWatchTarget("src/assets/js/**/*.js");
@@ -14,8 +15,16 @@ export default function (eleventyConfig) {
     eleventyConfig.addWatchTarget("src/tools/sri-hasher/css/**/*.scss");
     eleventyConfig.watchIgnores.add("src/tools/sri-hasher/css/**/*.css");
     eleventyConfig.watchIgnores.add("src/tools/sri-hasher/css/**/*.css.map");
-    eleventyConfig.on("eleventy.before", () => {
-        for (const entry of ["src/assets/css/style", "src/assets/css/home", "src/assets/css/error", "src/tools/pwdgen/css/pwdgen", "src/tools/sri-hasher/css/sri-hasher"]) {
+    eleventyConfig.addWatchTarget("src/tools/keygen/css/**/*.scss");
+    eleventyConfig.addWatchTarget("src/tools/keygen/js/**/*.js");
+    eleventyConfig.watchIgnores.add("src/tools/keygen/css/**/*.css");
+    eleventyConfig.watchIgnores.add("src/tools/keygen/css/**/*.css.map");
+    eleventyConfig.watchIgnores.add("src/tools/keygen/js/app.js");
+    eleventyConfig.watchIgnores.add("src/tools/keygen/js/app.js.LEGAL.txt");
+    eleventyConfig.watchIgnores.add("src/tools/keygen/js/THIRD-PARTY-LICENSES.txt");
+    eleventyConfig.on("eleventy.before", async () => {
+        await buildKeygen();
+        for (const entry of ["src/assets/css/style", "src/assets/css/home", "src/assets/css/error", "src/tools/pwdgen/css/pwdgen", "src/tools/sri-hasher/css/sri-hasher", "src/tools/keygen/css/keygen"]) {
             const directory = path.dirname(entry);
             const name = path.basename(entry);
             const result = compile(`${directory}/${name}.scss`, { style: "expanded", sourceMap: true });
@@ -49,10 +58,16 @@ export default function (eleventyConfig) {
         "src/tools/pwdgen/js/*.js": "pwdgen/js",
         "src/tools/sri-hasher/css/*.css": "sri-hasher/css",
         "src/tools/sri-hasher/css/*.css.map": "sri-hasher/css",
-        "src/tools/sri-hasher/js/*.js": "sri-hasher/js"
+        "src/tools/sri-hasher/js/*.js": "sri-hasher/js",
+        "src/tools/keygen/css/*.css": "keygen/css",
+        "src/tools/keygen/css/*.css.map": "keygen/css",
+        "src/tools/keygen/js/app.js": "keygen/js/app.js",
+        "src/tools/keygen/js/app.js.LEGAL.txt": "keygen/js/app.js.LEGAL.txt",
+        "src/tools/keygen/js/THIRD-PARTY-LICENSES.txt": "keygen/js/THIRD-PARTY-LICENSES.txt"
     });
-    // Original tool sources are retained until their migration is complete.
-    eleventyConfig.ignores.add("src/tools/keygen/**");
+    eleventyConfig.ignores.add("src/tools/keygen/nodejs/**");
+    eleventyConfig.ignores.add("src/tools/keygen/scripts/**");
+    eleventyConfig.ignores.add("src/tools/keygen/node_modules/**");
 
     return {
         dir: {

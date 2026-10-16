@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import './helpers/register-utils.js';
+const {
     OPTION, SYMBOL, MISLEAD_SYMBOLS, validation, getUseCharacters,
     cryptoRandomIndex, arrayShuffle, calcEntropy,
     passwordGenerate, bulkPasswordGenerate, uuidGenerate, bulkUuidGenerate
-} from '../src/tools/pwdgen/js/pwdgen.js';
+} = await import('../src/tools/pwdgen/js/pwdgen.js');
 
 const options = overrides => ({ ...OPTION, length: 16, ...overrides });
 const validated = overrides => {

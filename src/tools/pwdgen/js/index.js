@@ -8,6 +8,7 @@ import {
 import { getById, querySel } from "#utils/dom.js";
 import { numberFormat } from "#utils/format.js";
 import { copyText } from "#utils/clipboard.js";
+import { downloadText } from "#utils/download.js";
 
 // UI state stays in memory. Generated values never enter storage, URLs, or logs.
 export function initializePwdgen(document){
@@ -410,27 +411,12 @@ export function initializePwdgen(document){
             return;
         }
 
-        let url;
-
-        const anchor = document.createElement('a');
-
         try{
-            const blob = new window.Blob([batch.value], { type: 'text/plain;charset=utf-8' });
-            url = window.URL.createObjectURL(blob);
-            anchor.href = url;
-            anchor.download = `passwords_${batch.value.split('\n').length}.txt`;
-            document.body.append(anchor);
-            anchor.click();
+            downloadText(batch.value, `passwords_${batch.value.split('\n').length}.txt`, document);
 
             get('bulk-status').textContent = 'Download started.';
         } catch(e){
             get('bulk-status').textContent = 'Download failed. Copy the results instead.';
-        } finally{
-            anchor.remove();
-
-            if(url){
-                window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-            }
         }
     });
 

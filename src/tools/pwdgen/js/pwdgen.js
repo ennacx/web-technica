@@ -1,3 +1,5 @@
+import { randomUint32 as cryptoRandomUint32 } from '#utils/crypto.js';
+
 // アルファベット大文字一覧
 const ALPHA_U = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 // アルファベット小文字一覧
@@ -98,31 +100,6 @@ const ENTROPY_STRENGTH = {
         return this.levels.find(level => value < level.threshold)?.label ?? 'Unknown';
     }
 };
-
-/**
- * 指定バイト数の乱数バッファを返す (Uint8Array)
- *
- * @param {number} bytes
- * @returns {Uint8Array}
- */
-function cryptoRandomBytes(bytes){
-    const a = new Uint8Array(bytes);
-    crypto.getRandomValues(a);
-
-    return a;
-}
-
-/**
- * `crypto.getRandomUint32()`相当 (単一の32bit非負整数) を取得
- *
- * @returns {number} 0..2^32-1
- */
-function cryptoRandomUint32(){
-    const a = new Uint32Array(1);
-    crypto.getRandomValues(a);
-
-    return a[0] >>> 0;
-}
 
 /**
  * 指定された上界 `n` (1 <= n <= 2^32) の一様インデックスを返す (棄却サンプリング)

@@ -10,6 +10,7 @@
     },
     {
         "slug": "keygen",
+        "url": "/keygen/",
         "name": "Keypair Generator",
         "category": "Generate",
         "icon": "shield",

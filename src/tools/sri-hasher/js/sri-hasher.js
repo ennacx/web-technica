@@ -1,3 +1,6 @@
+import { Bytes } from '#utils/bytes.js';
+import { digestBytes } from '#utils/crypto.js';
+
 export const ALLOWED_EXTENSIONS = ['js', 'css'];
 export const ALGORITHMS = ['SHA-256', 'SHA-384', 'SHA-512'];
 
@@ -73,13 +76,7 @@ export async function fetchContent(url, fetcher = globalThis.fetch){
 }
 
 export function arrayBufferToBase64(buffer){
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for(let i = 0; i < bytes.length; i += 0x8000){
-        binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    }
-
-    return btoa(binary);
+    return Bytes.toBase64(buffer);
 }
 
 export async function sriFromArrayBuffer(buffer, algorithm, crypto = globalThis.crypto){
@@ -90,7 +87,7 @@ export async function sriFromArrayBuffer(buffer, algorithm, crypto = globalThis.
         throw new Error('Web Crypto is unavailable. Use a supported browser over HTTPS or localhost.');
     }
 
-    const digest = await crypto.subtle.digest(algorithm, buffer);
+    const digest = await digestBytes(buffer, algorithm, crypto);
 
     return algorithm.toLowerCase().replace('-', '') + '-' + arrayBufferToBase64(digest);
 }

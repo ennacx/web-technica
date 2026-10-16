@@ -1,0 +1,169 @@
+@charset "UTF-8";
+/*
+ * 共通の mixin。
+ */
+/*
+ * 共通の寸法・フォント。テーマ色はCSSカスタムプロパティで公開する。
+ */
+main.keygen {
+  width: min(100% - 64px, 1120px);
+  padding-block: 24px 48px;
+}
+
+.keygen-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+  gap: 24px;
+}
+.keygen-layout > .panel {
+  min-width: 0;
+}
+
+.keygen-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  margin-block: 16px;
+}
+
+.keygen-option {
+  margin-block-start: 24px;
+  padding-block-start: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.keygen-passphrase {
+  display: flex;
+  gap: 8px;
+}
+.keygen-passphrase .input {
+  min-width: 0;
+}
+.keygen-passphrase .button {
+  flex: none;
+}
+
+.keygen-formats {
+  margin-block: 20px;
+}
+.keygen-formats small {
+  display: block;
+}
+.keygen-formats .checkbox {
+  margin-block: 8px;
+}
+
+.keygen-advanced {
+  margin-block-start: 20px;
+}
+
+.keygen summary {
+  min-height: 44px;
+  padding-block: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.keygen .result-output {
+  max-height: 320px;
+  margin: 8px 0 16px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.keygen .input + .field-help,
+.keygen-passphrase + .field-help {
+  margin-block-start: 8px;
+}
+
+.keygen-actions, .keygen-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 20px 12px;
+}
+
+.keygen-actions .button-primary {
+  flex: 1;
+}
+
+.keygen-progress {
+  display: block;
+  width: 100%;
+  height: 8px;
+  margin-block: 16px;
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  accent-color: var(--color-accent);
+  background: var(--color-surface-raised);
+}
+.keygen-progress::-webkit-progress-bar {
+  background: var(--color-surface-raised);
+}
+.keygen-progress::-webkit-progress-value {
+  background: var(--color-accent);
+}
+.keygen-progress::-moz-progress-bar {
+  background: var(--color-accent);
+}
+
+.keygen-pointer-zone {
+  width: 100%;
+  min-height: 120px;
+  margin-block-start: 16px;
+  border-style: dashed;
+  touch-action: none;
+}
+
+.keygen-output h2 {
+  margin-block-end: 16px;
+  font-size: 18px;
+}
+
+.keygen-result-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block: 20px 8px;
+}
+.keygen-result-heading h3 {
+  font-size: 14px;
+}
+
+.keygen-key-details {
+  margin-block-start: 20px;
+  padding-block-start: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.keygen-status {
+  grid-column: 1/-1;
+}
+
+.keygen-license {
+  margin-block-start: 20px;
+}
+
+@media (max-width: 767.98px) {
+  main.keygen {
+    width: calc(100% - 40px);
+    padding-block: 16px 32px;
+  }
+  .keygen-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .keygen-layout > .panel {
+    padding: 20px;
+  }
+  .keygen-downloads .button {
+    flex: 1 1 120px;
+  }
+}
+
+/*# sourceMappingURL=keygen.css.map */

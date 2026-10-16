@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import {
+import './helpers/register-utils.js';
+const {
     ALGORITHMS, getExtension, validateURL, validateFile,
     fetchContent, sriFromArrayBuffer, makeHtmlTag
-} from '../src/tools/sri-hasher/js/sri-hasher.js';
+} = await import('../src/tools/sri-hasher/js/sri-hasher.js');
 
 test('SRI matches independent hashes for all algorithms, empty files, UTF-8 and binary data', async () => {
     const samples = [new Uint8Array(), new TextEncoder().encode('abc'), new TextEncoder().encode('\u65e5\u672c\u8a9e\r\n'), new Uint8Array([0, 255, 128, 10, 13])];
