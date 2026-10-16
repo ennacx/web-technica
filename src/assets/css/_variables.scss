@@ -1,0 +1,33 @@
+/*
+ * 共通の寸法・フォント。テーマ色はCSSカスタムプロパティで公開する。
+ */
+
+$sp-width-criteria: 767.98px;
+$sans-serif-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+$serif-font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+$monospace-font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+@mixin theme {
+    :root {
+        color-scheme: dark;
+        // ページ背景
+        --color-bg: #151a20;
+        //
+        --color-surface: #202730;
+        --color-surface-raised: #29323d;
+        --color-border: #39434e;
+        --color-text: #e4e9ed;
+        --color-text-muted: #a9b5c0;
+        --color-accent: #73b8aa;
+        --color-accent-hover: #91d3c4;
+        --color-accent-soft: #203438;
+        --color-danger: #e49a9a;
+        --color-warning: #e4c78c;
+        --color-success: #86cfa4;
+        --font-ui: #{$sans-serif-font-family};
+        --font-mono: #{$monospace-font-family};
+        --radius-control: 8px;
+        --radius-panel: 12px;
+        --content-width: 1120px;
+    }
+}

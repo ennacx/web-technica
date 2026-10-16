@@ -1,0 +1,18 @@
+/*
+ * 共通の mixin。
+ */
+
+@use "variables";
+
+@mixin mobile {
+    @media (max-width: variables.$sp-width-criteria) {
+        @content;
+    }
+}
+
+@mixin placeholder($color) {
+    &::placeholder {
+        color: $color;
+        opacity: 1;
+    }
+}

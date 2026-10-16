@@ -1,0 +1,36 @@
+[
+    {
+        "name": "Password Generator",
+        "slug": "pwdgen",
+        "url": "/pwdgen/",
+        "description": "Generate random passwords with customizable length and character sets.",
+        "offline": "ready",
+        "category": "Generate",
+        "icon": "key",
+        "status": "published",
+        "tags": ["Password", "Random", "Security"]
+    },
+    {
+        "name": "Keypair Generator",
+        "slug": "keygen",
+        "url": "/keygen/",
+        "description": "Generate cryptographic key pairs, including RSA, Ed25519, and EC.",
+        "offline": "ready",
+        "category": "Generate",
+        "icon": "shield",
+        "status": "published",
+        "tags": ["RSA", "Ed25519", "EC", "Passphrase"]
+    },
+    {
+        "name": "SRI Hasher",
+        "slug": "sri-hasher",
+        "url": "/sri-hasher/",
+        "description": "Generate Subresource Integrity (SRI) hashes for CDN resources or local files.",
+        "offline": "partial",
+        "offlineDescription": "Local files work offline once the site is cached. Fetching a URL requires an internet connection.",
+        "category": "Security",
+        "icon": "code",
+        "status": "published",
+        "tags": ["SHA-256", "SHA-384", "SHA-512"]
+    }
+]

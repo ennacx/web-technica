@@ -1,0 +1,15 @@
+---
+layout: layouts/base.njk
+title: You're Offline
+description: Open the cached Web-Technica tools while offline.
+permalink: /offline.html
+pageClass: not-found
+pageStylesheet: /assets/css/error.css
+eleventyExcludeFromCollections: true
+---
+
+<section class="panel error-page" aria-labelledby="offline-heading">
+    <h1 id="offline-heading">You're offline</h1>
+    <p class="error-page__description">This page is not available offline. You can still use the cached tools. SRI hashing from a URL requires an internet connection; local files work offline.</p>
+    <a class="button button-primary" href="{{ '/' | url }}#tools">Browse Offline Tools</a>
+</section>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1018 887" role="img" aria-labelledby="title desc">
+  <title id="title">Web-Technica mark</title>
+  <desc id="desc">Approved Web-Technica mark in the latest mint and teal colorway.</desc>
+  <defs>
+    <linearGradient id="gLeft" x1="0%" y1="0%" x2="72%" y2="100%">
+      <stop offset="0%" stop-color="#83F5E6"/>
+      <stop offset="100%" stop-color="#4FE3C8"/>
+    </linearGradient>
+    <linearGradient id="gMid" x1="0%" y1="0%" x2="88%" y2="100%">
+      <stop offset="0%" stop-color="#3BC6C0"/>
+      <stop offset="100%" stop-color="#19DDB7"/>
+    </linearGradient>
+    <linearGradient id="gRight" x1="8%" y1="0%" x2="88%" y2="100%">
+      <stop offset="0%" stop-color="#178E9B"/>
+      <stop offset="100%" stop-color="#0B7581"/>
+    </linearGradient>
+  </defs>
+  <polygon points="20,20 235,20 611,677 503,867" fill="url(#gLeft)"/>
+  <polygon points="346,20 562,20 780,395 674,586" fill="url(#gMid)"/>
+  <polygon points="672,20 998,20 831,303" fill="url(#gRight)"/>
+</svg>

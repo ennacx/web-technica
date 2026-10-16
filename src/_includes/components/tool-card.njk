@@ -1,0 +1,41 @@
+{% from "components/icons.njk" import icon %}
+{% from "components/offline-status.njk" import offlineStatus %}
+
+{% macro toolCard(tool, offlineModes) %}
+    {% set available = (tool.status == 'published' and tool.url) %}
+
+    <article class="tool-card{% if available %} is-available{% endif %}" aria-labelledby="tool-{{ tool.slug }}">
+        <div class="tool-card-main">
+            <div class="icon-tile">{{ icon(tool.icon) }}</div>
+            <div class="tool-card-copy">
+                <div class="tool-card-meta">
+                    <span class="eyebrow">{{ tool.category }}</span>
+                    <span class="tool-card-badges">
+                        {{ offlineStatus(tool, offlineModes) }}
+                        {% if not available %}
+                            <span class="badge">
+                                {% if tool.status == "develop" %}
+                                    In Develop
+                                {% elif tool.status == "planned" %}
+                                    Planned
+                                {% else %}
+                                    Coming Soon
+                                {% endif %}
+                            </span>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <h3 id="tool-{{ tool.slug }}">{% if available %}<a class="tool-card-link" href="{{ tool.url | url }}">{{ tool.name }}</a>{% else %}{{ tool.name }}{% endif %}</h3>
+
+                <p>{{ tool.description }}</p>
+            </div>
+        </div>
+
+        <ul class="tag-list" aria-label="{{ tool.name }} features">
+            {% for tag in tool.tags %}
+                <li class="tag">{{ tag }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+{% endmacro %}

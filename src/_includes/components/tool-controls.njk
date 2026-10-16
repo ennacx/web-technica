@@ -1,0 +1,16 @@
+{% from "components/icons.njk" import icon %}
+
+{# IDは呼び出し元が指定し、各ツールのJSとの契約を維持する。 #}
+{% macro copyButton(id, label, iconOnly = false) %}
+    <button id="{{ id }}" class="button{% if iconOnly %} button-icon{% else %} button-secondary{% endif %}" type="button"{% if iconOnly %} aria-label="{{ label }}"{% endif %} disabled>
+        <span data-icon-copy>{{ icon('copy') }}</span><span data-icon-check hidden>{{ icon('check') }}</span>{% if not iconOnly %} {{ label }}{% endif %}
+    </button>
+{% endmacro %}
+
+{% macro errorMessage(id) %}
+    <p id="{{ id }}" class="notice notice-error" role="alert" tabindex="-1" hidden></p>
+{% endmacro %}
+
+{% macro statusMessage(id) %}
+    <p id="{{ id }}" class="field-help" role="status" aria-live="polite" aria-atomic="true"></p>
+{% endmacro %}

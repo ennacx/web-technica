@@ -1,0 +1,10 @@
+.idea/
+.npm-cache/
+node_modules/
+dist/
+
+# keygen
+src/tools/keygen/js/app.js
+src/tools/keygen/js/app.js.map
+src/tools/keygen/js/app.js.LEGAL.txt
+src/tools/keygen/js/THIRD-PARTY-LICENSES.txt

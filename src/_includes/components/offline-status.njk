@@ -1,0 +1,13 @@
+{% from "components/icons.njk" import icon %}
+
+{% macro offlineStatus(tool, modes, detailed = false) %}
+    {% set support = modes[tool.offline] %}
+    {% if support %}
+        {% if detailed %}<div class="tool-offline">{% endif %}
+        <span class="badge offline-badge" data-offline="{{ tool.offline }}">{{ icon(support.icon) }} {{ support.label }}</span>
+        {% if detailed %}
+            <p>{{ tool.offlineDescription or support.description }}</p>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endmacro %}

@@ -1,0 +1,32 @@
+---
+layout: layouts/base.njk
+---
+
+{% from "components/icons.njk" import icon %}
+{% from "components/offline-status.njk" import offlineStatus %}
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{{ '/' | url }}#tools">{{ icon('arrow-left') }} All Tools</a>
+    {{ icon('chevron-right') }} <span aria-current="page">{{ title }}</span>
+</nav>
+
+<div class="tool-heading">
+    <div class="tool-heading-copy">
+        <span class="tool-heading-icon">{{ icon(tool.icon) }}</span>
+        <div>
+            <h1>{{ title }}</h1>
+            {% if toolIntro %}
+                <p>{% for line in toolIntro %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+            {% endif %}
+            {{ offlineStatus(tool, offlineModes, true) }}
+        </div>
+    </div>
+
+    {% if processingNotice %}
+        <div class="local-processing">{{ icon(processingNotice.icon) }}<div><strong>{{ processingNotice.title }}</strong><span>{{ processingNotice.description }}</span></div></div>
+    {% endif %}
+</div>
+
+{% if javascriptNotice %}<noscript><p class="notice notice-warning">{{ javascriptNotice }}</p></noscript>{% endif %}
+
+{{ content | safe }}

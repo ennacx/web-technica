@@ -1,0 +1,84 @@
+---
+toolSlug: sri-hasher
+description: Generate SHA-256, SHA-384, or SHA-512 Subresource Integrity hashes and HTML tags from a CDN URL or local JavaScript and CSS files.
+permalink: /sri-hasher/index.html
+pageClass: sri-hasher
+pageStylesheet: /sri-hasher/css/sri-hasher.css
+pageScript: /sri-hasher/js/index.js
+toolIntro:
+    - Generate integrity hashes and ready-to-use HTML tags.
+processingNotice:
+    icon: shield-check
+    title: Hashing in your browser
+    description: URL mode contacts the resource host.
+javascriptNotice: Enable JavaScript to generate SRI hashes. Local files are processed in your browser.
+---
+
+{% from "components/icons.njk" import icon %}
+{% from "components/tool-controls.njk" import copyButton, errorMessage, statusMessage %}
+
+<div data-sri-hasher class="sri-layout">
+    <form id="sri-form" class="panel" novalidate>
+        <fieldset id="sri-settings" class="field">
+            <legend class="field-title">Resource</legend>
+
+            <fieldset class="field sri-source-options">
+                <legend class="visually-hidden">Resource source</legend>
+                <label class="checkbox"><input type="radio" name="source-mode" value="fetch" checked><span>CDN URL</span></label>
+                <label class="checkbox"><input type="radio" name="source-mode" value="file"><span>Local File</span></label>
+            </fieldset>
+
+            <div id="sri-url-fields">
+                <label class="field-label" for="sri-url">Resource URL</label>
+                <input id="sri-url" class="input" type="url" placeholder="https://cdn.example.com/library.min.js" autocomplete="off" spellcheck="false" aria-describedby="sri-url-help sri-error">
+
+                <p id="sri-url-help" class="field-help">The URL is fetched only when you select Generate SRI. The host must allow CORS. HTTP URLs may be blocked on HTTPS pages.</p>
+            </div>
+
+            <div id="sri-file-fields" hidden>
+                <label class="field-label" for="sri-file">Resource file</label>
+                <input id="sri-file" class="input" type="file" accept=".js,.css" disabled aria-describedby="sri-file-help sri-error">
+
+                <p id="sri-file-help" class="field-help">The file is read on this device and is never uploaded.</p>
+            </div>
+
+            <label class="field-label" for="sri-algorithm">Hash algorithm</label>
+            <select id="sri-algorithm" class="input">
+                <option>SHA-256</option>
+                <option>SHA-384</option>
+                <option>SHA-512</option>
+            </select>
+
+            <p class="field-help sri-form-note">Supported resources: JavaScript (.js) and CSS (.css).</p>
+        </fieldset>
+
+        {{ errorMessage('sri-error') }}
+
+        <button id="sri-generate" class="button button-primary" type="submit">{{ icon('refresh') }} <span>Generate SRI</span></button>
+
+        {{ statusMessage('sri-progress') }}
+    </form>
+
+    <section id="sri-result-panel" class="panel" aria-labelledby="sri-result-heading" aria-busy="false">
+        <h2 id="sri-result-heading">Result</h2>
+        <p id="sri-empty" class="field-help">Choose a resource and generate its integrity hash.</p>
+
+        <div id="sri-results" hidden>
+            <div class="sri-result-heading"><h3 id="sri-value-heading">Integrity value</h3>{{ copyButton('sri-copy', 'Copy SRI') }}</div>
+            <pre id="sri-value" class="result-output" tabindex="0" aria-labelledby="sri-value-heading"></pre>
+
+            <div class="sri-result-heading"><h3 id="sri-tag-heading">HTML tag</h3>{{ copyButton('sri-tag-copy', 'Copy Tag') }}</div>
+            <pre id="sri-tag" class="result-output" tabindex="0" aria-labelledby="sri-tag-heading"></pre>
+
+            <p id="sri-result-note" class="field-help"></p>
+        </div>
+
+        {{ statusMessage('sri-copy-status') }}
+    </section>
+</div>
+
+<aside class="sri-help" aria-labelledby="sri-help-heading">
+    <h2 id="sri-help-heading">Using the result</h2>
+    <p>Use a versioned resource URL and verify that the content comes from a trusted source. SRI checks that the served bytes match the hash; it does not establish whether the code is safe. If the resource changes, regenerate the hash.</p>
+    <p>Cross-origin resources need CORS support. For local files, update the generated relative path to match the file's published location.</p>
+</aside>

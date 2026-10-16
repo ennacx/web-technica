@@ -1,0 +1,30 @@
+{
+    "name": "web-technica",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Lightweight, privacy-friendly web utilities for developers.",
+    "license": "MIT",
+    "type": "module",
+    "workspaces": [
+        "src/tools/*"
+    ],
+    "engines": {
+        "node": ">=24"
+    },
+    "scripts": {
+        "dev": "eleventy --serve --pathprefix=/web-technica/",
+        "build:keygen": "npm run build --workspace @web-technica/keygen",
+        "build": "eleventy",
+        "build:pages": "eleventy --pathprefix=/web-technica/",
+        "test": "node --test"
+    },
+    "devDependencies": {
+        "@11ty/eleventy": "3.1.6",
+        "@resvg/resvg-js": "2.6.2",
+        "sass": "1.105.1"
+    },
+    "allowScripts": {
+        "@parcel/watcher@2.6.0": true,
+        "esbuild@0.25.12": true
+    }
+}
