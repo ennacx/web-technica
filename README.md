@@ -48,6 +48,14 @@ URL mode contacts the resource host and requires CORS support. Local files are r
 
 Use a trusted, versioned resource. Regenerate the integrity value whenever its contents change.
 
+## Install and use offline
+
+Use your browser's **Install app** command, or **Add to Home Screen** on iPhone and iPad. Installation availability depends on your browser. The installed app opens the tool list.
+
+After the first successful online load and offline cache setup, all three tools can be opened offline. SRI hashing from a URL still needs an internet connection; hashing local files works offline. Only the site's static files are cached. Passwords, keys, passphrases, selected files, and fetched SRI resources are not stored in the offline cache.
+
+Updates download in the background. When an update is ready, close all Web-Technica tabs and app windows, then reopen the app to apply it. Active tools are never automatically reloaded.
+
 ## License
 
 [MIT](LICENSE)

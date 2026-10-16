@@ -20,6 +20,7 @@
     },
     "devDependencies": {
         "@11ty/eleventy": "3.1.6",
+        "@resvg/resvg-js": "2.6.2",
         "sass": "1.105.1"
     },
     "allowScripts": {

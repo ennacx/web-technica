@@ -3,11 +3,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { compile } from 'sass';
 import { buildKeygen } from './src/tools/keygen/scripts/build.mjs';
+import { buildPwaIcons, buildServiceWorker } from './scripts/build-pwa.mjs';
 
 export default function(eleventyConfig){
     // 共通
     eleventyConfig.addWatchTarget('src/assets/js/**/*.js');
     eleventyConfig.addWatchTarget('src/assets/css/**/*.scss');
+    eleventyConfig.addWatchTarget('src/assets/img/brand/logo.svg');
+    eleventyConfig.addWatchTarget('src/_includes/pwa/service-worker.js');
+    eleventyConfig.watchIgnores.add('src/assets/img/brand/icon-*.png');
     eleventyConfig.watchIgnores.add('src/assets/css/**/*.css');
     eleventyConfig.watchIgnores.add('src/assets/css/**/*.css.map');
     // pwdgen
@@ -29,6 +33,8 @@ export default function(eleventyConfig){
     eleventyConfig.watchIgnores.add('src/tools/keygen/js/THIRD-PARTY-LICENSES.txt');
 
     eleventyConfig.on('eleventy.before', async () => {
+        buildPwaIcons();
+
         // keygenのビルド
         await buildKeygen();
 
@@ -92,7 +98,7 @@ export default function(eleventyConfig){
         }));
     });
 
-    eleventyConfig.addPassthroughCopy({
+    const passthrough = {
         // assets
         'src/assets/js/utils/*.js': 'assets/js/utils',
         'src/assets/js/components/*.js': 'assets/js/components',
@@ -113,6 +119,20 @@ export default function(eleventyConfig){
         'src/tools/sri-hasher/css/*.css': 'sri-hasher/css',
         'src/tools/sri-hasher/css/*.css.map': 'sri-hasher/css',
         'src/tools/sri-hasher/js/*.js': 'sri-hasher/js'
+    };
+
+    eleventyConfig.addPassthroughCopy(passthrough);
+
+    eleventyConfig.on('eleventy.after', ({ directories, results, runMode, outputMode }) => {
+        if(outputMode === 'fs'){
+            buildServiceWorker({
+                outputDirectory: directories.output,
+                results,
+                passthrough,
+                pathPrefix: eleventyConfig.pathPrefix,
+                runMode
+            });
+        }
     });
 
     eleventyConfig.ignores.add('src/tools/keygen/nodejs/**');
