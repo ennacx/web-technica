@@ -4,6 +4,22 @@ A collection of lightweight, privacy-friendly web utilities for developers.
 
 [Open Web-Technica](https://ennacx.github.io/web-technica/)
 
+## Offline availability
+
+Tool cards and tool pages show one of these capability labels. They describe which features can work offline, rather than the current connection or cache status. Offline use requires a successful initial online load and offline cache setup.
+
+| Label | Availability |
+|---|---|
+| Offline ready | All features work offline. |
+| Limited offline | Some features work offline; others need an internet connection. |
+| Online only | An internet connection is required to use the tool. |
+
+| Tool | Offline support | Limitations |
+|---|---|---|
+| [Password Generator](https://ennacx.github.io/web-technica/pwdgen/) | Offline ready | All generation features work offline. |
+| [Keypair Generator](https://ennacx.github.io/web-technica/keygen/) | Offline ready | All generation and export features work offline. |
+| [SRI Hasher](https://ennacx.github.io/web-technica/sri-hasher/) | Limited offline | Local files work offline. Fetching a URL requires an internet connection. |
+
 ## Password Generator
 
 [Open Password Generator](https://ennacx.github.io/web-technica/pwdgen/)

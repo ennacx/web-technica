@@ -3,6 +3,7 @@ layout: layouts/base.njk
 ---
 
 {% from "components/icons.njk" import icon %}
+{% from "components/offline-status.njk" import offlineStatus %}
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
     <a href="{{ '/' | url }}#tools">{{ icon('arrow-left') }} All Tools</a>
@@ -17,6 +18,7 @@ layout: layouts/base.njk
             {% if toolIntro %}
                 <p>{% for line in toolIntro %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
             {% endif %}
+            {{ offlineStatus(tool, offlineModes, true) }}
         </div>
     </div>
 

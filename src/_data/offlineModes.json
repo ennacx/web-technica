@@ -1,0 +1,17 @@
+{
+    "ready": {
+        "label": "Offline ready",
+        "icon": "check",
+        "description": "All features work offline once the site is cached."
+    },
+    "partial": {
+        "label": "Limited offline",
+        "icon": "wifi",
+        "description": "Some features work offline once the site is cached. Other features require an internet connection."
+    },
+    "none": {
+        "label": "Online only",
+        "icon": "wifi",
+        "description": "An internet connection is required to use this tool."
+    }
+}

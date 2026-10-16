@@ -30,7 +30,7 @@ pageClass: home
 
     <div class="home-tool-grid">
         {% for tool in tools %}
-            {{ toolCard(tool) }}
+            {{ toolCard(tool, offlineModes) }}
         {% endfor %}
 
         <article class="home-contribute" aria-labelledby="contribute-heading">
