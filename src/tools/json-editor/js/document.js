@@ -1,4 +1,5 @@
 export class JsonEditorDocument {
+    filename = 'document.json';
     source = '';
     viewText = '';
     mode = 'edit';

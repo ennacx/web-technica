@@ -24,6 +24,12 @@ const syntaxText = get('json-syntax-text');
 const errorMessage = get('json-error');
 const prettyButton = get('json-pretty');
 const indentSelect = get('json-indent');
+const filenameDisplay = get('json-filename-display');
+const filenameLabel = get('json-filename');
+const filenameForm = get('json-filename-form');
+const filenameInput = get('json-filename-input');
+const filenameError = get('json-filename-error');
+const renameButton = get('json-rename');
 
 const editorDocument = new JsonEditorDocument();
 
@@ -164,6 +170,67 @@ input.addEventListener('input', () => {
 editButton.addEventListener('click', () => setMode(false));
 viewButton.addEventListener('click', () => setMode(true));
 
+function closeFilenameEditor(){
+    filenameForm.hidden = true;
+    filenameDisplay.hidden = false;
+
+    renameButton.setAttribute('aria-expanded', 'false');
+    renameButton.focus({ preventScroll: true });
+}
+
+renameButton.addEventListener('click', () => {
+    filenameInput.value = editorDocument.filename;
+
+    filenameInput.removeAttribute('aria-invalid');
+
+    filenameError.hidden = true;
+    filenameError.textContent = '';
+    filenameDisplay.hidden = true;
+    filenameForm.hidden = false;
+
+    renameButton.setAttribute('aria-expanded', 'true');
+    filenameInput.focus({ preventScroll: true });
+    filenameInput.select();
+});
+
+filenameForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const name = filenameInput.value.trim();
+    if(!name){
+        filenameError.textContent = 'Enter a file name.';
+        filenameError.hidden = false;
+
+        filenameInput.setAttribute('aria-invalid', 'true');
+        filenameInput.focus();
+
+        return;
+    }
+
+    editorDocument.filename = name;
+    filenameLabel.textContent = name;
+    filenameLabel.title = name;
+
+    closeFilenameEditor();
+
+    status.textContent = `File name changed to ${name}.`;
+});
+
+filenameInput.addEventListener('input', () => {
+    filenameInput.removeAttribute('aria-invalid');
+
+    filenameError.hidden = true;
+    filenameError.textContent = '';
+});
+
+filenameInput.addEventListener('keydown', (event) => {
+    if(event.key === 'Escape'){
+        event.preventDefault();
+
+        closeFilenameEditor();
+    }
+});
+
 validateButton.addEventListener('click', () => {
     const result = validate();
     status.textContent = result.state === 'empty' ? 'Enter JSON to validate.' : '';
@@ -271,7 +338,7 @@ copyButton.addEventListener('click', async () => {
 
 downloadButton.addEventListener('click', () => {
     try{
-        downloadText(editorDocument.text, 'document.json', document, 'application/json;charset=utf-8');
+        downloadText(editorDocument.text, editorDocument.filename, document, 'application/json;charset=utf-8');
 
         const result = validate();
 

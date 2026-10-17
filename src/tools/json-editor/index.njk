@@ -20,12 +20,26 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
 
 <section class="json-workspace" aria-label="JSON editor" aria-describedby="json-preview-note">
     <div class="json-document-bar">
-        <h2>{{ icon('document') }} <span>document.json</span></h2>
+        <div class="json-filename-group">
+            <div id="json-filename-display" class="json-filename-display">
+                <h2>{{ icon('document') }} <span id="json-filename">document.json</span></h2>
+                <button type="button" id="json-rename" class="button button-icon" aria-label="Edit file name" title="Edit file name" aria-controls="json-filename-form" aria-expanded="false">{{ icon('pencil') }}</button>
+            </div>
+
+            <form id="json-filename-form" class="json-filename-form" hidden novalidate>
+                <label for="json-filename-input" class="visually-hidden">File name</label>
+                <input id="json-filename-input" class="input" type="text" value="document.json" required autocomplete="off" spellcheck="false" aria-describedby="json-filename-error">
+                <button type="submit" class="button button-primary button-icon" aria-label="Confirm file name" title="Confirm file name">{{ icon('check') }}</button>
+                <p id="json-filename-error" class="json-filename-error field-help" role="alert" hidden></p>
+            </form>
+        </div>
+
         <div class="json-document-actions">
             <div class="json-modes" role="group" aria-label="Editor mode">
                 <button type="button" id="json-edit" class="button" aria-pressed="true" aria-controls="json-input">Edit</button>
                 <button type="button" id="json-view" class="button" aria-pressed="false" aria-controls="json-display">View</button>
             </div>
+
             <button type="button" id="json-copy" class="button button-icon" aria-label="Copy source" title="Copy source" disabled>{{ icon('copy') }}</button>
             <button type="button" id="json-download" class="button button-icon" aria-label="Save source" title="Save source" disabled>{{ icon('download') }}</button>
         </div>
@@ -50,6 +64,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
     <div class="json-editor-body">
         <label for="json-input" class="visually-hidden">JSON source</label>
         <textarea id="json-input" class="json-input" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="json-syntax json-error" placeholder='Paste your JSON here, or load the sample below…'></textarea>
+
         <div id="json-display" class="json-display" hidden>
             <div id="json-lines" class="json-line-numbers" aria-hidden="true"></div>
             <pre id="json-code" tabindex="0" aria-label="JSON source, read only"></pre>
@@ -73,6 +88,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
         <p id="json-mode-help" class="field-help">Edit: operations change the source. Copy and Save use the source.</p>
         <p id="json-indent-help" class="field-help">Indent keeps existing line breaks. Pretty Print rebuilds the layout.</p>
     </div>
+
     <button type="button" id="json-sample" class="button">{{ icon('code') }} Load sample</button>
 </div>
 
