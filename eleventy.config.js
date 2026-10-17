@@ -161,6 +161,9 @@ export default function(eleventyConfig){
         }
     });
 
+    // リポジトリ利用ガイドはサイトページでは無いので無視
+    eleventyConfig.ignores.add('src/tools/**/README.md');
+
     eleventyConfig.ignores.add('src/tools/keygen/nodejs/**');
     eleventyConfig.ignores.add('src/tools/keygen/scripts/**');
     eleventyConfig.ignores.add('src/tools/keygen/node_modules/**');
