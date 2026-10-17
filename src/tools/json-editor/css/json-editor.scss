@@ -40,6 +40,11 @@ main.json-editor {
     gap: 8px;
 }
 
+.json-format-help {
+    flex-basis: 100%;
+    color: var(--color-warning);
+}
+
 .json-indent {
     display: flex;
     align-items: center;

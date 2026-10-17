@@ -22,6 +22,7 @@ const validateButton = get('json-validate');
 const syntax = get('json-syntax');
 const syntaxText = get('json-syntax-text');
 const errorMessage = get('json-error');
+const formatHelp = get('json-format-help');
 const prettyButton = get('json-pretty');
 const indentSelect = get('json-indent');
 const filenameDisplay = get('json-filename-display');
@@ -56,6 +57,14 @@ function showValidation(result){
 
     prettyButton.disabled = (result.state !== 'valid');
     indentSelect.disabled = (viewing && result.state !== 'valid');
+
+    formatHelp.hidden = (result.state !== 'invalid');
+    formatHelp.textContent = (result.state === 'invalid') ?
+        ((viewing) ?
+            'Showing the original text. Fix the syntax errors in Edit to use Pretty Print and Indent. Your display settings are kept.' :
+            'Pretty Print is unavailable until the syntax errors are fixed. You can still edit the JSON and adjust Indent.'
+        ) :
+        '';
 }
 
 function validate(){

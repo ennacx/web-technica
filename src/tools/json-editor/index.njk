@@ -29,7 +29,9 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
             <form id="json-filename-form" class="json-filename-form" hidden novalidate>
                 <label for="json-filename-input" class="visually-hidden">File name</label>
                 <input id="json-filename-input" class="input" type="text" value="document.json" required autocomplete="off" spellcheck="false" aria-describedby="json-filename-error">
+
                 <button type="submit" class="button button-primary button-icon" aria-label="Confirm file name" title="Confirm file name">{{ icon('check') }}</button>
+
                 <p id="json-filename-error" class="json-filename-error field-help" role="alert" hidden></p>
             </form>
         </div>
@@ -46,19 +48,21 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
     </div>
 
     <div class="json-toolbar">
-        <div class="json-actions" role="group" aria-label="JSON operations" aria-describedby="json-mode-help">
-            <button type="button" id="json-pretty" class="button" disabled>Pretty Print</button>
+        <div class="json-actions" role="group" aria-label="JSON operations" aria-describedby="json-mode-help json-format-help">
+            <button type="button" id="json-pretty" class="button" aria-describedby="json-format-help" disabled>Pretty Print</button>
             <button type="button" class="button" disabled>Minify</button>
             <button type="button" class="button" disabled>Sort Keys</button>
         </div>
         <div class="json-indent">
             <label for="json-indent">Indent</label>
-            <select id="json-indent" class="input" aria-describedby="json-indent-help json-mode-help">
+            <select id="json-indent" class="input" aria-describedby="json-indent-help json-mode-help json-format-help">
                 <option value="2">2 spaces</option>
                 <option value="4">4 spaces</option>
                 <option value="8">8 spaces</option>
             </select>
         </div>
+
+        <p id="json-format-help" class="field-help json-format-help" role="status" hidden></p>
     </div>
 
     <div class="json-editor-body">
