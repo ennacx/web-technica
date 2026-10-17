@@ -61,13 +61,11 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
                 <option value="8">8 spaces</option>
             </select>
         </div>
-
-        <p id="json-format-help" class="field-help json-format-help" role="status" hidden></p>
     </div>
 
     <div class="json-editor-body">
         <label for="json-input" class="visually-hidden">JSON source</label>
-        <textarea id="json-input" class="json-input" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="json-syntax json-error" placeholder='Paste your JSON here, or load the sample below…'></textarea>
+        <textarea id="json-input" class="json-input" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="json-syntax json-error json-input-help" placeholder='Paste your JSON here, or load the sample below…'></textarea>
 
         <div id="json-display" class="json-display" hidden>
             <div id="json-lines" class="json-line-numbers" aria-hidden="true"></div>
@@ -81,16 +79,19 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
             <p id="json-error" class="json-error" hidden></p>
         </div>
         <div class="json-status-actions">
-            <button type="button" id="json-validate" class="button" disabled>{{ icon('shield-check') }} Validate</button>
+            <button type="button" id="json-validate" class="button" aria-label="Validate source JSON" title="Validate source JSON" disabled>{{ icon('shield-check') }} Validate</button>
             <span id="json-stats">0 characters · 1 line</span>
         </div>
+
+        <p id="json-format-help" class="field-help json-format-help" role="status" aria-live="polite"></p>
     </div>
 </section>
 
 <div class="json-below-editor">
     <div class="json-editor-help">
-        <p id="json-mode-help" class="field-help">Edit: operations change the source. Copy and Save use the source.</p>
+        <p id="json-mode-help" class="field-help">Edit: operations, validation, Copy, and Save use the source.</p>
         <p id="json-indent-help" class="field-help">Indent keeps existing line breaks. Pretty Print rebuilds the layout. View operations require valid JSON; display settings are kept while you fix errors.</p>
+        <p id="json-input-help" class="field-help">In Edit, Enter continues indentation; closing braces and brackets align with their opening line.</p>
     </div>
 
     <button type="button" id="json-sample" class="button">{{ icon('code') }} Load sample</button>

@@ -4,6 +4,31 @@ import { validateJson } from '../src/tools/json-editor/js/validator.js';
 import { prettyPrintJson, minifyJson, changeJsonIndent } from '../src/tools/json-editor/js/formatter.js';
 import { JsonEditorDocument } from '../src/tools/json-editor/js/document.js';
 
+test('source validation is mode independent and does not generate or inspect View text', () => {
+    const document = new JsonEditorDocument();
+    document.setSource('{\n  "x": [1, 2]\n}');
+    document.mode = 'view';
+    document.setViewFormat('minify');
+    assert.equal(document.view.dirty, true);
+    // Validation must remain available independently of the display renderer.
+    document.getViewText = () => { throw new Error('View generation must not run'); };
+    for(const mode of ['edit', 'view']){
+        document.mode = mode;
+        assert.deepEqual(document.validateSource(), { state: 'valid', message: '' });
+        assert.equal(document.view.dirty, true);
+        assert.equal(document.view.text, null);
+    }
+    const broken = '{\n  "x": [1, 2,]\n}';
+    document.setSource(broken);
+    for(const mode of ['edit', 'view']){
+        document.mode = mode;
+        assert.deepEqual(document.validateSource(), validateJson(broken));
+        assert.equal(document.validateSource().state, 'invalid');
+    }
+    document.setSource('');
+    assert.equal(document.validateSource().state, 'empty');
+});
+
 test('Minify removes only whitespace outside strings and preserves sensitive tokens', () => {
     const source = ' \r\n{ "10" : 9007199254740993, "2": 1.0000000000000000001, "n": -0, "n":1E+400, "s": " a  b \\t \\n \\u0061 \\\" \\\\ ", "arr": [ true, null, {}, [] ] }\t';
     const expected = '{"10":9007199254740993,"2":1.0000000000000000001,"n":-0,"n":1E+400,"s":" a  b \\t \\n \\u0061 \\\" \\\\ ","arr":[true,null,{},[]]}';

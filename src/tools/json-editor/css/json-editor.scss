@@ -40,8 +40,12 @@ main.json-editor {
     gap: 8px;
 }
 
-.json-format-help {
-    flex-basis: 100%;
+.json-status-bar .json-format-help {
+    display: block;
+    flex: 0 0 100%;
+    block-size: 3.4em;
+    overflow: auto;
+    overflow-wrap: anywhere;
     color: var(--color-warning);
 }
 
@@ -395,5 +399,9 @@ main.json-editor {
 
     .json-status-bar {
         padding-inline: 16px;
+    }
+
+    .json-status-bar .json-format-help {
+        block-size: 6.8em;
     }
 }

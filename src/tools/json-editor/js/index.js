@@ -1,9 +1,9 @@
 import { getById } from '#utils/dom.js';
 import { copyText } from '#utils/clipboard.js';
 import { downloadText } from '#utils/download.js';
-import { validateJson } from './validator.js';
 import { prettyPrintJson, minifyJson, changeJsonIndent } from './formatter.js';
 import { JsonEditorDocument } from './document.js';
+import { planJsonInput } from './input-assist.js';
 
 const get = (id) => getById(id, document);
 
@@ -38,6 +38,8 @@ const editorDocument = new JsonEditorDocument();
 let viewing = false;
 let validationTimer;
 let renderedViewText = null;
+let composing = false;
+let applyingAssistance = false;
 
 function showValidation(result){
     syntax.dataset.state = result.state;
@@ -49,18 +51,15 @@ function showValidation(result){
         invalid: 'Invalid JSON',
     }[result.state];
 
-    errorMessage.textContent = result.message;
+    errorMessage.textContent = (result.message) ? `Source JSON: ${result.message}` : '';
     errorMessage.hidden = !result.message;
 
-    if(!viewing){
-        input.setAttribute('aria-invalid', String(result.state === 'invalid'));
-    }
+    input.setAttribute('aria-invalid', String(result.state === 'invalid'));
 
     prettyButton.disabled = (result.state !== 'valid');
     minifyButton.disabled = (result.state !== 'valid');
     indentSelect.disabled = (viewing && result.state !== 'valid');
 
-    formatHelp.hidden = (result.state !== 'invalid');
     formatHelp.textContent = (result.state === 'invalid') ?
         ((viewing) ?
             'Showing the original text. Fix the syntax errors in Edit to use Pretty Print, Minify, and Indent. Your display settings are kept.' :
@@ -72,7 +71,7 @@ function showValidation(result){
 function validate(){
     clearTimeout(validationTimer);
 
-    const result = validateJson(editorDocument.text);
+    const result = editorDocument.validateSource();
 
     showValidation(result);
 
@@ -160,8 +159,8 @@ function setMode(view){
     status.textContent = '';
 
     get('json-mode-help').textContent = (view) ?
-        'View: saved display settings apply to valid JSON. Invalid JSON is shown as entered. Copy and Save use the displayed text.' :
-        'Edit: operations change the source. Copy and Save use the source.';
+        'View: saved display settings apply to valid JSON. Validation uses the source. Copy and Save use the displayed text.' :
+        'Edit: operations, validation, Copy, and Save use the source.';
 
     for(const [button, action] of [[copyButton, 'Copy'], [downloadButton, 'Save']]){
         const label = `${action} ${view ? 'displayed JSON' : 'source'}`;
@@ -182,6 +181,50 @@ function setMode(view){
 }
 
 input.addEventListener('input', () => {
+    editorDocument.setSource(input.value);
+
+    status.textContent = '';
+
+    update();
+});
+
+input.addEventListener('compositionstart', () => { composing = true; });
+input.addEventListener('compositionend', () => { composing = false; });
+
+input.addEventListener('beforeinput', (event) => {
+    if(viewing || composing || applyingAssistance || event.isComposing || !event.cancelable){
+        return;
+    }
+
+    const inserted = (['insertLineBreak', 'insertParagraph'].includes(event.inputType)) ?
+        '\n' :
+        ((event.inputType === 'insertText') ? event.data : null);
+    const edit = planJsonInput(input.value, input.selectionStart, input.selectionEnd, inserted, editorDocument.editIndent);
+
+    if(!edit){
+        return;
+    }
+
+    event.preventDefault();
+    input.setSelectionRange(edit.start, edit.end);
+
+    let insertedNatively = false;
+
+    applyingAssistance = true;
+
+    try{
+        insertedNatively = (document.execCommand?.('insertText', false, edit.text) === true);
+    } catch(e){
+        // TODO: Fall back to the standard textarea replacement API.
+    } finally{
+        applyingAssistance = false;
+    }
+
+    if(!insertedNatively){
+        input.setRangeText(edit.text, edit.start, edit.end, 'end');
+    }
+
+    input.setSelectionRange(edit.caret, edit.caret);
     editorDocument.setSource(input.value);
 
     status.textContent = '';
@@ -277,6 +320,7 @@ indentSelect.addEventListener('change', () => {
 
         return;
     }
+
     const source = editorDocument.text;
     const start = input.selectionStart;
     const end = input.selectionEnd;

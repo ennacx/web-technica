@@ -22,6 +22,12 @@ export class JsonEditorDocument {
         return (this.mode === 'edit') ? this.editIndent : this.view.indent;
     }
 
+    // Syntax and error positions always refer to the editable source, never
+    // to generated display text or its cache.
+    validateSource(){
+        return validateJson(this.source);
+    }
+
     setSource(text){
         if(text === this.source){
             return;
@@ -46,7 +52,7 @@ export class JsonEditorDocument {
         }
 
         if(this.mode === 'view'){
-            if(validateJson(this.source).state !== 'valid'){
+            if(this.validateSource().state !== 'valid'){
                 return false;
             }
 
@@ -68,7 +74,7 @@ export class JsonEditorDocument {
             throw new RangeError('Unsupported view format.');
         }
 
-        if(validateJson(this.source).state !== 'valid'){
+        if(this.validateSource().state !== 'valid'){
             return false;
         }
 
@@ -94,7 +100,7 @@ export class JsonEditorDocument {
         let text = this.source;
 
         // 無効や未完了の入力は設定を変更しなくてもそのまま表示され続ける
-        if(validateJson(this.source).state === 'valid'){
+        if(this.validateSource().state === 'valid'){
             if(this.view.format === 'pretty'){
                 text = prettyPrintJson(this.source, this.view.indent);
             } else if(this.view.format === 'minify'){
