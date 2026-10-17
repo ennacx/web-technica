@@ -60,6 +60,7 @@ function showValidation(result){
     minifyButton.disabled = (result.state !== 'valid');
     indentSelect.disabled = (viewing && result.state !== 'valid');
 
+    formatHelp.hidden = (result.state !== 'invalid');
     formatHelp.textContent = (result.state === 'invalid') ?
         ((viewing) ?
             'Showing the original text. Fix the syntax errors in Edit to use Pretty Print, Minify, and Indent. Your display settings are kept.' :
