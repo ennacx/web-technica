@@ -4,20 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{ description or site.description }}">
+    <meta name="theme-color" content="#151a20">
+
+    {% if site.googleSiteVerification %}
+        <meta name="google-site-verification" content="{{ site.googleSiteVerification }}">
+    {% endif %}
+
+    {% if noindex %}
+        <meta name="robots" content="noindex">
+    {% else %}
+        <link rel="canonical" href="{{ page.url | absoluteUrl(site.url) | escape }}">
+    {% endif %}
 
     <title>{% if title %}{{ title }} | {% endif %}{{ site.name }}</title>
 
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | url }}">
-
-    <link rel="manifest" href="{{ '/manifest.webmanifest' | url }}">
-    <meta name="theme-color" content="#151a20">
-    <link rel="apple-touch-icon" href="{{ '/assets/img/brand/icon-180.png' | url }}">
-    <link rel="icon" href="{{ '/assets/img/brand/logo.svg' | url }}" type="image/svg+xml">
-    <link rel="shortcut icon" href="{{ '/assets/img/brand/logo.svg' | url }}">
-
     {% if pageStylesheet %}
         <link rel="stylesheet" href="{{ pageStylesheet | url }}">
     {% endif %}
+
+    <link rel="manifest" href="{{ '/manifest.webmanifest' | url }}">
+    <link rel="apple-touch-icon" href="{{ '/assets/img/brand/icon-180.png' | url }}">
+    <link rel="icon" href="{{ '/assets/img/brand/logo.svg' | url }}" type="image/svg+xml">
+    <link rel="shortcut icon" href="{{ '/assets/img/brand/logo.svg' | url }}">
 
     <script type="importmap">
     {
@@ -51,6 +60,8 @@
 
     <script src="{{ '/assets/js/components/tool-navigation.js' | url }}" type="module"></script>
     <script src="{{ '/assets/js/components/pwa.js' | url }}" type="module" data-pwa="{{ '/sw.js' | url }}" data-enabled="{{ eleventy.env.runMode == 'build' }}"></script>
-    {% if pageScript %}<script src="{{ pageScript | url }}" type="module"></script>{% endif %}
+    {% if pageScript %}
+        <script src="{{ pageScript | url }}" type="module"></script>
+    {% endif %}
 </body>
 </html>
