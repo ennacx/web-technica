@@ -34,7 +34,8 @@ main.json-editor {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px;
+  padding: 16px 20px;
+  border-block-end: 1px solid var(--color-border);
 }
 
 .json-actions, .json-document-actions {
@@ -63,7 +64,8 @@ main.json-editor {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 20px;
-  border-block: 1px solid var(--color-border);
+  border-block-end: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 .json-document-bar h2 {
   display: flex;
@@ -204,6 +206,34 @@ main.json-editor {
   border-radius: 50%;
 }
 
+.json-validation {
+  flex: 1;
+  min-width: 0;
+}
+
+.json-status-bar .json-error {
+  display: block;
+  margin-block-start: 8px;
+  color: var(--color-danger);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+#json-syntax[data-state=valid] {
+  color: var(--color-success);
+}
+#json-syntax[data-state=valid] .json-status-dot {
+  background: currentColor;
+}
+
+#json-syntax[data-state=invalid] {
+  color: var(--color-danger);
+}
+#json-syntax[data-state=invalid] .json-status-dot {
+  border-radius: 0;
+  background: currentColor;
+}
+
 .json-below-editor {
   display: flex;
   flex-wrap: wrap;
@@ -221,6 +251,26 @@ main.json-editor {
   margin-block-start: 8px;
 }
 
+.json-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.json-status-actions .button {
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.json-status-actions .button .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.json-editor-help p + p {
+  margin-block-start: 4px;
+}
+
 @media (max-width: 767.98px) {
   main.json-editor {
     width: calc(100% - 40px);
@@ -230,8 +280,8 @@ main.json-editor {
     padding: 16px;
   }
   .json-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     width: 100%;
   }
   .json-actions .button {
