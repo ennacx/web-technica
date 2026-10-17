@@ -35,6 +35,7 @@ const editorDocument = new JsonEditorDocument();
 
 let viewing = false;
 let validationTimer;
+let renderedViewText = null;
 
 function showValidation(result){
     syntax.dataset.state = result.state;
@@ -49,8 +50,12 @@ function showValidation(result){
     errorMessage.textContent = result.message;
     errorMessage.hidden = !result.message;
 
-    if(!viewing) input.setAttribute('aria-invalid', String(result.state === 'invalid'));
-    prettyButton.disabled = result.state !== 'valid';
+    if(!viewing){
+        input.setAttribute('aria-invalid', String(result.state === 'invalid'));
+    }
+
+    prettyButton.disabled = (result.state !== 'valid');
+    indentSelect.disabled = (viewing && result.state !== 'valid');
 }
 
 function validate(){
@@ -65,9 +70,14 @@ function validate(){
 
 // Cosmetic token colors are not a syntax check. Never insert source as HTML.
 function renderSource(){
+    const source = editorDocument.text;
+
+    if(source === renderedViewText){
+        return;
+    }
+
     code.replaceChildren();
 
-    const source = editorDocument.text;
     const fragment = document.createDocumentFragment();
     const tokens = /"(?:[^"\\\u0000-\u001f]|\\[^\r\n])*"\s*(?=:)|"(?:[^"\\\u0000-\u001f]|\\[^\r\n])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:true|false|null)\b/g;
 
@@ -95,6 +105,7 @@ function renderSource(){
     const count = source.split('\n').length;
 
     lines.textContent = Array.from({ length: count }, (_, index) => index + 1).join('\n');
+    renderedViewText = source;
 }
 
 function update(immediate = false){
@@ -131,14 +142,14 @@ function setMode(view){
 
     indentSelect.value = String(editorDocument.indent);
     input.style.tabSize = String(editorDocument.editIndent);
-    code.style.tabSize = String(editorDocument.viewIndent);
+    code.style.tabSize = String(editorDocument.view.indent);
 
     update(true);
 
     status.textContent = '';
 
     get('json-mode-help').textContent = (view) ?
-        'View: operations affect this display only. Copy and Save use the displayed text. Editing the source refreshes this view.' :
+        'View: saved display settings apply to valid JSON. Invalid JSON is shown as entered. Copy and Save use the displayed text.' :
         'Edit: operations change the source. Copy and Save use the source.';
 
     for(const [button, action] of [[copyButton, 'Copy'], [downloadButton, 'Save']]){
@@ -238,6 +249,23 @@ validateButton.addEventListener('click', () => {
 
 indentSelect.addEventListener('change', () => {
     const nextWidth = Number(indentSelect.value);
+
+    if(viewing){
+        if(!editorDocument.setIndent(nextWidth)){
+            indentSelect.value = String(editorDocument.indent);
+            update(true);
+
+            return;
+        }
+
+        code.style.tabSize = String(editorDocument.view.indent);
+
+        update(true);
+
+        status.textContent = `Display indentation adjusted to ${nextWidth} spaces. Existing line breaks and inline spacing kept.`;
+
+        return;
+    }
     const source = editorDocument.text;
     const start = input.selectionStart;
     const end = input.selectionEnd;
@@ -285,7 +313,7 @@ indentSelect.addEventListener('change', () => {
         input.scrollLeft = scrollLeft;
     }
 
-    code.style.tabSize = String(editorDocument.viewIndent);
+    code.style.tabSize = String(editorDocument.view.indent);
     input.style.tabSize = String(editorDocument.editIndent);
 
     update(true);
@@ -301,8 +329,13 @@ prettyButton.addEventListener('click', () => {
     }
 
     try{
-        editorDocument.setText(prettyPrintJson(editorDocument.text, editorDocument.indent));
-        if(!viewing) input.value = editorDocument.source;
+        if(viewing){
+            editorDocument.setViewFormat('pretty');
+        } else{
+            editorDocument.setText(prettyPrintJson(editorDocument.text, editorDocument.indent));
+
+            input.value = editorDocument.source;
+        }
 
         update(true);
 

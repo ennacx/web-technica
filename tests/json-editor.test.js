@@ -9,11 +9,10 @@ test('View transformations and output stay separate from Edit source across mode
     const source = '{ "a" : [1,  2], "a": 9007199254740993 }';
     document.setSource(source);
     document.mode = 'view';
-    document.setText(prettyPrintJson(document.text, document.indent));
+    document.setViewFormat('pretty');
     const formatted = document.text;
     assert.notEqual(formatted, source);
     assert.equal(document.source, source);
-    document.setText(changeJsonIndent(document.text, document.indent, 8));
     document.setIndent(8);
     const displayed = document.text;
     assert.match(displayed, /\n {8}"a"/);
@@ -26,27 +25,82 @@ test('View transformations and output stay separate from Edit source across mode
     assert.equal(document.indent, 8);
 });
 
-test('Edit transformations change source and refresh View, including incomplete edits', () => {
+test('Pretty / 4 spaces survives invalid input, then regenerates only after repair', () => {
     const document = new JsonEditorDocument();
-    document.setSource('{\n  "a" : [1,  2]\n}');
-    document.setIndent(4);
-    document.setText(changeJsonIndent(document.text, 2, document.indent));
-    assert.equal(document.source, '{\n    "a" : [1,  2]\n}');
+    document.setSource('{"a":[1,2]}');
     document.mode = 'view';
-    assert.equal(document.text, document.source);
-    assert.equal(document.indent, 4);
-    document.setText(prettyPrintJson(document.text, 8));
+    document.setViewFormat('pretty');
+    document.setIndent(4);
+    assert.equal(document.text, '{\n    "a": [\n        1,\n        2\n    ]\n}');
     document.mode = 'edit';
+    document.setIndent(8);
     document.setSource('{\n    "unfinished":');
+    assert.equal(document.view.text, null);
+    assert.equal(document.view.dirty, true);
+    assert.equal(document.view.indent, 4);
+    assert.equal(document.view.format, 'pretty');
     document.mode = 'view';
     assert.equal(document.text, '{\n    "unfinished":');
     assert.equal(validateJson(document.text).state, 'invalid');
-    document.setText(changeJsonIndent(document.text, 4, 2));
-    assert.equal(document.text, '{\n  "unfinished":');
-    assert.equal(document.source, '{\n    "unfinished":');
+    assert.equal(document.setIndent(2), false);
+    assert.equal(document.setViewFormat('source'), false);
+    assert.equal(document.view.indent, 4);
+    assert.equal(document.view.format, 'pretty');
+    document.mode = 'edit';
+    document.setSource('{"a":[3,4]}');
+    assert.equal(document.view.text, null);
+    document.mode = 'view';
+    assert.equal(document.text, '{\n    "a": [\n        3,\n        4\n    ]\n}');
+    assert.equal(document.source, '{"a":[3,4]}');
+});
+
+test('View cache stays valid across mode switches and identical source/settings', () => {
+    const document = new JsonEditorDocument();
+    document.setSource('{"a":1}');
+    document.mode = 'view';
+    document.setViewFormat('pretty');
+    document.setIndent(4);
+    assert.equal(document.view.dirty, true);
+    const cached = document.text;
+    assert.equal(document.view.dirty, false);
     document.mode = 'edit';
     document.setSource(document.source);
-    assert.equal(document.text, document.source);
+    document.mode = 'view';
+    document.setViewFormat('pretty');
+    document.setIndent(4);
+    assert.equal(document.view.dirty, false);
+    assert.equal(document.view.text, cached);
+    assert.equal(document.text, cached);
+    document.setIndent(8);
+    assert.equal(document.view.dirty, true);
+    assert.equal(document.view.text, null);
+    assert.equal(document.text, '{\n        "a": 1\n}');
+});
+
+test('View indent alone preserves layout across source edits; Edit indent works on invalid JSON', () => {
+    const document = new JsonEditorDocument();
+    document.setSource('{\n  "a" : [1,  2]\n}');
+    document.mode = 'view';
+    document.setIndent(4);
+    assert.equal(document.text, '{\n    "a" : [1,  2]\n}');
+    assert.equal(document.view.format, 'source');
+    document.mode = 'edit';
+    document.setSource('{\n  "a" : [3,  4]\n}');
+    document.mode = 'view';
+    assert.equal(document.text, '{\n    "a" : [3,  4]\n}');
+    document.mode = 'edit';
+    document.setSource('{\n  "a":');
+    document.setText(changeJsonIndent(document.text, document.indent, 8));
+    document.setIndent(8);
+    document.mode = 'view';
+    assert.equal(document.text, '{\n        "a":');
+    assert.equal(document.indent, 4);
+    document.mode = 'edit';
+    document.setSource('');
+    document.mode = 'view';
+    assert.equal(document.text, '');
+    assert.equal(document.setIndent(2), false);
+    assert.equal(document.view.indent, 4);
 });
 
 test('indent changes keep manual line breaks, inline spacing and unfinished JSON', () => {

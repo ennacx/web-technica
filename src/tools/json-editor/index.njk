@@ -67,7 +67,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
 
         <div id="json-display" class="json-display" hidden>
             <div id="json-lines" class="json-line-numbers" aria-hidden="true"></div>
-            <pre id="json-code" tabindex="0" aria-label="JSON source, read only"></pre>
+            <pre id="json-code" tabindex="0" aria-label="JSON display, read only" aria-describedby="json-syntax json-error"></pre>
         </div>
     </div>
 
@@ -86,7 +86,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
 <div class="json-below-editor">
     <div class="json-editor-help">
         <p id="json-mode-help" class="field-help">Edit: operations change the source. Copy and Save use the source.</p>
-        <p id="json-indent-help" class="field-help">Indent keeps existing line breaks. Pretty Print rebuilds the layout.</p>
+        <p id="json-indent-help" class="field-help">Indent keeps existing line breaks. Pretty Print rebuilds the layout. View operations require valid JSON; display settings are kept while you fix errors.</p>
     </div>
 
     <button type="button" id="json-sample" class="button">{{ icon('code') }} Load sample</button>
