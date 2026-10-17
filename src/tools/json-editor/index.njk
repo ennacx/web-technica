@@ -1,6 +1,6 @@
 ---
 toolSlug: json-editor
-description: View, edit, format, and validate JSON directly in your browser.
+description: Edit, format, minify, validate, and naturally sort JSON keys in your browser.
 permalink: /json-editor/index.html
 pageClass: json-editor
 pageStylesheet: /json-editor/css/json-editor.css
@@ -11,14 +11,12 @@ processingNotice:
     icon: lock
     title: Your JSON stays here
     description: No uploads or browser storage.
-javascriptNotice: Enable JavaScript to use the JSON editor preview.
+javascriptNotice: Enable JavaScript to use the JSON editor. Your data is processed in your browser.
 ---
 
 {% from "components/icons.njk" import icon %}
 
-<p id="json-preview-note" class="json-preview-note"><span class="badge">In development</span> Edit, format, minify, and naturally sort JSON keys. Your data stays in your browser.</p>
-
-<section class="json-workspace" aria-label="JSON editor" aria-describedby="json-preview-note">
+<section class="json-workspace" aria-label="JSON editor">
     <div class="json-document-bar">
         <div class="json-filename-group">
             <div id="json-filename-display" class="json-filename-display">

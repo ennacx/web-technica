@@ -14,12 +14,12 @@
         "name": "JSON Editor",
         "slug": "json-editor",
         "url": "/json-editor/",
-        "description": "Format, minify, and validate JSON directly in your browser.",
+        "description": "Edit, format, minify, validate, and naturally sort JSON keys in your browser.",
         "offline": "ready",
         "category": "Data & Text",
         "icon": "json",
-        "status": "develop",
-        "tags": ["JSON", "Formatter", "Validator", "Minifier"]
+        "status": "published",
+        "tags": ["JSON", "Formatter", "Validator", "Minifier", "Natural Sort"]
     },
     {
         "name": "Keypair Generator",
