@@ -72,6 +72,22 @@ After the first successful online load and offline cache setup, all three tools 
 
 Updates download in the background. When an update is ready, close all Web-Technica tabs and app windows, then reopen the app to apply it. Active tools are never automatically reloaded.
 
+## Search Console and search indexing
+
+The shared layout renders the Google ownership verification meta tag from `src/_data/site.json`. Keep the token after verification. `site.url` is the production origin (without a path); Eleventy's `pathPrefix` supplies the deployment subdirectory.
+
+Eleventy generates `/sitemap.xml` from its HTML page collection and adds an absolute canonical URL to each indexable page. New pages are included automatically. Use `sitemap: false` to omit a page from the sitemap, or `noindex: true` to also render a robots `noindex` meta tag. Pages with `eleventyExcludeFromCollections: true` are omitted; 404 and offline fallback pages also use `noindex`.
+
+After deploying:
+
+1. Verify the URL-prefix property `https://ennacx.github.io/web-technica/` in Google Search Console using the HTML meta tag method.
+2. Submit `https://ennacx.github.io/web-technica/sitemap.xml` in the Sitemaps report.
+3. Use URL Inspection to check the home page and tool pages.
+
+No project-level `robots.txt` is generated: crawlers only use `https://ennacx.github.io/robots.txt`, not `/web-technica/robots.txt`. Submit the sitemap directly in Search Console. `lastmod` is intentionally omitted because build time and source file timestamps do not reliably describe meaningful page updates.
+
+References: [Google sitemap guidance](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap), [robots.txt location](https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec).
+
 ## License
 
 [MIT](LICENSE)

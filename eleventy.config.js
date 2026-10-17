@@ -6,6 +6,20 @@ import { buildKeygen } from './src/tools/keygen/scripts/build.mjs';
 import { buildPwaIcons, buildServiceWorker } from './scripts/build-pwa.mjs';
 
 export default function(eleventyConfig){
+    eleventyConfig.addFilter('absoluteUrl', (url, origin) => {
+        const filteredUrl = eleventyConfig.getFilter('url')(url);
+
+        return new URL(filteredUrl, origin).href;
+    });
+
+    eleventyConfig.addCollection('sitemap', (collectionApi) => {
+        return collectionApi.getAll().filter((item) => (
+            item.outputPath?.endsWith('.html')
+            && item.data.sitemap !== false
+            && !item.data.noindex
+        )).sort((a, b) => a.url.localeCompare(b.url));
+    });
+
     // 共通
     eleventyConfig.addWatchTarget('src/assets/js/**/*.js');
     eleventyConfig.addWatchTarget('src/assets/css/**/*.scss');
