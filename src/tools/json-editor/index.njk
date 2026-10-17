@@ -1,0 +1,70 @@
+---
+toolSlug: json-editor
+description: View and edit JSON directly in your browser.
+permalink: /json-editor/index.html
+pageClass: json-editor
+pageStylesheet: /json-editor/css/json-editor.css
+pageScript: /json-editor/js/index.js
+toolIntro:
+    - Inspect, format, and edit JSON in one place.
+processingNotice:
+    icon: lock
+    title: Your JSON stays here
+    description: No uploads or browser storage.
+javascriptNotice: Enable JavaScript to use the JSON editor preview.
+---
+
+{% from "components/icons.njk" import icon %}
+
+<p id="json-preview-note" class="json-preview-note"><span class="badge">UI Preview</span> Editing, viewing, copying, and downloading are available. Formatting, sorting, and validation are coming next.</p>
+
+<section class="json-workspace" aria-label="JSON editor" aria-describedby="json-preview-note">
+    <div class="json-toolbar">
+        <div class="json-actions" role="group" aria-label="JSON operations">
+            <button class="button button-primary" type="button" disabled>Pretty Print</button>
+            <button class="button" type="button" disabled>Minify</button>
+            <button class="button" type="button" disabled>Sort Keys</button>
+            <button class="button" type="button" disabled>{{ icon('shield-check') }} Validate</button>
+        </div>
+        <div class="json-indent">
+            <label for="json-indent">Indent</label>
+            <select id="json-indent" class="input" disabled aria-describedby="json-preview-note">
+                <option value="2">2 spaces</option>
+                <option value="4">4 spaces</option>
+                <option value="8">8 spaces</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="json-document-bar">
+        <h2>{{ icon('document') }} <span>document.json</span></h2>
+        <div class="json-document-actions">
+            <div class="json-modes" role="group" aria-label="Editor mode">
+                <button id="json-edit" class="button" type="button" aria-pressed="true" aria-controls="json-input">Edit</button>
+                <button id="json-view" class="button" type="button" aria-pressed="false" aria-controls="json-display">View</button>
+            </div>
+            <button id="json-copy" class="button" type="button" disabled>{{ icon('copy') }} <span>Copy</span></button>
+            <button id="json-download" class="button" type="button" disabled>{{ icon('download') }} <span>Save</span></button>
+        </div>
+    </div>
+
+    <div class="json-editor-body">
+        <label for="json-input" class="visually-hidden">JSON source</label>
+        <textarea id="json-input" class="json-input" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="json-syntax" placeholder='Paste your JSON here, or load the sample below…'></textarea>
+        <div id="json-display" class="json-display" hidden>
+            <div id="json-lines" class="json-line-numbers" aria-hidden="true"></div>
+            <pre id="json-code" tabindex="0" aria-label="JSON source, read only"></pre>
+        </div>
+    </div>
+
+    <div class="json-status-bar">
+        <p id="json-syntax" role="status"><span class="json-status-dot" aria-hidden="true"></span><span id="json-syntax-text">No JSON yet</span></p>
+        <span id="json-stats">0 characters · 1 line</span>
+    </div>
+</section>
+
+<div class="json-below-editor">
+    <p class="field-help">Paste JSON to begin. Incomplete text is kept when you switch views.</p>
+    <button id="json-sample" class="button" type="button">{{ icon('code') }} Load sample</button>
+</div>
+<p id="json-action-status" class="field-help json-action-status" role="status" aria-live="polite"></p>

@@ -11,6 +11,17 @@
         "tags": ["Password", "Random", "Security"]
     },
     {
+        "name": "JSON Editor",
+        "slug": "json-editor",
+        "url": "/json-editor/",
+        "description": "Format, minify, and validate JSON directly in your browser.",
+        "offline": "ready",
+        "category": "Data & Text",
+        "icon": "json",
+        "status": "develop",
+        "tags": ["JSON", "Formatter", "Validator", "Minifier"]
+    },
+    {
         "name": "Keypair Generator",
         "slug": "keygen",
         "url": "/keygen/",
