@@ -2,7 +2,7 @@
 {% from "components/offline-status.njk" import offlineStatus %}
 
 {% macro toolCard(tool, offlineModes) %}
-    {% set available = (tool.status == 'published' and tool.url) %}
+    {% set available = ((tool.status == 'published' or tool.status == "develop") and tool.url) %}
 
     <article class="tool-card{% if available %} is-available{% endif %}" aria-labelledby="tool-{{ tool.slug }}">
         <div class="tool-card-main">

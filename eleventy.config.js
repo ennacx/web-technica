@@ -46,6 +46,11 @@ export default function(eleventyConfig){
     eleventyConfig.addWatchTarget('src/tools/sri-hasher/css/**/*.scss');
     eleventyConfig.watchIgnores.add('src/tools/sri-hasher/css/**/*.css');
     eleventyConfig.watchIgnores.add('src/tools/sri-hasher/css/**/*.css.map');
+    // json-editor
+    eleventyConfig.addWatchTarget('src/tools/json-editor/js/**/*.js');
+    eleventyConfig.addWatchTarget('src/tools/json-editor/css/**/*.scss');
+    eleventyConfig.watchIgnores.add('src/tools/json-editor/css/**/*.css');
+    eleventyConfig.watchIgnores.add('src/tools/json-editor/css/**/*.css.map');
     // keygen
     eleventyConfig.addWatchTarget('src/tools/keygen/js/**/*.js');
     eleventyConfig.addWatchTarget('src/tools/keygen/css/**/*.scss');
@@ -68,7 +73,8 @@ export default function(eleventyConfig){
             'src/assets/css/error',
             'src/tools/pwdgen/css/pwdgen',
             'src/tools/keygen/css/keygen',
-            'src/tools/sri-hasher/css/sri-hasher'
+            'src/tools/sri-hasher/css/sri-hasher',
+            'src/tools/json-editor/css/json-editor'
         ];
 
         for(const entry of entries){
@@ -116,10 +122,7 @@ export default function(eleventyConfig){
             categories.get(category).push(tool);
         }
 
-        return Array.from(categories, ([name, tools]) => ({
-            name,
-            tools,
-        }));
+        return Array.from(categories, ([name, tools]) => ({ name, tools }));
     });
 
     const passthrough = {
@@ -127,22 +130,21 @@ export default function(eleventyConfig){
         'src/assets/js/utils/*.js': 'assets/js/utils',
         'src/assets/js/components/*.js': 'assets/js/components',
         'src/assets/css/*.css': 'assets/css',
-        'src/assets/css/*.css.map': 'assets/css',
         'src/assets/img': 'assets/img',
+        // json-editor
+        'src/tools/json-editor/js/*.js': 'json-editor/js',
+        'src/tools/json-editor/css/*.css': 'json-editor/css',
         // pwdgen
-        'src/tools/pwdgen/css/*.css': 'pwdgen/css',
-        'src/tools/pwdgen/css/*.css.map': 'pwdgen/css',
         'src/tools/pwdgen/js/*.js': 'pwdgen/js',
+        'src/tools/pwdgen/css/*.css': 'pwdgen/css',
         // keygen
-        'src/tools/keygen/css/*.css': 'keygen/css',
-        'src/tools/keygen/css/*.css.map': 'keygen/css',
         'src/tools/keygen/js/app.js': 'keygen/js/app.js',
+        'src/tools/keygen/css/*.css': 'keygen/css',
         'src/tools/keygen/js/app.js.LEGAL.txt': 'keygen/js/app.js.LEGAL.txt',
         'src/tools/keygen/js/THIRD-PARTY-LICENSES.txt': 'keygen/js/THIRD-PARTY-LICENSES.txt',
         // sri-hasher
+        'src/tools/sri-hasher/js/*.js': 'sri-hasher/js',
         'src/tools/sri-hasher/css/*.css': 'sri-hasher/css',
-        'src/tools/sri-hasher/css/*.css.map': 'sri-hasher/css',
-        'src/tools/sri-hasher/js/*.js': 'sri-hasher/js'
     };
 
     eleventyConfig.addPassthroughCopy(passthrough);
