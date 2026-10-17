@@ -16,7 +16,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
 
 {% from "components/icons.njk" import icon %}
 
-<p id="json-preview-note" class="json-preview-note"><span class="badge">In development</span> Editing, viewing, formatting, minifying, validation, copying, and downloading are available. Sorting is coming next.</p>
+<p id="json-preview-note" class="json-preview-note"><span class="badge">In development</span> Edit, format, minify, and naturally sort JSON keys. Your data stays in your browser.</p>
 
 <section class="json-workspace" aria-label="JSON editor" aria-describedby="json-preview-note">
     <div class="json-document-bar">
@@ -51,7 +51,11 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
         <div class="json-actions" role="group" aria-label="JSON operations" aria-describedby="json-mode-help json-format-help">
             <button type="button" id="json-pretty" class="button" aria-describedby="json-format-help" disabled>Pretty Print</button>
             <button type="button" id="json-minify" class="button" aria-describedby="json-format-help" disabled>Minify</button>
-            <button type="button" class="button" disabled>Sort Keys</button>
+            <button type="button" id="json-sort" class="button" aria-describedby="json-format-help json-sort-help" disabled>
+                <span id="json-sort-asc-icon">{{ icon('sort-ascending') }}</span>
+                <span id="json-sort-desc-icon" hidden>{{ icon('sort-descending') }}</span>
+                <span id="json-sort-label">Sort Ascending</span>
+            </button>
         </div>
         <div class="json-indent">
             <label for="json-indent">Indent</label>
@@ -71,6 +75,8 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
             <div id="json-lines" class="json-line-numbers" aria-hidden="true"></div>
             <pre id="json-code" tabindex="0" aria-label="JSON display, read only" aria-describedby="json-syntax json-error"></pre>
         </div>
+
+        <p id="json-action-status" class="json-action-status" role="status" aria-live="polite" aria-atomic="true" aria-label="Last action"></p>
     </div>
 
     <div class="json-status-bar">
@@ -92,9 +98,9 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
         <p id="json-mode-help" class="field-help">Edit: operations, validation, Copy, and Save use the source.</p>
         <p id="json-indent-help" class="field-help">Indent keeps existing line breaks. Pretty Print rebuilds the layout. View operations require valid JSON; display settings are kept while you fix errors.</p>
         <p id="json-input-help" class="field-help">In Edit, Enter continues indentation; closing braces and brackets align with their opening line.</p>
+        <p id="json-sort-help" class="field-help">Sort applies to all object keys using natural order. Array order and duplicate keys are kept. The button shows the next sort direction.</p>
     </div>
 
     <button type="button" id="json-sample" class="button">{{ icon('code') }} Load sample</button>
 </div>
 
-<p id="json-action-status" class="field-help json-action-status" role="status" aria-live="polite"></p>

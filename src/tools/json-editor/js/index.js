@@ -25,6 +25,7 @@ const errorMessage = get('json-error');
 const formatHelp = get('json-format-help');
 const prettyButton = get('json-pretty');
 const minifyButton = get('json-minify');
+const sortButton = get('json-sort');
 const indentSelect = get('json-indent');
 const filenameDisplay = get('json-filename-display');
 const filenameLabel = get('json-filename');
@@ -58,13 +59,14 @@ function showValidation(result){
 
     prettyButton.disabled = (result.state !== 'valid');
     minifyButton.disabled = (result.state !== 'valid');
+    sortButton.disabled = (result.state !== 'valid');
     indentSelect.disabled = (viewing && result.state !== 'valid');
 
     formatHelp.hidden = (result.state !== 'invalid');
     formatHelp.textContent = (result.state === 'invalid') ?
         ((viewing) ?
-            'Showing the original text. Fix the syntax errors in Edit to use Pretty Print, Minify, and Indent. Your display settings are kept.' :
-            'Pretty Print and Minify are unavailable until the syntax errors are fixed. You can still edit the JSON and adjust Indent.'
+            'Showing the original text. Fix the syntax errors in Edit to use formatting, sorting, and Indent. Your display settings are kept.' :
+            'Formatting and sorting are unavailable until the syntax errors are fixed. You can still edit the JSON and adjust Indent.'
         ) :
         '';
 }
@@ -120,6 +122,11 @@ function renderSource(){
 }
 
 function update(immediate = false){
+    const nextDirection = (editorDocument.sort === 'asc') ? 'desc' : 'asc';
+    get('json-sort-label').textContent = (nextDirection === 'asc') ? 'Sort Ascending' : 'Sort Descending';
+    get('json-sort-asc-icon').hidden = (nextDirection !== 'asc');
+    get('json-sort-desc-icon').hidden = (nextDirection !== 'desc');
+
     const length = editorDocument.text.length;
     const count = editorDocument.text.split('\n').length;
 
@@ -421,6 +428,28 @@ minifyButton.addEventListener('click', () => {
         status.textContent = `${viewing ? 'Display' : 'Source'} minified.`;
     } catch(e){
         status.textContent = 'Could not minify this document. Your text has been kept.';
+    }
+});
+
+sortButton.addEventListener('click', () => {
+    if(validate().state !== 'valid'){
+        return;
+    }
+
+    const direction = (editorDocument.sort === 'asc') ? 'desc' : 'asc';
+
+    try{
+        editorDocument.sortKeys(direction);
+
+        if(!viewing){
+            input.value = editorDocument.source;
+        }
+
+        update(true);
+
+        status.textContent = `${viewing ? 'Display' : 'Source'} object keys sorted in ${(direction === 'asc') ? 'ascending' : 'descending'} natural order.`;
+    } catch(e){
+        status.textContent = 'Could not sort this document. Your text has been kept.';
     }
 });
 

@@ -176,6 +176,7 @@ main.json-editor {
 }
 
 .json-editor-body {
+    position: relative;
     background: var(--color-bg);
 }
 
@@ -322,8 +323,36 @@ main.json-editor {
 }
 
 .json-action-status {
-    min-height: 24px;
-    margin-block-start: 8px;
+    position: absolute;
+    inset-block-start: 12px;
+    inset-inline-end: 16px;
+    z-index: 1;
+    max-inline-size: min(420px, calc(100% - 32px));
+    max-block-size: 180px;
+    overflow: auto;
+    margin: 0;
+    padding: 12px 16px;
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+
+    &:empty {
+        display: none;
+    }
+
+    &::before {
+        display: block;
+        margin-block-end: 4px;
+        color: var(--color-accent);
+        font-size: 11px;
+        font-weight: 600;
+        content: 'Last action';
+    }
 }
 
 .json-status-actions {

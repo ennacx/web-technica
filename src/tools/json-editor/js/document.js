@@ -1,15 +1,18 @@
 import { validateJson } from './validator.js';
 import { prettyPrintJson, minifyJson, changeJsonIndent } from './formatter.js';
+import { sortJsonKeys } from './key-sorter.js';
 
 export class JsonEditorDocument {
     filename = 'document.json';
     source = '';
     mode = 'edit';
     editIndent = 2;
+    editSort = null;
     view = {
         format: 'source',
         indent: 2,
         indentApplied: false,
+        sort: null,
         text: null,
         dirty: true,
     };
@@ -20,6 +23,47 @@ export class JsonEditorDocument {
 
     get indent(){
         return (this.mode === 'edit') ? this.editIndent : this.view.indent;
+    }
+
+    get sort(){
+        return this.mode === 'edit' ? this.editSort : this.view.sort;
+    }
+
+    setViewSort(direction){
+        if(![null, 'asc', 'desc'].includes(direction)){
+            throw new RangeError('Choose asc, desc, or null.');
+        }
+
+        if(this.validateSource().state !== 'valid'){
+            return false;
+        }
+
+        if(this.view.sort !== direction){
+            this.view.sort = direction;
+
+            this.invalidateView();
+        }
+
+        return true;
+    }
+
+    sortKeys(direction){
+        if(!['asc', 'desc'].includes(direction)){
+            throw new RangeError('Choose asc or desc.');
+        }
+
+        if(this.validateSource().state !== 'valid'){
+            return false;
+        }
+
+        if(this.mode === 'view'){
+            return this.setViewSort(direction);
+        }
+
+        this.setSource(sortJsonKeys(this.source, direction));
+        this.editSort = direction;
+
+        return true;
     }
 
     // Syntax and error positions always refer to the editable source, never
@@ -101,12 +145,16 @@ export class JsonEditorDocument {
 
         // 無効や未完了の入力は設定を変更しなくてもそのまま表示され続ける
         if(this.validateSource().state === 'valid'){
+            if(this.view.sort){
+                text = sortJsonKeys(text, this.view.sort);
+            }
+
             if(this.view.format === 'pretty'){
-                text = prettyPrintJson(this.source, this.view.indent);
+                text = prettyPrintJson(text, this.view.indent);
             } else if(this.view.format === 'minify'){
-                text = minifyJson(this.source);
+                text = minifyJson(text);
             } else if(this.view.indentApplied){
-                text = changeJsonIndent(this.source, this.view.indent, this.view.indent);
+                text = changeJsonIndent(text, this.view.indent, this.view.indent);
             }
         }
 
