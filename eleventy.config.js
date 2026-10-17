@@ -6,12 +6,22 @@ import { buildKeygen } from './src/tools/keygen/scripts/build.mjs';
 import { buildPwaIcons, buildServiceWorker } from './scripts/build-pwa.mjs';
 
 export default function(eleventyConfig){
+    // XMLは最初のバイトで必ずXML宣言をしなければならないため、ビルド時に先頭と文末をtrimする。
+    eleventyConfig.addTransform('trimXml', function(content){
+        if((this.page.outputPath || '').endsWith('.xml')){
+            return content.trim();
+        }
+
+        return content;
+    });
+
     eleventyConfig.addFilter('absoluteUrl', (url, origin) => {
         const filteredUrl = eleventyConfig.getFilter('url')(url);
 
         return new URL(filteredUrl, origin).href;
     });
 
+    // サイトマップのコレクションを登録
     eleventyConfig.addCollection('sitemap', (collectionApi) => {
         return collectionApi.getAll().filter((item) => (
             item.outputPath?.endsWith('.html')
