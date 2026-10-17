@@ -1,8 +1,51 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateJson } from '../src/tools/json-editor/js/validator.js';
-import { prettyPrintJson, changeJsonIndent } from '../src/tools/json-editor/js/formatter.js';
+import { prettyPrintJson, minifyJson, changeJsonIndent } from '../src/tools/json-editor/js/formatter.js';
 import { JsonEditorDocument } from '../src/tools/json-editor/js/document.js';
+
+test('Minify removes only whitespace outside strings and preserves sensitive tokens', () => {
+    const source = ' \r\n{ "10" : 9007199254740993, "2": 1.0000000000000000001, "n": -0, "n":1E+400, "s": " a  b \\t \\n \\u0061 \\\" \\\\ ", "arr": [ true, null, {}, [] ] }\t';
+    const expected = '{"10":9007199254740993,"2":1.0000000000000000001,"n":-0,"n":1E+400,"s":" a  b \\t \\n \\u0061 \\\" \\\\ ","arr":[true,null,{},[]]}';
+    assert.equal(minifyJson(source), expected);
+    assert.equal(minifyJson(expected), expected);
+    for(const value of ['{}', '[]', 'null', 'true', 'false', '-0', '1e400', '"  text  "']){
+        assert.equal(minifyJson(` \t${value}\n`), value);
+    }
+    for(const invalid of ['', '{', '{"x":1,}', '1 2', 't rue', '[0 1]', '\u00a0{}']){
+        assert.throws(() => minifyJson(invalid), SyntaxError, invalid);
+    }
+});
+
+test('View Minify preserves source and survives source errors and repair independently of Edit', () => {
+    const document = new JsonEditorDocument();
+    const original = '{\n  "x": [1,  2]\n}';
+    document.setSource(original);
+    document.mode = 'view';
+    document.setIndent(4);
+    document.setViewFormat('minify');
+    assert.equal(document.text, '{"x":[1,2]}');
+    assert.equal(document.source, original);
+    document.mode = 'edit';
+    assert.equal(document.text, original);
+    document.setSource('{\n  "x":');
+    document.mode = 'view';
+    assert.equal(document.text, '{\n  "x":');
+    assert.equal(document.view.format, 'minify');
+    assert.equal(document.setViewFormat('pretty'), false);
+    document.mode = 'edit';
+    document.setSource('{ "x": [3,  4] }');
+    document.mode = 'view';
+    assert.equal(document.text, '{"x":[3,4]}');
+    document.setViewFormat('pretty');
+    assert.equal(document.text, '{\n    "x": [\n        3,\n        4\n    ]\n}');
+    document.setViewFormat('minify');
+    document.mode = 'edit';
+    document.setText(minifyJson(document.text));
+    assert.equal(document.source, '{"x":[3,4]}');
+    assert.equal(document.view.format, 'minify');
+    assert.equal(document.view.indent, 4);
+});
 
 test('View transformations and output stay separate from Edit source across mode switches', () => {
     const document = new JsonEditorDocument();

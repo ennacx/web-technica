@@ -4,7 +4,7 @@ import { validateJson } from './validator.js';
  * 既存の行のインデントを再調整する。
  * 構文解析は行わず改行の挿入やインラインの空白の変更もしない。未完成のJSONであっても、文字列の内容は保護する。
  *
- * @param {string} source
+ * @param {string} source - JSONソース
  * @param {number} previousWidth
  * @param {number} nextWidth
  * @returns {string}
@@ -103,12 +103,7 @@ export function prettyPrintJson(source, indent = 2){
         throw new RangeError('Choose 2, 4, or 8 spaces.');
     }
 
-    const validation = validateJson(source);
-    if(validation.state !== 'valid'){
-        throw new SyntaxError(validation.message || 'Enter JSON to format.');
-    }
-
-    const tokens = source.match(/"(?:\\[\s\S]|[^"\\])*"|[{}\[\],:]|[^\x20\t\r\n{}\[\],:]+/g);
+    const tokens = jsonTokens(source);
     const output = [];
 
     // ネスト階層
@@ -147,4 +142,30 @@ export function prettyPrintJson(source, indent = 2){
     }
 
     return output.join('');
+}
+
+/**
+ * JSONをMinify化する。
+ *
+ * @param {string} source - JSONソース
+ * @returns {string}
+ */
+export function minifyJson(source){
+    return jsonTokens(source).join('');
+}
+
+/**
+ * @param {string} source - JSONソース
+ * @returns {RegExpMatchArray}
+ */
+function jsonTokens(source){
+    const validation = validateJson(source);
+
+    if(validation.state !== 'valid'){
+        throw new SyntaxError(validation.message || 'Enter JSON to format.');
+    }
+
+    // 空白を除去する前に検証を行うことで、無効な断片が有効なJSONの一部として統合されてしまう事態を防ぐ。
+    // 文字列トークンおよび数値トークンは、ソースコード上の表記がそのまま保持される。
+    return source.match(/"(?:\\[\s\S]|[^"\\])*"|[{}\[\],:]|[^\x20\t\r\n{}\[\],:]+/g);
 }

@@ -1,5 +1,5 @@
 import { validateJson } from './validator.js';
-import { prettyPrintJson, changeJsonIndent } from './formatter.js';
+import { prettyPrintJson, minifyJson, changeJsonIndent } from './formatter.js';
 
 export class JsonEditorDocument {
     filename = 'document.json';
@@ -64,7 +64,7 @@ export class JsonEditorDocument {
     }
 
     setViewFormat(format){
-        if(!['source', 'pretty'].includes(format)){
+        if(!['source', 'pretty', 'minify'].includes(format)){
             throw new RangeError('Unsupported view format.');
         }
 
@@ -97,6 +97,8 @@ export class JsonEditorDocument {
         if(validateJson(this.source).state === 'valid'){
             if(this.view.format === 'pretty'){
                 text = prettyPrintJson(this.source, this.view.indent);
+            } else if(this.view.format === 'minify'){
+                text = minifyJson(this.source);
             } else if(this.view.indentApplied){
                 text = changeJsonIndent(this.source, this.view.indent, this.view.indent);
             }

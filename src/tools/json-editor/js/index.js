@@ -2,7 +2,7 @@ import { getById } from '#utils/dom.js';
 import { copyText } from '#utils/clipboard.js';
 import { downloadText } from '#utils/download.js';
 import { validateJson } from './validator.js';
-import { prettyPrintJson, changeJsonIndent } from './formatter.js';
+import { prettyPrintJson, minifyJson, changeJsonIndent } from './formatter.js';
 import { JsonEditorDocument } from './document.js';
 
 const get = (id) => getById(id, document);
@@ -24,6 +24,7 @@ const syntaxText = get('json-syntax-text');
 const errorMessage = get('json-error');
 const formatHelp = get('json-format-help');
 const prettyButton = get('json-pretty');
+const minifyButton = get('json-minify');
 const indentSelect = get('json-indent');
 const filenameDisplay = get('json-filename-display');
 const filenameLabel = get('json-filename');
@@ -56,13 +57,14 @@ function showValidation(result){
     }
 
     prettyButton.disabled = (result.state !== 'valid');
+    minifyButton.disabled = (result.state !== 'valid');
     indentSelect.disabled = (viewing && result.state !== 'valid');
 
     formatHelp.hidden = (result.state !== 'invalid');
     formatHelp.textContent = (result.state === 'invalid') ?
         ((viewing) ?
-            'Showing the original text. Fix the syntax errors in Edit to use Pretty Print and Indent. Your display settings are kept.' :
-            'Pretty Print is unavailable until the syntax errors are fixed. You can still edit the JSON and adjust Indent.'
+            'Showing the original text. Fix the syntax errors in Edit to use Pretty Print, Minify, and Indent. Your display settings are kept.' :
+            'Pretty Print and Minify are unavailable until the syntax errors are fixed. You can still edit the JSON and adjust Indent.'
         ) :
         '';
 }
@@ -354,6 +356,29 @@ prettyButton.addEventListener('click', () => {
     }
 });
 
+minifyButton.addEventListener('click', () => {
+    if(validate().state !== 'valid'){
+        status.textContent = 'Fix the syntax errors before minifying. Your text has been kept.';
+
+        return;
+    }
+
+    try{
+        if(viewing){
+            editorDocument.setViewFormat('minify');
+        } else{
+            editorDocument.setText(minifyJson(editorDocument.text));
+            input.value = editorDocument.source;
+        }
+
+        update(true);
+
+        status.textContent = `${viewing ? 'Display' : 'Source'} minified.`;
+    } catch(e){
+        status.textContent = 'Could not minify this document. Your text has been kept.';
+    }
+});
+
 sampleButton.addEventListener('click', () => {
     if(input.value){
         return;
@@ -372,6 +397,7 @@ sampleButton.addEventListener('click', () => {
 copyButton.addEventListener('click', async () => {
     try{
         await copyText(editorDocument.text);
+
         status.textContent = 'JSON text copied.';
     } catch(e){
         status.textContent = 'Could not copy. Select the text and copy it manually.';

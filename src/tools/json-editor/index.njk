@@ -16,7 +16,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
 
 {% from "components/icons.njk" import icon %}
 
-<p id="json-preview-note" class="json-preview-note"><span class="badge">In development</span> Editing, viewing, formatting, validation, copying, and downloading are available. Minify and sorting are coming next.</p>
+<p id="json-preview-note" class="json-preview-note"><span class="badge">In development</span> Editing, viewing, formatting, minifying, validation, copying, and downloading are available. Sorting is coming next.</p>
 
 <section class="json-workspace" aria-label="JSON editor" aria-describedby="json-preview-note">
     <div class="json-document-bar">
@@ -50,7 +50,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor preview.
     <div class="json-toolbar">
         <div class="json-actions" role="group" aria-label="JSON operations" aria-describedby="json-mode-help json-format-help">
             <button type="button" id="json-pretty" class="button" aria-describedby="json-format-help" disabled>Pretty Print</button>
-            <button type="button" class="button" disabled>Minify</button>
+            <button type="button" id="json-minify" class="button" aria-describedby="json-format-help" disabled>Minify</button>
             <button type="button" class="button" disabled>Sort Keys</button>
         </div>
         <div class="json-indent">
