@@ -11,6 +11,26 @@
         "tags": ["Password", "Random", "Security"]
     },
     {
+        "name": "URL Inspector",
+        "slug": "url-inspector",
+        "description": "Inspect, edit, and rebuild URLs and query parameters.",
+        "offline": "ready",
+        "category": "Inspect",
+        "icon": "link",
+        "status": "develop",
+        "tags": ["URL", "Query", "Encode", "Decode"]
+    },
+    {
+        "name": "Regex Tester",
+        "slug": "regex-tester",
+        "description": "Test regular expressions with match highlighting and capture groups.",
+        "offline": "ready",
+        "category": "Test",
+        "icon": "regex",
+        "status": "planned",
+        "tags": ["Regex", "Pattern", "Match", "Replace"]
+    },
+    {
         "name": "JSON Editor",
         "slug": "json-editor",
         "url": "/json-editor/",
