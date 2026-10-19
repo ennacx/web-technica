@@ -36,11 +36,19 @@ Original starts unset. Once the first valid URL has been saved, further valid in
 
 The component form provides **Protocol**, **Hostname**, **Port**, **Pathname**, and **Fragment**. Open **Credentials** to edit **Username** and **Password**.
 
+Protocol displays its trailing `:` as a fixed suffix, and Fragment displays its leading `#` as a fixed prefix. Enter `https` or `results` without those delimiters. Leave Fragment empty to remove it. An additional `#` typed into the Fragment field is part of the fragment content.
+
 Draft values stay in the form until you select **Apply changes** or press Enter. Changes are applied together. If a setter rejects a value, an error identifies the field, the draft remains available to correct, and Current URL is unchanged.
 
 The Password field is masked by default; **Show password** reveals it. Current URL and Original URL still display credentials in their complete text, and Copy URL includes them.
 
 Direct edits to Current URL, Reset, and Clear resynchronize the component form, replacing pending component drafts.
+
+### Path segments
+
+A read-only breadcrumb-style list follows the Pathname field as you type, including pending edits before Apply changes. It also updates when Current URL is parsed or restored. The list does not edit the path or create navigation links.
+
+The list always starts with `Root /`; an empty path or `/` displays only that item. Segments are split on literal `/` characters before any decoding. The initial slash is represented by Root. Empty segments within the path appear as `(empty)`, and a final empty segment appears as `Trailing /`. For example, `/a//b%2Fc/` displays `Root / › a › (empty) › b%2Fc › Trailing /`. Repeated slashes remain distinct: `//` displays `Root / › (empty) › Trailing /`. Percent-encoded text stays encoded, so `%2F` remains inside its segment. Invalid Current URL input retains the last valid path preview along with the other component values.
 
 ## Edit query parameters
 

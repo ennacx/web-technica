@@ -1,5 +1,6 @@
 import { copyText } from '#utils/clipboard.js';
 import { componentNames, UrlInspectorDocument } from './document.js';
+import { componentFieldValue, componentUrlValue, pathSegments } from './components.js';
 
 const state = new UrlInspectorDocument();
 
@@ -39,21 +40,70 @@ function render({ rows = true, components = true } = {}){
     get('reset').disabled = (state.originalUrl === null || state.currentUrl === state.originalUrl);
     get('store').disabled = (!state.valid || state.currentUrl === state.originalUrl);
 
-    get('length').textContent = `${state.currentUrl.length.toLocaleString()} characters`;
-    get('query-count').textContent = String(state.rows.length);
+    get('length').textContent = `${state.currentUrl.length.toLocaleString('en-US')} characters`;
+
+    const queryCount = state.rows.length;
+
+    get('query-count').textContent = `${queryCount.toLocaleString('en-US')} ${(queryCount > 1) ? 'queries' : 'query'}.`;
 
     if(components){
         get('component-error').hidden = true;
 
         for(const name of componentNames){
-            componentInputs[name].value = state.lastValidUrl?.[name] ?? '';
+            componentInputs[name].value = componentFieldValue(name, state.lastValidUrl?.[name] ?? '');
             componentInputs[name].removeAttribute('aria-invalid');
         }
+
+        renderPathSegments();
     }
 
     if(rows){
         renderRows();
     }
+}
+
+function renderPathSegments(){
+    get('path-preview').hidden = (!state.lastValidUrl);
+
+    const fragment = document.createDocumentFragment();
+    const segments = pathSegments(componentInputs.pathname.value);
+
+    segments.forEach((segment, index) => {
+        const item = document.createElement('li');
+
+        if(index > 0){
+            const separator = document.createElement('span');
+
+            separator.className = 'url-path-separator';
+            separator.textContent = '›';
+            separator.setAttribute('aria-hidden', 'true');
+
+            item.append(separator);
+        }
+
+        const label = document.createElement('code');
+
+        label.className = 'url-path-segment';
+        label.textContent = (segment === '') ? '(empty)' : segment;
+        label.title = (index === 0) ? 'Root' : `Segment ${index}${(segment === '') ? ': empty' : ''}`;
+
+        if(index === 0){
+            label.textContent = 'Root /';
+            label.title = 'Root /';
+        } else if(index === segments.length - 1 && segment === ''){
+            label.textContent = 'Trailing /';
+            label.title = 'Trailing slash (empty final segment)';
+        }
+
+        if(segment === ''){
+            label.classList.add('is-empty');
+        }
+
+        item.append(label);
+        fragment.append(item);
+    });
+
+    get('path-segments').replaceChildren(fragment);
 }
 
 function makeButton(label, text, action, id){
@@ -178,6 +228,8 @@ get('show-password').addEventListener('change', (event) => {
     get('password').type = (event.target.checked) ? 'text' : 'password';
 });
 
+componentInputs.pathname.addEventListener('input', renderPathSegments);
+
 get('components-form').addEventListener('submit', (event) => {
     event.preventDefault();
 
@@ -186,7 +238,7 @@ get('components-form').addEventListener('submit', (event) => {
     }
 
     try{
-        const drafts = Object.fromEntries(componentNames.map((name) => [name, componentInputs[name].value]));
+        const drafts = Object.fromEntries(componentNames.map((name) => [name, componentUrlValue(name, componentInputs[name].value)]));
 
         state.applyComponents(drafts);
 

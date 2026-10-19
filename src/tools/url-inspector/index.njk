@@ -62,7 +62,11 @@ javascriptNotice: Enable JavaScript to use URL Inspector. URLs are processed in 
                     <div class="url-component-grid">
                         <div>
                             <label for="url-protocol" class="field-label">Protocol</label>
-                            <input name="protocol" id="url-protocol" class="input" placeholder="https:" spellcheck="false">
+                            <div class="url-input-group">
+                                <input name="protocol" id="url-protocol" class="input" placeholder="https" spellcheck="false" aria-describedby="url-protocol-help">
+                                <span class="url-input-affix" aria-hidden="true">:</span>
+                            </div>
+                            <span id="url-protocol-help" class="visually-hidden">The trailing colon is added automatically.</span>
                         </div>
                         <div>
                             <label for="url-port" class="field-label">Port</label>
@@ -76,10 +80,21 @@ javascriptNotice: Enable JavaScript to use URL Inspector. URLs are processed in 
                         <div class="url-full-width">
                             <label for="url-pathname" class="field-label">Pathname</label>
                             <input name="pathname" id="url-pathname" class="input" placeholder="/search" spellcheck="false">
+                            <div id="url-path-preview" class="url-path-preview" hidden>
+                                <p id="url-path-segments-label" class="field-help">Path segments</p>
+                                <ol id="url-path-segments" class="url-path-segments" aria-labelledby="url-path-segments-label" aria-describedby="url-path-segments-help"></ol>
+
+                                <p id="url-path-segments-help" class="field-help">Read-only path structure. Empty segments are preserved.</p>
+                            </div>
                         </div>
                         <div class="url-full-width">
                             <label class="field-label" for="url-hash">Fragment</label>
-                            <input name="hash" id="url-hash" class="input" placeholder="#results" spellcheck="false">
+                            <div class="url-input-group">
+                                <span class="url-input-affix" aria-hidden="true">#</span>
+                                <input name="hash" id="url-hash" class="input" placeholder="results" spellcheck="false" aria-describedby="url-hash-help">
+                            </div>
+
+                            <span id="url-hash-help" class="visually-hidden">The leading hash is added automatically. Leave empty to remove the fragment.</span>
                         </div>
                     </div>
 
@@ -103,7 +118,7 @@ javascriptNotice: Enable JavaScript to use URL Inspector. URLs are processed in 
 
         <section class="url-panel url-query-panel" aria-labelledby="url-query-title">
             <div class="url-section-heading">
-                <h2 id="url-query-title">Query Parameters <span id="url-query-count" class="badge">0</span></h2>
+                <h2 id="url-query-title">Query Parameters <span id="url-query-count" class="badge">0 query.</span></h2>
             </div>
 
             <p id="url-query-help" class="field-help">Decoded keys and values. Duplicate keys and row order are kept. Edits apply when you leave a field or press Enter.</p>
