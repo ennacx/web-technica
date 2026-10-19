@@ -179,10 +179,6 @@ main.json-editor {
   background: transparent;
   color: var(--color-text);
 }
-.json-input::placeholder {
-  color: var(--color-text-muted);
-  opacity: 1;
-}
 .json-input:focus-visible {
   outline-offset: -3px;
 }

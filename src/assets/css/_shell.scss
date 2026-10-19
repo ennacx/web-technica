@@ -94,8 +94,7 @@ main.container {
     white-space: nowrap;
     cursor: pointer;
 
-    &:hover,
-    &[aria-expanded="true"] {
+    &:hover, &[aria-expanded="true"] {
         background: var(--color-surface);
         color: var(--color-text);
     }

@@ -51,6 +51,11 @@ export default function(eleventyConfig){
     eleventyConfig.addWatchTarget('src/tools/json-editor/css/**/*.scss');
     eleventyConfig.watchIgnores.add('src/tools/json-editor/css/**/*.css');
     eleventyConfig.watchIgnores.add('src/tools/json-editor/css/**/*.css.map');
+    // url-inspector
+    eleventyConfig.addWatchTarget('src/tools/url-inspector/js/**/*.js');
+    eleventyConfig.addWatchTarget('src/tools/url-inspector/css/**/*.scss');
+    eleventyConfig.watchIgnores.add('src/tools/url-inspector/css/**/*.css');
+    eleventyConfig.watchIgnores.add('src/tools/url-inspector/css/**/*.css.map');
     // keygen
     eleventyConfig.addWatchTarget('src/tools/keygen/js/**/*.js');
     eleventyConfig.addWatchTarget('src/tools/keygen/css/**/*.scss');
@@ -74,7 +79,8 @@ export default function(eleventyConfig){
             'src/tools/pwdgen/css/pwdgen',
             'src/tools/keygen/css/keygen',
             'src/tools/sri-hasher/css/sri-hasher',
-            'src/tools/json-editor/css/json-editor'
+            'src/tools/json-editor/css/json-editor',
+            'src/tools/url-inspector/css/url-inspector'
         ];
 
         for(const entry of entries){
@@ -134,6 +140,9 @@ export default function(eleventyConfig){
         // json-editor
         'src/tools/json-editor/js/*.js': 'json-editor/js',
         'src/tools/json-editor/css/*.css': 'json-editor/css',
+        // url-inspector
+        'src/tools/url-inspector/js/*.js': 'url-inspector/js',
+        'src/tools/url-inspector/css/*.css': 'url-inspector/css',
         // pwdgen
         'src/tools/pwdgen/js/*.js': 'pwdgen/js',
         'src/tools/pwdgen/css/*.css': 'pwdgen/css',

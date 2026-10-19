@@ -274,6 +274,11 @@ button:disabled {
   line-height: 1.7;
 }
 
+input::placeholder, textarea::placeholder {
+  color: color-mix(in srgb, var(--color-text-muted) 70%, var(--color-bg));
+  opacity: 0.67;
+}
+
 .input {
   width: 100%;
   min-height: 44px;
@@ -283,10 +288,6 @@ button:disabled {
   background: var(--color-bg);
   color: var(--color-text);
   font: inherit;
-}
-.input::placeholder {
-  color: var(--color-text-muted);
-  opacity: 1;
 }
 .input:disabled {
   opacity: 0.5;
@@ -410,6 +411,15 @@ button:disabled {
   border-radius: 3px;
   background: var(--color-surface-raised);
 }
+.entropy-meter [data-strength=danger] {
+  background: var(--color-danger);
+}
+.entropy-meter [data-strength=warning] {
+  background: var(--color-warning);
+}
+.entropy-meter [data-strength=success], .entropy-meter [data-strength=primary] {
+  background: var(--color-success);
+}
 .entropy-meter span {
   display: block;
   height: 100%;
@@ -425,18 +435,6 @@ button:disabled {
 
 [data-strength=success], [data-strength=primary] {
   color: var(--color-success);
-}
-
-.entropy-meter [data-strength=danger] {
-  background: var(--color-danger);
-}
-
-.entropy-meter [data-strength=warning] {
-  background: var(--color-warning);
-}
-
-.entropy-meter [data-strength=success], .entropy-meter [data-strength=primary] {
-  background: var(--color-success);
 }
 
 .tool-card.is-available:hover, .tool-card.is-available:focus-within {

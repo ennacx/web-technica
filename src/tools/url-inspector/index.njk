@@ -1,0 +1,127 @@
+---
+toolSlug: url-inspector
+description: Inspect, edit, and rebuild URLs and query parameters in your browser.
+permalink: /url-inspector/index.html
+pageClass: url-inspector
+pageStylesheet: /url-inspector/css/url-inspector.css
+pageScript: /url-inspector/js/index.js
+noindex: true
+toolIntro:
+    - Inspect the structure. Edit the details. Rebuild your URL.
+processingNotice:
+    icon: lock
+    title: Your URLs stay here
+    description: No requests, uploads, or browser storage.
+javascriptNotice: Enable JavaScript to use URL Inspector. URLs are processed in your browser.
+---
+
+{% from "components/icons.njk" import icon %}
+
+<div class="url-workspace">
+    <section class="url-panel url-current" aria-labelledby="url-current-title">
+        <div class="url-section-heading">
+            <h2 id="url-current-title"><label for="url-current">Current URL</label> <span class="badge">Interactive mockup</span></h2>
+            <span id="url-validity" class="badge" data-state="empty" role="status">No URL yet</span>
+        </div>
+
+        <textarea id="url-current" class="input" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="url-input-help url-error" placeholder="https://example.com/search?q=camera&amp;tag=photo&amp;tag=travel#results"></textarea>
+
+        <div class="url-current-footer">
+            <p id="url-input-help" class="field-help">Paste an absolute URL to get started, or <button id="url-sample" type="button" class="url-text-button">load a sample</button>.</p>
+            <span id="url-length" class="field-help">0 characters</span>
+        </div>
+        <p id="url-error" class="url-error" role="status" hidden></p>
+
+        <div class="url-actions">
+            <button id="url-copy" type="button" class="button button-primary" disabled>{{ icon('copy') }} Copy URL</button>
+            <button id="url-store" type="button" class="button" disabled>Store as Original</button>
+            <button id="url-reset" type="button" class="button" disabled>{{ icon('refresh') }} Reset</button>
+            <button id="url-clear" type="button" class="button" disabled>Clear</button>
+        </div>
+
+        <div class="url-original">
+            <div class="url-section-heading"><h3><label for="url-original">Original URL</label></h3><span class="field-help">Saved restore point</span></div>
+            <textarea id="url-original" class="input" rows="2" readonly spellcheck="false" placeholder="The first valid URL will be saved here." aria-describedby="url-original-help"></textarea>
+            <p id="url-original-help" class="field-help">Saved once automatically. Use Store as Original to replace it. Clear keeps this restore point.</p>
+        </div>
+    </section>
+
+    <p id="url-action-status" class="url-action-status field-help" role="status" aria-live="polite"></p>
+    <p id="url-stale" class="notice notice-warning" hidden>Last valid state — showing the last successfully parsed URL. Fix Current URL to resume editing.</p>
+
+    <div class="url-editors">
+        <section class="url-panel" aria-labelledby="url-components-title">
+            <div class="url-section-heading">
+                <h2 id="url-components-title">URL Components</h2><span class="eyebrow">Structure</span>
+            </div>
+
+            <p id="url-components-help" class="field-help">Edit fields, then apply your changes. Query parameters are edited separately.</p>
+
+            <form id="url-components-form" novalidate autocomplete="off">
+                <fieldset id="url-components" class="field" disabled aria-describedby="url-components-help url-component-error">
+                    <div class="url-component-grid">
+                        <div>
+                            <label for="url-protocol" class="field-label">Protocol</label>
+                            <input name="protocol" id="url-protocol" class="input" placeholder="https:" spellcheck="false">
+                        </div>
+                        <div>
+                            <label for="url-port" class="field-label">Port</label>
+                            <input name="port" id="url-port" class="input" placeholder="Default" inputmode="numeric" spellcheck="false">
+                        </div>
+
+                        <div class="url-full-width">
+                            <label for="url-hostname" class="field-label">Hostname</label>
+                            <input name="hostname" id="url-hostname" class="input" placeholder="example.com" spellcheck="false">
+                        </div>
+                        <div class="url-full-width">
+                            <label for="url-pathname" class="field-label">Pathname</label>
+                            <input name="pathname" id="url-pathname" class="input" placeholder="/search" spellcheck="false">
+                        </div>
+                        <div class="url-full-width">
+                            <label class="field-label" for="url-hash">Fragment</label>
+                            <input name="hash" id="url-hash" class="input" placeholder="#results" spellcheck="false">
+                        </div>
+                    </div>
+
+                    <details class="url-credentials"><summary>Credentials <span class="field-help">Username &amp; password</span></summary>
+                        <label for="url-username" class="field-label">Username</label>
+                        <input name="username" id="url-username" class="input" autocomplete="off" spellcheck="false">
+
+                        <label for="url-password" class="field-label">Password</label>
+                        <input type="password" name="password" id="url-password" class="input" autocomplete="new-password" spellcheck="false">
+
+                        <label class="checkbox url-show-password">
+                            <input type="checkbox" id="url-show-password"><span>Show password</span>
+                        </label>
+                    </details>
+
+                    <p id="url-component-error" class="url-error" role="alert" hidden></p>
+                    <div class="url-actions"><button class="button" type="submit">{{ icon('check') }} Apply changes</button></div>
+                </fieldset>
+            </form>
+        </section>
+
+        <section class="url-panel url-query-panel" aria-labelledby="url-query-title">
+            <div class="url-section-heading">
+                <h2 id="url-query-title">Query Parameters <span id="url-query-count" class="badge">0</span></h2>
+            </div>
+
+            <p id="url-query-help" class="field-help">Decoded keys and values. Duplicate keys and row order are kept. Edits apply when you leave a field or press Enter.</p>
+
+            <fieldset id="url-query" class="field" disabled aria-describedby="url-query-help">
+                <div class="url-table-scroll" role="region" aria-label="Query parameter editor" tabindex="0">
+                    <table class="url-query-table"><thead><tr><th scope="col">Key</th><th scope="col">Value</th><th scope="col">Order</th><th scope="col"><span class="visually-hidden">Action</span></th></tr></thead><tbody id="url-query-rows"></tbody></table>
+                </div>
+
+                <p id="url-query-empty" class="field-help url-empty">No query parameters. Add a parameter to start editing.</p>
+                <button type="button" id="url-add" class="button">{{ icon('plus') }} Add parameter</button>
+            </fieldset>
+            <div class="url-query-note field-help">Query edits use URLSearchParams. Spaces may become <code>+</code>, and <code>?flag</code> becomes <code>?flag=</code>.</div>
+        </section>
+    </div>
+
+    <div class="url-bottom-note field-help">
+        <p>Direct input keeps your exact text. Structured edits may normalize the URL, including hostname casing, default ports, and encoding.</p>
+        <p>Copy URL includes credentials and query values. Original and Current URLs are visible here; nothing is saved after reloading.</p>
+    </div>
+</div>
