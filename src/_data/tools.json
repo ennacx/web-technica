@@ -38,7 +38,7 @@
         "offline": "ready",
         "category": "Data & Text",
         "icon": "json",
-        "status": "published",
+        "status": "develop",
         "tags": ["JSON", "Formatter", "Validator", "Minifier", "Natural Sort"]
     },
     {
