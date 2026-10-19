@@ -116,6 +116,21 @@ test('UI hides opaque path previews and preserves row DOM and focus when editing
     get('reset').fire('click');
     checkCredentials(true);
 
+    for(const source of ['file:///tmp/a', 'mailto:aaa@bbb.com']){
+        input(source);
+        const pathname = get('pathname').value;
+        get('protocol').value = 'https';
+        get('hostname').value = 'example.com';
+        get('components-form').fire('submit');
+        assert.equal(get('current').value, source);
+        assert.equal(get('component-error').hidden, false);
+        assert.match(get('component-error').textContent, /edit Current URL directly/);
+        assert.equal(get('protocol').value, 'https');
+        assert.equal(get('hostname').value, 'example.com');
+        assert.equal(get('pathname').value, pathname);
+        checkCredentials(false);
+    }
+
     input('https://example.com/a%2Fb/c');
     assert.equal(get('path-preview').hidden, false);
     assert.deepEqual(labels(), ['Root /', 'a%2Fb', 'c']);

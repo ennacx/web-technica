@@ -15,6 +15,10 @@ main.url-inspector {
     .input {
         font-family: var(--font-mono);
         font-size: 13px;
+
+        &:focus-visible {
+            outline-offset: -2px;
+        }
     }
 
     .button {
@@ -143,11 +147,21 @@ main.url-inspector {
 .url-input-group {
     display: flex;
     min-width: 0;
+    border-radius: var(--radius-control);
+
+    &:focus-within {
+        outline: 2px solid var(--color-accent-hover);
+        outline-offset: -2px;
+    }
 
     .input {
         flex: 1;
         min-width: 0;
         border-radius: 0;
+
+        &:focus-visible {
+            outline: none;
+        }
 
         &:first-child {
             border-radius: var(--radius-control) 0 0 var(--radius-control);
@@ -278,6 +292,10 @@ main.url-inspector {
     .button {
         min-width: 32px;
         padding: 8px;
+
+        &:focus-visible {
+            outline-offset: -2px;
+        }
     }
 }
 

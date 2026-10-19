@@ -1,7 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments, canHaveCredentials } from '../src/tools/url-inspector/js/components.js';
+import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments, canHaveCredentials, canChangeProtocol } from '../src/tools/url-inspector/js/components.js';
 import { componentNames, UrlInspectorDocument } from '../src/tools/url-inspector/js/document.js';
+
+test('protocol changes enforce WHATWG scheme-state restrictions before invoking a setter', () => {
+    for(const [source, protocol, allowed] of [
+        ['mailto:aaa@bbb.com', 'https:', false],
+        ['data:text/plain,hello', 'https:', false],
+        ['custom://host/path', 'https:', false],
+        ['https://example.com/', 'mailto:', false],
+        ['file:///tmp/a', 'https:', false],
+        ['file:///tmp/a', 'file:', true],
+        ['file://server/a', 'https:', true],
+        ['https://user:secret@example.com/', 'file:', false],
+        ['https://example.com:8080/', 'file:', false],
+        ['https://example.com/', 'file:', true],
+        ['http://example.com/', 'https:', true],
+        ['mailto:aaa@bbb.com', 'urn:', true]
+    ]){
+        assert.equal(canChangeProtocol(new URL(source), protocol), allowed, `${source} -> ${protocol}`);
+    }
+});
 
 test('credentials and port capability follows the URL host and file scheme rules', () => {
     for(const source of ['https://example.com/', 'http://[::1]/', 'ftp://example.com/', 'ws://example.com/', 'custom://host/path']){

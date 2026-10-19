@@ -4,6 +4,55 @@ import { componentNames, UrlInspectorDocument } from '../src/tools/url-inspector
 
 const draftsFor = (document, changes) => ({ ...Object.fromEntries(componentNames.map((name) => [name, document.lastValidUrl[name]])), ...changes });
 
+test('a permissive protocol setter cannot reinterpret an opaque URL as HTTPS', (t) => {
+    const NativeURL = globalThis.URL;
+    let setterCalls = 0;
+    class PermissiveURL extends NativeURL {
+        get protocol(){ return super.protocol; }
+        set protocol(value){
+            setterCalls++;
+            if(super.protocol === 'mailto:' && value === 'https:'){
+                this.href = 'https://example.com/' + this.pathname;
+            } else{
+                super.protocol = value;
+            }
+        }
+    }
+    globalThis.URL = PermissiveURL;
+    t.after(() => { globalThis.URL = NativeURL; });
+    const document = new UrlInspectorDocument();
+    document.setCurrent('mailto:aaa@bbb.com');
+    assert.throws(() => document.applyComponents(draftsFor(document, { protocol: 'https:', hostname: 'example.com' })), (error) => error.component === 'protocol');
+    assert.equal(setterCalls, 0);
+    assert.equal(document.currentUrl, 'mailto:aaa@bbb.com');
+    assert.equal(document.lastValidUrl.pathname, 'aaa@bbb.com');
+});
+
+test('rejected structural scheme changes retain the URL and guide direct editing without reinterpreting paths', () => {
+    for(const source of ['file:///tmp/a', 'mailto:aaa@bbb.com', 'data:text/plain,hello']){
+        const document = new UrlInspectorDocument();
+        document.setCurrent(source);
+        const parsed = document.lastValidUrl;
+        const rows = document.rows;
+        const drafts = draftsFor(document, { protocol: 'https:', hostname: 'example.com' });
+        const beforeDrafts = { ...drafts };
+        assert.throws(() => document.applyComponents(drafts), (error) => {
+            assert.equal(error.component, 'protocol');
+            assert.match(error.message, /edit Current URL directly/);
+            return true;
+        });
+        assert.equal(document.currentUrl, source);
+        assert.equal(document.originalUrl, source);
+        assert.equal(document.lastValidUrl, parsed);
+        assert.equal(document.rows, rows);
+        assert.deepEqual(drafts, beforeDrafts);
+        document.setCurrent('https://example.com/intended/path');
+        assert.equal(document.valid, true);
+        assert.equal(document.currentUrl, 'https://example.com/intended/path');
+        assert.equal(document.originalUrl, source);
+    }
+});
+
 test('hostname validation uses the target scheme rather than HTTP normalization', () => {
     for(const [source, changes, expected] of [
         ['custom://host/path', { hostname: 'EXAMPLE.ORG' }, 'custom://EXAMPLE.ORG/path'],

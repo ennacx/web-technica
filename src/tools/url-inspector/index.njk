@@ -54,8 +54,8 @@ javascriptNotice: Enable JavaScript to use URL Inspector. URLs are processed in 
                 <h2 id="url-components-title">URL Components</h2><span class="eyebrow">Structure</span>
             </div>
 
-            <p id="url-components-help" class="field-help">Edit fields, then apply your changes. Query parameters are edited separately.</p>
-            <p id="url-credentials-help" class="field-help" hidden>Username, password, and port are unavailable for this URL. Apply a supported protocol and a non-empty hostname to enable them.</p>
+            <p id="url-components-help" class="field-help">Edit fields, then apply your changes. Query parameters are edited separately. Some scheme or structure changes cannot be applied here; edit Current URL directly for those changes.</p>
+            <p id="url-credentials-help" class="field-help" hidden>Username, password, and port are unavailable for this URL. Credentials and port are unavailable for URLs without a hostname or using the `file:` scheme.</p>
 
             <form id="url-components-form" novalidate autocomplete="off">
                 <fieldset id="url-components" class="field" disabled aria-describedby="url-components-help url-component-error">

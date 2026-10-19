@@ -1,4 +1,4 @@
-import { canHaveCredentials } from './components.js';
+import { canHaveCredentials, canChangeProtocol } from './components.js';
 
 export const componentNames = ['protocol', 'hostname', 'port', 'username', 'password', 'pathname', 'hash'];
 
@@ -83,6 +83,9 @@ export class UrlInspectorDocument {
                 // プロトコル
                 if(name === 'protocol'){
                     expected = value.toLowerCase().replace(/:$/, '') + ':';
+                    if(!canChangeProtocol(next, expected)){
+                        throw new Error();
+                    }
                 }
                 // ポート
                 else if(name === 'port'){
@@ -130,7 +133,7 @@ export class UrlInspectorDocument {
             } catch(e){
                 const label = (name === 'hash') ? 'Fragment' : name[0].toUpperCase() + name.slice(1);
 
-                const error = new Error(`${label} could not be applied to this URL. Check the value and scheme.`);
+                const error = new Error(`${label} could not be applied to this URL. Check the value and scheme. For structural changes, edit Current URL directly.`);
                 error.component = name;
 
                 throw error;

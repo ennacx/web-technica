@@ -37,7 +37,7 @@ export function componentUrlValue(name, value){
 }
 
 /**
- * URL APIの相対解決を使い、階層パスを持つURLかどうかを判定する。
+ * URL-APIの相対解決を使い、階層パスを持つURLかどうかを判定する。
  *
  * @param {URL} url - URL
  * @return {boolean}
@@ -81,4 +81,34 @@ export function pathSegments(pathname){
  */
 export function canHaveCredentials(url){
     return (url.protocol !== 'file:' && url.host !== '');
+}
+
+/**
+ * WHATWG URL Standardにおいて、特殊な構文規則 (スラッシュ2つ // を伴うホスト構造など) を持つ、
+ * 特定のプロトコルスキーム (Special protocol / Special scheme)。
+ *
+ * @type {Set<string>}
+ */
+const specialProtocols = new Set(['ftp', 'file', 'http', 'https', 'ws', 'wss'].map((v) => `${v}:`));
+
+/**
+ * WHATWG scheme-stateのsetter制限。構文自体の検証はURL-APIに委ねる。
+ *
+ * @param {URL} url
+ * @param {string} protocol - 小文字化済み、末尾コロン付きの変更先
+ * @return {boolean}
+ * @see https://url.spec.whatwg.org/#scheme-state
+ */
+export function canChangeProtocol(url, protocol){
+    if(url.protocol === protocol){
+        return true;
+    } else if(specialProtocols.has(url.protocol) !== specialProtocols.has(protocol)){
+        return false;
+    } else if(protocol === 'file:' && (url.username !== '' || url.password !== '' || url.port !== '')){
+        return false;
+    } else if(url.protocol === 'file:' && url.host === ''){
+        return false;
+    }
+
+    return true;
 }

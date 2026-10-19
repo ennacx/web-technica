@@ -40,6 +40,10 @@ Protocol displays its trailing `:` as a fixed suffix, and Fragment displays its 
 
 Draft values stay in the form until you select **Apply changes** or press Enter. Changes are applied together. If a setter rejects a value, an error identifies the field, the draft remains available to correct, and Current URL is unchanged.
 
+Structured edits respect the URL API's setter restrictions and apply Protocol before Hostname. They do not reconstruct a different URL structure to bypass a rejected setter or reinterpret an opaque path as a hierarchical one. For example, changing `file:///tmp/a` to HTTPS while adding a hostname in the same operation is rejected, as is changing `mailto:aaa@bbb.com` to HTTPS. Edit Current URL directly to enter the complete intended URL. A `file:` URL with an existing non-empty host may still accept a protocol change through the standard setter.
+
+Protocol changes also have an explicit preflight check for the WHATWG scheme-state restrictions: switching between special and non-special schemes, switching to `file:` while credentials or a port remain, and switching away from `file:` with an empty host are rejected before invoking the setter. This keeps those restrictions enforced even if a runtime's setter is more permissive. URL syntax parsing and normalization still use the standard API.
+
 Username, Password, Port, and Show password are enabled only when the valid Current URL has a non-empty host and its protocol is not `file:`. URLs such as `mailto:`, `data:`, and hostless custom URLs disable these controls. The decision uses the committed URL: pending Protocol or Hostname drafts do not toggle the controls. Apply those changes successfully first to enable newly supported fields. Invalid or cleared Current URLs disable them even when the last valid state had a host.
 
 Changes are also checked against the URL being rebuilt. Explicitly clearing credentials and port can be combined with a switch to `file:` or removal of a custom URL's hostname in one Apply changes operation. Unsupported values are rejected without changing Current URL; they are never silently discarded.
@@ -112,7 +116,7 @@ All current features work offline after the site's initial online load and succe
 |---|---|
 | Current URL is invalid | Enter an absolute URL with a scheme, such as `https://example.com/` |
 | Structured editing is disabled | Fix Current URL; the visible fields may be showing the last valid state |
-| A component cannot be applied | Check the indicated value and whether the URL scheme supports editing that component |
+| A component cannot be applied | Check the indicated value and scheme. For a scheme or structure change that setters reject, edit Current URL directly |
 | Query encoding changes after editing | Query rebuilding uses `URLSearchParams`; use Reset to restore the saved text |
 | Reset is unavailable | Original must be set and differ from Current URL |
 | Copy fails | Select and copy Current URL manually |
