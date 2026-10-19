@@ -94,8 +94,7 @@ main.container {
     white-space: nowrap;
     cursor: pointer;
 
-    &:hover,
-    &[aria-expanded="true"] {
+    &:hover, &[aria-expanded="true"] {
         background: var(--color-surface);
         color: var(--color-text);
     }
@@ -168,6 +167,15 @@ main.container {
         width: 18px;
         height: 18px;
         color: var(--color-accent);
+    }
+
+    .site-nav-tool-name {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tool-status-badge {
+        flex: none;
     }
 }
 

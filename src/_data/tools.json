@@ -13,6 +13,7 @@
     {
         "name": "URL Inspector",
         "slug": "url-inspector",
+        "url": "/url-inspector/",
         "description": "Inspect, edit, and rebuild URLs and query parameters.",
         "offline": "ready",
         "category": "Inspect",

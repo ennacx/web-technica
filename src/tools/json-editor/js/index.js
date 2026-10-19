@@ -130,7 +130,7 @@ function update(immediate = false){
     const length = editorDocument.text.length;
     const count = editorDocument.text.split('\n').length;
 
-    get('json-stats').textContent = `${length.toLocaleString('en')} characters · ${count.toLocaleString('en')} line${(count === 1) ? '' : 's'}`;
+    get('json-stats').textContent = `${length.toLocaleString('en-US')} characters · ${count.toLocaleString('en')} line${(count === 1) ? '' : 's'}`;
 
     clearTimeout(validationTimer);
 

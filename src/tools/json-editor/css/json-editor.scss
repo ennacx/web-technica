@@ -188,10 +188,6 @@ main.json-editor {
     background: transparent;
     color: var(--color-text);
 
-    &::placeholder {
-        color: var(--color-text-muted);
-        opacity: 1;
-    }
 
     &:focus-visible {
         outline-offset: -3px;
