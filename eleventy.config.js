@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { compile } from 'sass';
 import { buildKeygen } from './src/tools/keygen/scripts/build.mjs';
 import { buildPwaIcons, buildServiceWorker } from './scripts/build-pwa.mjs';
+import { isToolAvailable, groupAvailableTools } from './scripts/tool-status.mjs';
 
 export default function(eleventyConfig){
     // XMLは最初のバイトで必ずXML宣言をしなければならないため、ビルド時に先頭と文末をtrimする。
@@ -13,12 +14,6 @@ export default function(eleventyConfig){
         }
 
         return content;
-    });
-
-    eleventyConfig.addFilter('absoluteUrl', (url, origin) => {
-        const filteredUrl = eleventyConfig.getFilter('url')(url);
-
-        return new URL(filteredUrl, origin).href;
     });
 
     // サイトマップのコレクションを登録
@@ -51,6 +46,11 @@ export default function(eleventyConfig){
     eleventyConfig.addWatchTarget('src/tools/json-editor/css/**/*.scss');
     eleventyConfig.watchIgnores.add('src/tools/json-editor/css/**/*.css');
     eleventyConfig.watchIgnores.add('src/tools/json-editor/css/**/*.css.map');
+    // url-inspector
+    eleventyConfig.addWatchTarget('src/tools/url-inspector/js/**/*.js');
+    eleventyConfig.addWatchTarget('src/tools/url-inspector/css/**/*.scss');
+    eleventyConfig.watchIgnores.add('src/tools/url-inspector/css/**/*.css');
+    eleventyConfig.watchIgnores.add('src/tools/url-inspector/css/**/*.css.map');
     // keygen
     eleventyConfig.addWatchTarget('src/tools/keygen/js/**/*.js');
     eleventyConfig.addWatchTarget('src/tools/keygen/css/**/*.scss');
@@ -74,7 +74,8 @@ export default function(eleventyConfig){
             'src/tools/pwdgen/css/pwdgen',
             'src/tools/keygen/css/keygen',
             'src/tools/sri-hasher/css/sri-hasher',
-            'src/tools/json-editor/css/json-editor'
+            'src/tools/json-editor/css/json-editor',
+            'src/tools/url-inspector/css/url-inspector'
         ];
 
         for(const entry of entries){
@@ -101,28 +102,12 @@ export default function(eleventyConfig){
         }
     });
 
-    eleventyConfig.addFilter('groupPublishedTools', (tools) => {
-        const categories = new Map();
+    eleventyConfig.addFilter('isToolAvailable', isToolAvailable);
+    eleventyConfig.addFilter('groupAvailableTools', groupAvailableTools);
+    eleventyConfig.addFilter('absoluteUrl', (url, origin) => {
+        const filteredUrl = eleventyConfig.getFilter('url')(url);
 
-        for(const tool of tools){
-            if(tool.status !== 'published'){
-                continue;
-            }
-
-            const category = tool.category;
-
-            if(!category){
-                continue;
-            }
-
-            if(!categories.has(category)){
-                categories.set(category, []);
-            }
-
-            categories.get(category).push(tool);
-        }
-
-        return Array.from(categories, ([name, tools]) => ({ name, tools }));
+        return new URL(filteredUrl, origin).href;
     });
 
     const passthrough = {
@@ -134,6 +119,9 @@ export default function(eleventyConfig){
         // json-editor
         'src/tools/json-editor/js/*.js': 'json-editor/js',
         'src/tools/json-editor/css/*.css': 'json-editor/css',
+        // url-inspector
+        'src/tools/url-inspector/js/*.js': 'url-inspector/js',
+        'src/tools/url-inspector/css/*.css': 'url-inspector/css',
         // pwdgen
         'src/tools/pwdgen/js/*.js': 'pwdgen/js',
         'src/tools/pwdgen/css/*.css': 'pwdgen/css',

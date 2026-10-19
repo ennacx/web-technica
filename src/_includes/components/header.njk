@@ -1,6 +1,7 @@
 {% from "components/icons.njk" import icon %}
+{% from "components/tool-status.njk" import toolStatus %}
 
-{% set categories = tools | groupPublishedTools %}
+{% set categories = tools | groupAvailableTools %}
 {% set toolsActive = (page.url == '/') %}
 
 <header class="site-header">
@@ -20,7 +21,7 @@
                         </button>
                         <ul id="tool-category-{{ loop.index }}" class="site-nav-dropdown" role="list" hidden>
                             {% for tool in category.tools %}
-                                <li><a href="{{ tool.url | url }}"{% if tool.url == page.url %} aria-current="page"{% endif %}>{{ icon(tool.icon) }}<span>{{ tool.name }}</span></a></li>
+                                <li><a href="{{ tool.url | url }}"{% if tool.url == page.url %} aria-current="page"{% endif %}>{{ icon(tool.icon) }}<span class="site-nav-tool-name">{{ tool.name }}</span>{{ toolStatus(tool) }}</a></li>
                             {% endfor %}
                         </ul>
                     </li>

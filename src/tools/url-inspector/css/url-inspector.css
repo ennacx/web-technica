@@ -1,0 +1,320 @@
+main.url-inspector {
+  width: min(100% - 64px, 1120px);
+  padding-block: 24px 48px;
+}
+
+.url-workspace {
+  min-width: 0;
+}
+.url-workspace textarea {
+  display: block;
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+.url-workspace .input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.url-workspace .input:focus-visible {
+  outline-offset: -2px;
+}
+.url-workspace .button .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.url-panel {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+
+.url-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-end: 16px;
+}
+.url-section-heading h2, .url-section-heading h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.url-section-heading h3 {
+  font-size: 13px;
+}
+
+#url-current {
+  min-height: 100px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+#url-original {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+#url-validity[data-state=valid] {
+  color: var(--color-success);
+}
+#url-validity[data-state=invalid] {
+  color: var(--color-danger);
+}
+
+.url-current-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block: 10px 16px;
+}
+
+.url-text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.url-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 16px;
+}
+
+.url-original {
+  margin-block-start: 24px;
+  padding-block-start: 20px;
+  border-block-start: 1px solid var(--color-border);
+}
+.url-original .field-help {
+  margin-block-start: 8px;
+}
+
+.url-error {
+  margin-block: 12px;
+  color: var(--color-danger);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.url-action-status {
+  min-height: 24px;
+  margin-block: 8px;
+  color: var(--color-accent);
+}
+
+.url-editors {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.url-component-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0 12px;
+}
+
+.url-full-width {
+  grid-column: 1/-1;
+}
+
+.url-input-group {
+  display: flex;
+  min-width: 0;
+  border-radius: var(--radius-control);
+}
+.url-input-group:focus-within {
+  outline: 2px solid var(--color-accent-hover);
+  outline-offset: -2px;
+}
+.url-input-group .input {
+  flex: 1;
+  min-width: 0;
+  border-radius: 0;
+}
+.url-input-group .input:focus-visible {
+  outline: none;
+}
+.url-input-group .input:first-child {
+  border-radius: var(--radius-control) 0 0 var(--radius-control);
+}
+.url-input-group .input:last-child {
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+}
+
+.url-input-affix {
+  display: flex;
+  align-items: center;
+  padding-inline: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font: 13px var(--font-mono);
+}
+.url-input-affix:first-child {
+  border-inline-end: 0;
+  border-radius: var(--radius-control) 0 0 var(--radius-control);
+}
+.url-input-affix:last-child {
+  border-inline-start: 0;
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+}
+
+.url-path-preview {
+  margin-block-start: 12px;
+}
+
+.url-path-segments {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-block: 8px;
+  padding: 0;
+  list-style: none;
+}
+.url-path-segments li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  cursor: default;
+}
+
+.url-path-segment {
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg);
+  font: 12px var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.url-path-segment.is-empty {
+  color: var(--color-text-muted);
+  border-style: dashed;
+}
+
+.url-path-separator {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.url-credentials {
+  margin-block-start: 20px;
+  padding-block-start: 16px;
+  border-block-start: 1px solid var(--color-border);
+}
+.url-credentials summary {
+  cursor: pointer;
+  font-size: 13px;
+}
+.url-credentials summary span {
+  margin-inline-start: 8px;
+}
+
+.url-show-password {
+  margin-block-start: 12px;
+  font-size: 12px;
+}
+
+.url-table-scroll {
+  overflow-x: auto;
+  margin-block: 16px;
+}
+
+.url-query-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.url-query-table th {
+  padding: 0 4px 10px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+}
+.url-query-table td {
+  padding: 6px 4px;
+  border-block-start: 1px solid var(--color-border);
+}
+.url-query-table th:first-child, .url-query-table td:first-child {
+  padding-inline-start: 0;
+}
+.url-query-table td:last-child {
+  padding-inline-end: 0;
+}
+.url-query-table .input {
+  min-width: 100px;
+}
+.url-query-table .button {
+  min-width: 32px;
+  padding: 8px;
+}
+.url-query-table .button:focus-visible {
+  outline-offset: -2px;
+}
+
+.url-row-order {
+  display: flex;
+  gap: 4px;
+}
+
+.url-row-delete {
+  color: var(--color-danger);
+}
+
+.url-empty {
+  padding-block: 16px 24px;
+}
+
+.url-query-note {
+  margin-block-start: 24px;
+  padding-block-start: 16px;
+  border-block-start: 1px solid var(--color-border);
+}
+
+.url-bottom-note {
+  display: grid;
+  gap: 6px;
+  margin-block-start: 24px;
+}
+
+@media (max-width: 900px) {
+  .url-editors {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  main.url-inspector {
+    width: calc(100% - 32px);
+  }
+  .url-panel {
+    padding: 16px;
+  }
+  .url-query-table .button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .url-query-table {
+    min-width: 420px;
+  }
+}
+
+/*# sourceMappingURL=url-inspector.css.map */

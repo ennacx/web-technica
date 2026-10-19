@@ -4,6 +4,7 @@ layout: layouts/base.njk
 
 {% from "components/icons.njk" import icon %}
 {% from "components/offline-status.njk" import offlineStatus %}
+{% from "components/tool-status.njk" import toolStatus %}
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
     <a href="{{ '/' | url }}#tools">{{ icon('arrow-left') }} All Tools</a>
@@ -14,7 +15,7 @@ layout: layouts/base.njk
     <div class="tool-heading-copy">
         <span class="tool-heading-icon">{{ icon(tool.icon) }}</span>
         <div>
-            <h1>{{ title }}</h1>
+            <div class="tool-title-row"><h1>{{ title }}</h1>{{ toolStatus(tool) }}</div>
             {% if toolIntro %}
                 <p>{% for line in toolIntro %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
             {% endif %}
