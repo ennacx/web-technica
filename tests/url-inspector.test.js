@@ -4,6 +4,35 @@ import { componentNames, UrlInspectorDocument } from '../src/tools/url-inspector
 
 const draftsFor = (document, changes) => ({ ...Object.fromEntries(componentNames.map((name) => [name, document.lastValidUrl[name]])), ...changes });
 
+test('empty query keys and values remain separate ordered rows after editing', () => {
+    for(const query of ['?=', '?=&=']){
+        const document = new UrlInspectorDocument();
+        document.setCurrent('https://example.com/' + query);
+        const count = query === '?=' ? 1 : 2;
+        assert.deepEqual(document.rows.map(({ key, value }) => [key, value]), Array.from({ length: count }, () => ['', '']));
+        const id = document.rows[0].id;
+        document.editRow(id, 'value', 'temporary');
+        document.editRow(id, 'value', '');
+        assert.equal(document.currentUrl, 'https://example.com/' + query);
+        assert.equal(new Set(document.rows.map((row) => row.id)).size, count);
+    }
+});
+
+test('an empty fragment marker is kept until the fragment is explicitly changed', () => {
+    const document = new UrlInspectorDocument();
+    const original = 'https://example.com/#';
+    document.setCurrent(original);
+    assert.equal(document.lastValidUrl.hash, '');
+    assert.equal(document.currentUrl, original);
+    document.applyComponents(draftsFor(document, { pathname: '/changed' }));
+    assert.equal(document.currentUrl, 'https://example.com/changed#');
+    document.applyComponents(draftsFor(document, { hash: '#value' }));
+    document.applyComponents(draftsFor(document, { hash: '' }));
+    assert.equal(document.currentUrl, 'https://example.com/changed');
+    document.reset();
+    assert.equal(document.currentUrl, original);
+});
+
 test('direct input stays exact; Original is saved only once and survives Invalid/Clear/Reset', () => {
     const document = new UrlInspectorDocument();
     document.setCurrent('/relative');

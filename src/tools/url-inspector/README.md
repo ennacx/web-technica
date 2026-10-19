@@ -48,7 +48,9 @@ Direct edits to Current URL, Reset, and Clear resynchronize the component form, 
 
 A read-only breadcrumb-style list follows the Pathname field as you type, including pending edits before Apply changes. It also updates when Current URL is parsed or restored. The list does not edit the path or create navigation links.
 
-The list always starts with `Root /`; an empty path or `/` displays only that item. Segments are split on literal `/` characters before any decoding. The initial slash is represented by Root. Empty segments within the path appear as `(empty)`, and a final empty segment appears as `Trailing /`. For example, `/a//b%2Fc/` displays `Root / › a › (empty) › b%2Fc › Trailing /`. Repeated slashes remain distinct: `//` displays `Root / › (empty) › Trailing /`. Percent-encoded text stays encoded, so `%2F` remains inside its segment. Invalid Current URL input retains the last valid path preview along with the other component values.
+The preview is shown only for hierarchical URLs and Pathname values beginning with `/`. Opaque paths, such as `mailto:hello@example.com` and `data:text/plain,hello`, keep their URL API pathname in the field but do not show Path Segments. A slash inside an opaque path does not create a hierarchy. Classification uses the URL API's relative-resolution behavior rather than a scheme list. Empty or non-slash-prefixed drafts have no segment preview.
+
+The list starts with `Root /`; `/` displays only that item. Segments are split on literal `/` characters before any decoding. The initial slash is represented by Root. Empty segments within the path appear as `(empty)`, and a final empty segment appears as `Trailing /`. For example, `/a//b%2Fc/` displays `Root / › a › (empty) › b%2Fc › Trailing /`. Repeated slashes remain distinct: `//` displays `Root / › (empty) › Trailing /`. Percent-encoded text stays encoded, so `%2F` remains inside its segment. Invalid Current URL input retains the last valid path preview state along with the other component values.
 
 ## Edit query parameters
 
@@ -63,6 +65,8 @@ The table displays decoded keys and values.
 
 Duplicate keys, empty keys, and empty values are supported. Rows retain their order, and keys are never sorted automatically. Committing a text edit keeps the existing table fields in place.
 
+`?=` produces one row with an empty key and value; `?=&=` produces two separate empty rows. These rows remain present when edited and rebuilt.
+
 For example, `?tag=photo&tag=travel` remains two separate rows. In `?a=1&b=2?c=3`, the second row has key `b` and value `2?c=3`; the second question mark does not start another parameter.
 
 ## Normalization and encoding
@@ -76,6 +80,8 @@ Parsing direct input does not rewrite Current URL. Structured edits rebuild it u
 - Empty query separators may disappear.
 
 Query editing prioritizes parameter semantics rather than preserving every original spelling. Changes to encoding or parameter order can affect signed URLs. Reset restores the exact text saved as Original.
+
+An empty fragment marker (`https://example.com/#`) is preserved in direct input, even though the URL API reports an empty `hash`. Editing another component keeps that marker. Entering fragment content and then clearing it removes the fragment; Reset restores the saved original text.
 
 ## Invalid URLs and incomplete input
 

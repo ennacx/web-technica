@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { componentFieldValue, componentUrlValue, pathSegments } from '../src/tools/url-inspector/js/components.js';
+import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments } from '../src/tools/url-inspector/js/components.js';
 import { componentNames, UrlInspectorDocument } from '../src/tools/url-inspector/js/document.js';
 
 test('fixed punctuation round-trips component values, including literal hashes in fragments', () => {
@@ -36,14 +36,26 @@ test('punctuation-free fields apply through the model and can remove a fragment'
 
 test('path breadcrumbs start with Root and preserve additional empty segments without decoding', () => {
     for(const [pathname, expected] of [
-        ['', ['/']], ['/', ['/']], ['//', ['/', '', '']],
+        ['', []], ['/', ['/']], ['//', ['/', '', '']],
         ['/a', ['/', 'a']], ['/a//b/', ['/', 'a', '', 'b', '']],
         ['/a%2Fb/c%2fd/%252F', ['/', 'a%2Fb', 'c%2fd', '%252F']],
         ['/a%3Fb/%23c/%E3%81%82/%ZZ', ['/', 'a%3Fb', '%23c', '%E3%81%82', '%ZZ']],
-        ['opaque/path', ['/', 'opaque', 'path']],
+        ['opaque/path', []],
         ['/<script>/x', ['/', '<script>', 'x']]
     ]){
         const result = pathSegments(pathname);
         assert.deepEqual(result, expected);
     }
+});
+
+test('opaque paths do not support hierarchy even when their content includes slashes', () => {
+    for(const source of ['mailto:hello@example.com', 'data:text/plain,hello', 'data:text/html,<p>/a/b</p>', 'custom:opaque/a']){
+        const url = new URL(source);
+        assert.equal(hasHierarchicalPath(url), false, source);
+        assert.deepEqual(pathSegments(url.pathname), []);
+    }
+    for(const source of ['https://example.com/a%2Fb/c', 'file:///a/b', 'custom:/a/b', 'custom://host', 'mailto:/hierarchical/path']){
+        assert.equal(hasHierarchicalPath(new URL(source)), true, source);
+    }
+    assert.deepEqual(pathSegments(new URL('https://example.com/a%2Fb/c').pathname), ['/', 'a%2Fb', 'c']);
 });

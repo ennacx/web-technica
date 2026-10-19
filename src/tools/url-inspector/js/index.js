@@ -1,6 +1,6 @@
 import { copyText } from '#utils/clipboard.js';
 import { componentNames, UrlInspectorDocument } from './document.js';
-import { componentFieldValue, componentUrlValue, pathSegments } from './components.js';
+import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments } from './components.js';
 
 const state = new UrlInspectorDocument();
 
@@ -63,10 +63,12 @@ function render({ rows = true, components = true } = {}){
 }
 
 function renderPathSegments(){
-    get('path-preview').hidden = (!state.lastValidUrl);
-
     const fragment = document.createDocumentFragment();
-    const segments = pathSegments(componentInputs.pathname.value);
+    const segments = (state.lastValidUrl && hasHierarchicalPath(state.lastValidUrl)) ?
+        pathSegments(componentInputs.pathname.value) :
+        [];
+
+    get('path-preview').hidden = (segments.length === 0);
 
     segments.forEach((segment, index) => {
         const item = document.createElement('li');

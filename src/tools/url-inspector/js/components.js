@@ -37,20 +37,38 @@ export function componentUrlValue(name, value){
 }
 
 /**
- * デコード前に分割することで、`%2F`が元のセグメント内に維持されるようにする。
+ * URL APIの相対解決を使い、階層パスを持つURLかどうかを判定する。
+ *
+ * @param {URL} url
+ * @return {boolean}
+ */
+export function hasHierarchicalPath(url){
+    try{
+        // 相対解決は階層構造を持つベースURLに対してのみサポートされる
+        new URL('.', url);
+
+        return true;
+    } catch(e){
+        return false;
+    }
+}
+
+/**
+ * デコード前に分割し、%2Fと空セグメントを保持する。
+ * スラッシュから始まらないパスにはRootを追加しない。
  *
  * @param {string} pathname
  * @return {string[]}
  */
 export function pathSegments(pathname){
-    if(pathname === '' || pathname === '/'){
+    if(!pathname.startsWith('/')){
+        return [];
+    } else if(pathname === '/'){
         return ['/'];
     }
 
     const segments = pathname.split('/');
-    if(pathname.startsWith('/')){
-        segments.shift();
-    }
+    segments.shift();
 
     return ['/', ...segments];
 }
