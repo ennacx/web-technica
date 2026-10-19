@@ -1,3 +1,5 @@
+import { canHaveCredentials } from './components.js';
+
 export const componentNames = ['protocol', 'hostname', 'port', 'username', 'password', 'pathname', 'hash'];
 
 /**
@@ -57,16 +59,27 @@ export class UrlInspectorDocument {
 
         const next = new URL(this.currentUrl);
 
+        // 明示的な削除を先に行い、`file:` への切り替えやホスト名が空になるのと同じトランザクション内で認証情報とポートをクリアする。
+        for(const name of ['username', 'password', 'port']){
+            if(drafts[name] === ''){
+                next[name] = '';
+            }
+        }
+
         for(const name of componentNames){
             const value = drafts[name];
 
-            if(value === this.lastValidUrl[name]){
+            if(value === next[name]){
                 continue;
             }
 
             let expected;
 
             try{
+                if(['username', 'password', 'port'].includes(name) && !canHaveCredentials(next)){
+                    throw new Error();
+                }
+
                 // プロトコル
                 if(name === 'protocol'){
                     expected = value.toLowerCase().replace(/:$/, '') + ':';
@@ -83,10 +96,10 @@ export class UrlInspectorDocument {
                 }
                 // ホスト名
                 else if(name === 'hostname'){
-                    if(value === '' && next.protocol === 'file:'){
+                    if(value === ''){
                         expected = '';
                     } else{
-                        const probe = new URL(`http://${value}/`);
+                        const probe = new URL(`${next.protocol}//${value}/`);
 
                         // ホスト名フィールドに他のURL構成要素を含めてはならない
                         if(probe.port || probe.username || probe.password || probe.pathname !== '/' || probe.search || probe.hash || /[\s/?#@\\]/.test(value)){

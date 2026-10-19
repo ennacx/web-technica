@@ -4,6 +4,65 @@ import { componentNames, UrlInspectorDocument } from '../src/tools/url-inspector
 
 const draftsFor = (document, changes) => ({ ...Object.fromEntries(componentNames.map((name) => [name, document.lastValidUrl[name]])), ...changes });
 
+test('hostname validation uses the target scheme rather than HTTP normalization', () => {
+    for(const [source, changes, expected] of [
+        ['custom://host/path', { hostname: 'EXAMPLE.ORG' }, 'custom://EXAMPLE.ORG/path'],
+        ['https://example.com/path', { hostname: 'EXAMPLE.ORG' }, 'https://example.org/path'],
+        ['file://server/path', { hostname: 'localhost' }, 'file:///path'],
+        ['file://server/path', { hostname: 'LOCALHOST' }, 'file:///path'],
+        ['custom://host/path', { hostname: 'localhost' }, 'custom://localhost/path'],
+        ['https://example.com/path', { protocol: 'file:', hostname: 'localhost' }, 'file:///path'],
+        ['file://server/path', { protocol: 'https:', hostname: 'LOCALHOST' }, 'https://localhost/path']
+    ]){
+        const document = new UrlInspectorDocument();
+        document.setCurrent(source);
+        document.applyComponents(draftsFor(document, changes));
+        assert.equal(document.currentUrl, expected, source + ' ' + JSON.stringify(changes));
+        assert.equal(document.originalUrl, source);
+    }
+});
+
+test('scheme-aware hostname validation still rejects other URL components atomically', () => {
+    for(const source of ['https://example.com/path', 'custom://host/path', 'file://server/path']){
+        for(const hostname of ['other/path', 'user@other', 'other?query', 'other#fragment', 'other:8080', 'bad host', 'other\\path']){
+            const document = new UrlInspectorDocument();
+            document.setCurrent(source);
+            assert.throws(() => document.applyComponents(draftsFor(document, { hostname, pathname: '/must-not-commit' })), (error) => error.component === 'hostname');
+            assert.equal(document.currentUrl, source);
+        }
+    }
+});
+
+test('component transactions validate credentials and port against the rebuilt URL', () => {
+    const document = new UrlInspectorDocument();
+    for(const original of ['file://server/a', 'mailto:hello@example.com', 'custom:/path']){
+        document.setCurrent(original);
+        for(const name of ['username', 'password', 'port']){
+            assert.throws(() => document.applyComponents(draftsFor(document, { [name]: name === 'port' ? '8080' : 'test' })), (error) => error.component === name);
+            assert.equal(document.currentUrl, original);
+        }
+    }
+    document.setCurrent('https://user:secret@example.com:8443/a');
+    const before = document.currentUrl;
+    assert.throws(() => document.applyComponents(draftsFor(document, { protocol: 'file:' })));
+    assert.equal(document.currentUrl, before);
+    document.applyComponents(draftsFor(document, { protocol: 'file:', username: '', password: '', port: '' }));
+    assert.equal(document.currentUrl, 'file://example.com/a');
+    assert.throws(() => document.applyComponents(draftsFor(document, { username: 'forbidden', pathname: '/other' })));
+    assert.equal(document.currentUrl, 'file://example.com/a');
+    document.applyComponents(draftsFor(document, { protocol: 'https:', username: 'allowed', port: '8080' }));
+    assert.equal(document.currentUrl, 'https://allowed@example.com:8080/a');
+
+    document.setCurrent('custom://user:secret@host:8080/path');
+    document.applyComponents(draftsFor(document, { hostname: '', username: '', password: '', port: '' }));
+    assert.equal(document.currentUrl, 'custom:///path');
+    assert.throws(() => document.applyComponents(draftsFor(document, { password: 'forbidden' })));
+    assert.equal(document.currentUrl, 'custom:///path');
+    document.applyComponents(draftsFor(document, { hostname: 'host', password: 'allowed', port: '8080' }));
+    assert.equal(document.lastValidUrl.password, 'allowed');
+    assert.equal(document.lastValidUrl.port, '8080');
+});
+
 test('empty query keys and values remain separate ordered rows after editing', () => {
     for(const query of ['?=', '?=&=']){
         const document = new UrlInspectorDocument();

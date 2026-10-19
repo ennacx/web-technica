@@ -39,7 +39,7 @@ export function componentUrlValue(name, value){
 /**
  * URL APIの相対解決を使い、階層パスを持つURLかどうかを判定する。
  *
- * @param {URL} url
+ * @param {URL} url - URL
  * @return {boolean}
  */
 export function hasHierarchicalPath(url){
@@ -57,7 +57,7 @@ export function hasHierarchicalPath(url){
  * デコード前に分割し、%2Fと空セグメントを保持する。
  * スラッシュから始まらないパスにはRootを追加しない。
  *
- * @param {string} pathname
+ * @param {string} pathname - パス名
  * @return {string[]}
  */
 export function pathSegments(pathname){
@@ -71,4 +71,14 @@ export function pathSegments(pathname){
     segments.shift();
 
     return ['/', ...segments];
+}
+
+/**
+ * クレデンシャル情報を保持することができるURLかどうかを判定する。
+ *
+ * @param {URL} url - URL
+ * @return {boolean}
+ */
+export function canHaveCredentials(url){
+    return (url.protocol !== 'file:' && url.host !== '');
 }

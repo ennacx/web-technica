@@ -43,6 +43,7 @@ function createDocument(){
                 && (!selector.includes(':not(:disabled)') || !node.disabled)) ?? null;
         }
     }
+    document.defaultView = { HTMLElement: Element };
     const template = readFileSync(new URL('../src/tools/url-inspector/index.njk', import.meta.url), 'utf8');
     const elements = new Map([...template.matchAll(/<([a-z]+)\b[^>]*\bid="(url-[^"]+)"/g)].map(([, tag, id]) => [id, new Element(tag)]));
     document.getElementById = (id) => elements.get(id) ?? null;
@@ -60,6 +61,60 @@ test('UI hides opaque path previews and preserves row DOM and focus when editing
     const get = (id) => document.getElementById('url-' + id);
     const input = (url) => { get('current').value = url; get('current').fire('input'); };
     const labels = () => get('path-segments').children.map((li) => li.children.at(-1).textContent);
+
+    const checkCredentials = (editable) => {
+        for(const name of ['username', 'password', 'port', 'show-password']){
+            assert.equal(get(name).disabled, !editable, name);
+        }
+    };
+    checkCredentials(false);
+    for(const source of ['file:///a', 'file://server/a', 'mailto:hello@example.com', 'data:text/plain,hello', 'custom:///path']){
+        input(source);
+        checkCredentials(false);
+        assert.equal(get('credentials-help').hidden, false);
+    }
+    input('file://example.com/path');
+    get('protocol').value = 'https';
+    checkCredentials(false);
+    get('components-form').fire('submit');
+    assert.equal(get('current').value, 'https://example.com/path');
+    checkCredentials(true);
+    assert.equal(get('credentials-help').hidden, true);
+    get('username').value = 'user';
+    get('password').value = 'secret';
+    get('port').value = '8080';
+    get('components-form').fire('submit');
+    const authenticated = get('current').value;
+    get('protocol').value = 'file';
+    get('components-form').fire('submit');
+    assert.equal(get('current').value, authenticated);
+    assert.equal(get('component-error').hidden, false);
+    assert.equal(get('password').value, 'secret');
+    checkCredentials(true);
+    for(const name of ['username', 'password', 'port']){ get(name).value = ''; }
+    get('components-form').fire('submit');
+    assert.equal(get('current').value, 'file://example.com/path');
+    checkCredentials(false);
+    input('custom:///path');
+    get('hostname').value = 'host';
+    checkCredentials(false);
+    get('components-form').fire('submit');
+    checkCredentials(true);
+    get('hostname').value = '';
+    get('components-form').fire('submit');
+    checkCredentials(false);
+    input('https://example.com/');
+    checkCredentials(true);
+    input('invalid');
+    checkCredentials(false);
+    get('reset').fire('click');
+    checkCredentials(false); // The first valid URL saved as Original was file:.
+    input('https://example.com/');
+    get('store').fire('click');
+    get('clear').fire('click');
+    checkCredentials(false);
+    get('reset').fire('click');
+    checkCredentials(true);
 
     input('https://example.com/a%2Fb/c');
     assert.equal(get('path-preview').hidden, false);

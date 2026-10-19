@@ -1,7 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments } from '../src/tools/url-inspector/js/components.js';
+import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments, canHaveCredentials } from '../src/tools/url-inspector/js/components.js';
 import { componentNames, UrlInspectorDocument } from '../src/tools/url-inspector/js/document.js';
+
+test('credentials and port capability follows the URL host and file scheme rules', () => {
+    for(const source of ['https://example.com/', 'http://[::1]/', 'ftp://example.com/', 'ws://example.com/', 'custom://host/path']){
+        const url = new URL(source);
+        assert.equal(canHaveCredentials(url), true, source);
+        for(const name of ['username', 'password', 'port']){
+            const probe = new URL(url);
+            probe[name] = name === 'port' ? '8080' : 'test';
+            assert.notEqual(probe[name], '', source + ' ' + name);
+        }
+    }
+    for(const source of ['file:///a', 'file://server/a', 'mailto:hello@example.com', 'data:text/plain,hello', 'custom:/path', 'custom:///path']){
+        const url = new URL(source);
+        assert.equal(canHaveCredentials(url), false, source);
+        for(const name of ['username', 'password', 'port']){
+            const probe = new URL(url);
+            probe[name] = name === 'port' ? '8080' : 'test';
+            assert.equal(probe[name], '', source + ' ' + name);
+        }
+    }
+});
 
 test('fixed punctuation round-trips component values, including literal hashes in fragments', () => {
     for(const [name, urlValue, fieldValue] of [

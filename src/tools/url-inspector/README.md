@@ -40,6 +40,10 @@ Protocol displays its trailing `:` as a fixed suffix, and Fragment displays its 
 
 Draft values stay in the form until you select **Apply changes** or press Enter. Changes are applied together. If a setter rejects a value, an error identifies the field, the draft remains available to correct, and Current URL is unchanged.
 
+Username, Password, Port, and Show password are enabled only when the valid Current URL has a non-empty host and its protocol is not `file:`. URLs such as `mailto:`, `data:`, and hostless custom URLs disable these controls. The decision uses the committed URL: pending Protocol or Hostname drafts do not toggle the controls. Apply those changes successfully first to enable newly supported fields. Invalid or cleared Current URLs disable them even when the last valid state had a host.
+
+Changes are also checked against the URL being rebuilt. Explicitly clearing credentials and port can be combined with a switch to `file:` or removal of a custom URL's hostname in one Apply changes operation. Unsupported values are rejected without changing Current URL; they are never silently discarded.
+
 The Password field is masked by default; **Show password** reveals it. Current URL and Original URL still display credentials in their complete text, and Copy URL includes them.
 
 Direct edits to Current URL, Reset, and Clear resynchronize the component form, replacing pending component drafts.

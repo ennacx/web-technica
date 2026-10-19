@@ -1,10 +1,11 @@
+import { getById } from '#utils/dom.js';
 import { copyText } from '#utils/clipboard.js';
 import { componentNames, UrlInspectorDocument } from './document.js';
-import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments } from './components.js';
+import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments, canHaveCredentials } from './components.js';
 
 const state = new UrlInspectorDocument();
 
-const get = (id) => document.getElementById(`url-${id}`);
+const get = (id) => getById(`url-${id}`, document);
 
 const current = get('current');
 const rowsElement = get('query-rows');
@@ -39,6 +40,13 @@ function render({ rows = true, components = true } = {}){
     get('clear').disabled = !state.currentUrl;
     get('reset').disabled = (state.originalUrl === null || state.currentUrl === state.originalUrl);
     get('store').disabled = (!state.valid || state.currentUrl === state.originalUrl);
+
+    const credentialsEditable = (state.valid && canHaveCredentials(state.lastValidUrl));
+    for(const name of ['username', 'password', 'port']){
+        componentInputs[name].disabled = (!credentialsEditable);
+    }
+    get('show-password').disabled = (!credentialsEditable);
+    get('credentials-help').hidden = (!state.valid || credentialsEditable);
 
     get('length').textContent = `${state.currentUrl.length.toLocaleString('en-US')} characters`;
 
