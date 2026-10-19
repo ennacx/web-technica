@@ -51,6 +51,19 @@
     background: var(--color-surface-raised);
 }
 
+.tool-status-badge {
+    &[data-tool-status="develop"] {
+        color: var(--color-warning);
+    }
+}
+
+.tool-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
 .tag-list {
     display: flex;
     flex-wrap: wrap;

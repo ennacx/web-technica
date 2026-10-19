@@ -90,6 +90,17 @@ button:disabled {
   background: var(--color-surface-raised);
 }
 
+.tool-status-badge[data-tool-status=develop] {
+  color: var(--color-warning);
+}
+
+.tool-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
 .tag-list {
   display: flex;
   flex-wrap: wrap;
@@ -608,6 +619,13 @@ main.container {
   width: 18px;
   height: 18px;
   color: var(--color-accent);
+}
+.site-nav-dropdown .site-nav-tool-name {
+  flex: 1;
+  min-width: 0;
+}
+.site-nav-dropdown .tool-status-badge {
+  flex: none;
 }
 
 .github-link {

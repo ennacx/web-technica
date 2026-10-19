@@ -1,0 +1,7 @@
+{% macro toolStatus(tool) %}
+    {% if tool.status != 'published' %}
+        <span class="badge tool-status-badge" data-tool-status="{{ tool.status or 'unknown' }}">
+            {% if tool.status == 'develop' %}In development{% elif tool.status == 'planned' %}Planned{% else %}Coming soon{% endif %}
+        </span>
+    {% endif %}
+{% endmacro %}

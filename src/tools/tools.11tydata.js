@@ -10,6 +10,7 @@ export default {
 
             return tool;
         },
-        title: '{{ tool.name }}'
+        title: (data) => data.tool.name,
+        noindex: (data) => (data.tool.status !== 'published')
     }
 };

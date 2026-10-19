@@ -168,6 +168,15 @@ main.container {
         height: 18px;
         color: var(--color-accent);
     }
+
+    .site-nav-tool-name {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tool-status-badge {
+        flex: none;
+    }
 }
 
 .github-link {

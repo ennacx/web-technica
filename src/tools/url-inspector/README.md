@@ -4,7 +4,7 @@ Inspect, edit, and rebuild URLs and query parameters locally in your browser.
 
 [Open URL Inspector](https://ennacx.github.io/web-technica/url-inspector/) · [All tools and site information](../../../README.md)
 
-The current version is an interactive mockup with `develop` status. The page uses `noindex`. Additional editing features are future work, described in the [roadmap](#roadmap).
+The current version is an interactive mockup with `develop` status. The shared tool heading, homepage card, and header menu show an **In development** badge based on `src/_data/tools.json`. Non-published tool pages use `noindex`. Additional editing features are future work, described in the [roadmap](#roadmap).
 
 ## Start editing
 

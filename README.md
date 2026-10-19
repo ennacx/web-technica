@@ -10,6 +10,10 @@ Use the tools without registration or installation. Processing runs in your brow
 
 Implemented tools have their own README beside their page source, with detailed instructions, settings, limitations, and offline behavior. Status values below match the [tool registry](src/_data/tools.json): `published` tools are released, `develop` tools are in development, and `planned` tools are not yet available.
 
+The registry's `status` controls the shared site UI. Published tools have ordinary links; development tools with a URL appear in both the tool list and header menu with an **In development** badge. Planned tools appear as unlinked **Planned** cards and are omitted from the header. Tool page headings use the same status badge. Changing status requires rebuilding the site.
+
+Tool pages with a status other than `published` use `noindex` and are excluded from the sitemap. Development badges and this indexing restriction are removed automatically when a tool becomes `published`.
+
 | Tool / guide | Purpose | Status | Open the tool | Offline support |
 |---|---|---|---|---|
 | [Password Generator](src/tools/pwdgen/README.md) | Passwords, hexadecimal strings, and UUID v4 | `published` | [Open](https://ennacx.github.io/web-technica/pwdgen/) | Offline ready |

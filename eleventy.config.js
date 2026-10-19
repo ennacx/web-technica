@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { compile } from 'sass';
 import { buildKeygen } from './src/tools/keygen/scripts/build.mjs';
 import { buildPwaIcons, buildServiceWorker } from './scripts/build-pwa.mjs';
+import { isToolAvailable, groupAvailableTools } from './scripts/tool-status.mjs';
 
 export default function(eleventyConfig){
     // XMLは最初のバイトで必ずXML宣言をしなければならないため、ビルド時に先頭と文末をtrimする。
@@ -13,12 +14,6 @@ export default function(eleventyConfig){
         }
 
         return content;
-    });
-
-    eleventyConfig.addFilter('absoluteUrl', (url, origin) => {
-        const filteredUrl = eleventyConfig.getFilter('url')(url);
-
-        return new URL(filteredUrl, origin).href;
     });
 
     // サイトマップのコレクションを登録
@@ -107,28 +102,12 @@ export default function(eleventyConfig){
         }
     });
 
-    eleventyConfig.addFilter('groupPublishedTools', (tools) => {
-        const categories = new Map();
+    eleventyConfig.addFilter('isToolAvailable', isToolAvailable);
+    eleventyConfig.addFilter('groupAvailableTools', groupAvailableTools);
+    eleventyConfig.addFilter('absoluteUrl', (url, origin) => {
+        const filteredUrl = eleventyConfig.getFilter('url')(url);
 
-        for(const tool of tools){
-            if(tool.status !== 'published'){
-                continue;
-            }
-
-            const category = tool.category;
-
-            if(!category){
-                continue;
-            }
-
-            if(!categories.has(category)){
-                categories.set(category, []);
-            }
-
-            categories.get(category).push(tool);
-        }
-
-        return Array.from(categories, ([name, tools]) => ({ name, tools }));
+        return new URL(filteredUrl, origin).href;
     });
 
     const passthrough = {
