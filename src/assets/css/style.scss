@@ -32,6 +32,10 @@ a {
     outline-offset: 5px;
 }
 
+:is(input, textarea, select, button, .button):focus-visible {
+    outline-offset: var(--focus-control-offset);
+}
+
 h1, h2, h3 {
     font-weight: 650;
     line-height: 1.35;

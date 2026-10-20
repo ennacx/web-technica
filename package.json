@@ -12,7 +12,7 @@
         "node": ">=24"
     },
     "scripts": {
-        "dev": "eleventy --serve --pathprefix=/web-technica/",
+        "dev": "eleventy --serve --port=18080 --pathprefix=/web-technica/",
         "build:keygen": "npm run build --workspace @web-technica/keygen",
         "build": "eleventy",
         "build:pages": "eleventy --pathprefix=/web-technica/",

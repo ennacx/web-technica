@@ -187,11 +187,6 @@ main.json-editor {
     border-radius: 0;
     background: transparent;
     color: var(--color-text);
-
-
-    &:focus-visible {
-        outline-offset: -3px;
-    }
 }
 
 .json-display {

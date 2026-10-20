@@ -15,10 +15,6 @@ main.url-inspector {
     .input {
         font-family: var(--font-mono);
         font-size: 13px;
-
-        &:focus-visible {
-            outline-offset: -2px;
-        }
     }
 
     .button {
@@ -151,7 +147,7 @@ main.url-inspector {
 
     &:focus-within {
         outline: 2px solid var(--color-accent-hover);
-        outline-offset: -2px;
+        outline-offset: var(--focus-control-offset);
     }
 
     .input {
@@ -292,10 +288,6 @@ main.url-inspector {
     .button {
         min-width: 32px;
         padding: 8px;
-
-        &:focus-visible {
-            outline-offset: -2px;
-        }
     }
 }
 

@@ -179,9 +179,6 @@ main.json-editor {
   background: transparent;
   color: var(--color-text);
 }
-.json-input:focus-visible {
-  outline-offset: -3px;
-}
 
 .json-display {
   display: flex;

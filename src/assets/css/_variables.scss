@@ -27,6 +27,7 @@ $monospace-font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mo
         --font-ui: #{$sans-serif-font-family};
         --font-mono: #{$monospace-font-family};
         --radius-control: 8px;
+        --focus-control-offset: -2px;
         --radius-panel: 12px;
         --content-width: 1120px;
     }

@@ -72,7 +72,6 @@ main.pwdgen {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
 .pwdgen .code-sample {
   margin-block: 8px;
   padding: 8px 12px;
@@ -148,13 +147,13 @@ main.pwdgen {
   gap: 24px;
   margin-block-start: 16px;
 }
-.pwdgen-entropy-row .entropy-meter {
-  flex: 1;
-}
 .pwdgen-entropy-row p {
   font-size: 12px;
   white-space: nowrap;
   color: var(--color-text-muted);
+}
+.pwdgen-entropy-row .entropy-meter {
+  flex: 1;
 }
 
 .pwdgen-entropy-note {

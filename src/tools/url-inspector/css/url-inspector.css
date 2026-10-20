@@ -15,9 +15,6 @@ main.url-inspector {
   font-family: var(--font-mono);
   font-size: 13px;
 }
-.url-workspace .input:focus-visible {
-  outline-offset: -2px;
-}
 .url-workspace .button .icon {
   width: 16px;
   height: 16px;
@@ -140,7 +137,7 @@ main.url-inspector {
 }
 .url-input-group:focus-within {
   outline: 2px solid var(--color-accent-hover);
-  outline-offset: -2px;
+  outline-offset: var(--focus-control-offset);
 }
 .url-input-group .input {
   flex: 1;
@@ -266,9 +263,6 @@ main.url-inspector {
 .url-query-table .button {
   min-width: 32px;
   padding: 8px;
-}
-.url-query-table .button:focus-visible {
-  outline-offset: -2px;
 }
 
 .url-row-order {

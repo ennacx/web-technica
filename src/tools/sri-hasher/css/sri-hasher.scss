@@ -1,22 +1,99 @@
 @use "../../../assets/css/mixin";
 
 // SRI固有の配置。フォームやパネルの基本形状は共通SCSSを使用する。
-main.sri-hasher { width: min(100% - 64px, 1120px); padding-block: 24px 48px; }
-.sri-layout { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); align-items: start; gap: 24px; }
-.sri-layout > .panel { min-width: 0; }
-.sri-source-options { display: flex; flex-wrap: wrap; gap: 12px 24px; }
-.sri-form-note { margin-block: 16px 24px; }
-.sri-layout .input + .field-help { margin-block-start: 8px; }
-.sri-layout [role="status"] { margin-block-start: 12px; }
-.sri-layout h2 { margin-block-end: 16px; font-size: 18px; }
+main.sri-hasher {
+    width: min(100% - 64px, 1120px);
+    padding-block: 24px 48px;
+}
+
+.sri-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: start;
+    gap: 24px;
+
+    h2 {
+        margin-block-end: 16px;
+        font-size: 18px;
+    }
+
+    & > .panel {
+        min-width: 0;
+    }
+
+    .input + .field-help {
+        margin-block-start: 8px;
+    }
+
+    .result-output {
+        margin: 0 0 12px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    [role="status"] {
+        margin-block-start: 12px;
+    }
+}
+
+.sri-hasher {
+    input[type="file"] {
+        max-width: 100%;
+        font-size: 13px;
+    }
+
+    input::file-selector-button {
+        margin-inline-end: 12px;
+        padding: 4px 8px;
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        background: var(--color-surface-raised);
+        color: var(--color-text);
+        cursor: pointer;
+    }
+}
+
+.sri-source-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+}
+
+.sri-form-note {
+    margin-block: 16px 24px;
+}
+
 .sri-result-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-block: 24px 12px; h3 { font-size: 14px; } }
-.sri-layout .result-output { margin: 0 0 12px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.8; }
-.sri-help { margin-block-start: 28px; color: var(--color-text-muted); font-size: 13px; h2 { margin-block-end: 12px; color: var(--color-text); font-size: 16px; } p + p { margin-block-start: 12px; } }
-.sri-hasher input[type="file"] { max-width: 100%; font-size: 13px; }
-.sri-hasher input::file-selector-button { margin-inline-end: 12px; padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 4px; background: var(--color-surface-raised); color: var(--color-text); cursor: pointer; }
+
+.sri-help {
+    margin-block-start: 28px;
+    color: var(--color-text-muted);
+    font-size: 13px;
+
+    h2 {
+        margin-block-end: 12px;
+        color: var(--color-text);
+        font-size: 16px;
+    }
+
+    p + p {
+        margin-block-start: 12px;
+    }
+}
 
 @include mixin.mobile {
-    main.sri-hasher { width: calc(100% - 40px); padding-block: 16px 32px; }
-    .sri-layout { grid-template-columns: minmax(0, 1fr); }
-    .sri-layout > .panel { padding: 20px; }
+    main.sri-hasher {
+        width: calc(100% - 40px);
+        padding-block: 16px 32px;
+    }
+
+    .sri-layout {
+        grid-template-columns: minmax(0, 1fr);
+
+        & > .panel {
+            padding: 20px;
+        }
+    }
 }
