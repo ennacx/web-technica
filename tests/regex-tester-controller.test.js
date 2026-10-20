@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createExecutionController } from '../src/tools/regex-tester/js/controller.js';
-import { createResult } from '../src/tools/regex-tester/js/result.js';
+import { createResult, LIMITS, normalizeTimeoutMs } from '../src/tools/regex-tester/js/result.js';
 
 const sample = { engine: 'javascript', pattern: 'a', text: 'abc', flags: 'g', mode: 'auto' };
 function fixture(t){
@@ -116,4 +116,57 @@ test('worker errors, startup failures, input limits, cancellation and disposal s
     broken.run(sample);
     assert.equal(errors.at(-1).result.error.code, 'worker-unavailable');
     broken.dispose();
+});
+
+test('timeout settings are bounded, snapped to steps and captured separately for each run', (t) => {
+    assert.equal(normalizeTimeoutMs(-1), LIMITS.timeoutMinMs);
+    assert.equal(normalizeTimeoutMs(Infinity), LIMITS.timeoutDefaultMs);
+    assert.equal(normalizeTimeoutMs(NaN), LIMITS.timeoutDefaultMs);
+    assert.equal(normalizeTimeoutMs(1234), 1200);
+    const f = fixture(t);
+    const snapshot = { ...sample, timeoutMs: 2200 };
+    f.controller.run(snapshot);
+    snapshot.timeoutMs = 500;
+    f.tick(2199);
+    assert.equal(f.latest().status, 'running', 'later changes do not alter an active deadline');
+    f.tick(1);
+    assert.equal(f.latest().status, 'timeout');
+    assert.match(f.latest().result.error.message, /2200 ms/);
+    assert.equal(f.adapters[0].terminated, true);
+    for(const [requested, expected] of [[0, LIMITS.timeoutMinMs], [Infinity, LIMITS.timeoutDefaultMs], [100000, LIMITS.timeoutMaxMs]]){
+        f.controller.run({ ...sample, timeoutMs: requested });
+        assert.equal(f.adapters.at(-1).request.timeoutMs, expected);
+        f.tick(expected - 1);
+        assert.equal(f.latest().status, 'running');
+        f.tick(1);
+        assert.equal(f.latest().status, 'timeout');
+        assert.equal(f.adapters.at(-1).terminated, true);
+    }
+});
+
+test('empty pattern or text cancels work and never schedules or runs a Worker in either mode', (t) => {
+    const f = fixture(t);
+    for(const mode of ['auto', 'manual']){
+        for(const empty of [{ pattern: '' }, { text: '' }, { pattern: '', text: '' }]){
+            f.controller.update(sample);
+            f.controller.update({ ...sample, ...empty, mode });
+            f.tick(500);
+            assert.equal(f.latest().status, 'idle');
+            assert.equal(f.adapters.length, 0, 'clearing input cancels pending work');
+            f.controller.run({ ...sample, ...empty, mode });
+            assert.equal(f.latest().status, 'idle');
+            assert.equal(f.adapters.length, 0, 'direct Run is guarded as well');
+        }
+    }
+    f.controller.run(sample);
+    const running = f.adapters[0];
+    f.controller.update({ ...sample, text: '' });
+    assert.equal(running.terminated, true);
+    running.reply(createResult(running.request));
+    assert.equal(f.latest().status, 'idle', 'late result cannot restore a cleared result');
+    f.tick(2000);
+    assert.equal(f.adapters.length, 1);
+    f.controller.update({ ...sample, pattern: ' ', text: ' ' });
+    f.tick(300);
+    assert.equal(f.adapters.length, 2, 'whitespace is meaningful input and is not trimmed');
 });

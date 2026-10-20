@@ -2,18 +2,38 @@
 export const LIMITS = Object.freeze({
     // 実行前の入力待ち時間 (ms)
     debounceMs: 300,
-    // 実行開始後のマッチングプロセスの制限時間 (ms)
-    timeoutMs: 1500,
 
-    patternLength: 10000,
-    textLength: 1000000,
+    // 実行開始後のプロセスのデフォルト制限時間 (ms)
+    timeoutDefaultMs: 1500,
+    // 実行開始後のプロセスの最小制限時間 (ms)
+    timeoutMinMs: 500,
+    // 実行開始後のプロセスの最大制限時間 (ms)
+    timeoutMaxMs: 10_000,
+    // 実行開始後のプロセスの制限時間ステップ値 (ms)
+    timeoutStepMs: 100,
+
+    patternLength: 10_000,
+    textLength: 1_000_000,
     matches: 1000,
-    captureRanges: 10000,
+    captureRanges: 10_000,
     displayedMatches: 100,
     displayedGroups: 100,
-    highlightedLength: 100000,
+    highlightedLength: 100_000,
     displayedValueLength: 1000
 });
+
+/**
+ * タイムアウト時間範囲内になるよう調整された値を返却する。
+ *
+ * @param {number} value - タイムアウト時間 (ms)
+ * @return {number} - 範囲内になるよう調整されたタイムアウト時間
+ */
+export function normalizeTimeoutMs(value){
+    const duration = (Number.isFinite(value)) ? value : LIMITS.timeoutDefaultMs;
+    const bounded = Math.max(LIMITS.timeoutMinMs, Math.min(LIMITS.timeoutMaxMs, duration));
+
+    return LIMITS.timeoutMinMs + Math.round((bounded - LIMITS.timeoutMinMs) / LIMITS.timeoutStepMs) * LIMITS.timeoutStepMs;
+}
 
 /**
  * 正規表現エンジンに依存せず、Structured cloneが可能な結果を返す。

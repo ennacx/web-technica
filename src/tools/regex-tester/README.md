@@ -6,19 +6,19 @@ Test JavaScript regular expressions in a dedicated module Worker. Inspect whole 
 
 ## Pattern, flags, and execution
 
-Enter a pattern without surrounding `/` delimiters and enter your test text. The initial email example is evaluated using the same execution path as your input. Available flags are `g` (all matches), `i` (ignore case), `m` (multiline anchors), `s` (dot matches newlines), and `u` (Unicode mode). Without `g`, only the first match is returned. Empty patterns are valid and can produce empty matches. The engine adds `d` internally to obtain exact capture offsets.
+Enter a pattern without surrounding `/` delimiters and enter your test text. Both inputs start empty. Choose Load sample to try an email-matching example with named captures; it uses the same execution path as your input. Available flags are `g` (all matches), `i` (ignore case), `m` (multiline anchors), `s` (dot matches newlines), and `u` (Unicode mode). Without `g`, only the first match is returned. If either the pattern or test text is empty, Auto does not schedule execution and Run is disabled. Clearing either input cancels pending or running work and clears results; the status identifies the missing input. Whitespace is meaningful and is not trimmed. Nonempty patterns that produce zero-width matches, such as `(?:)` or lookarounds, remain supported. The engine adds `d` internally to obtain exact capture offsets.
 
 **Auto**, the default, waits 300 ms after the last input change. **Manual** waits for **Run**. Run also executes immediately in Auto. Changing pattern, flags, text, or mode cancels pending and running work and clears obsolete results. IME composition postpones Auto until composition ends. Results view changes do not execute the engine.
 
-The controller starts a fresh Worker for each execution and terminates it after completion, cancellation, or failure. A 1,500 ms timeout includes Worker startup and execution. If it expires, the Worker is terminated and the mode switches to Manual. Edit the input and choose Run to retry, or explicitly switch back to Auto. Nothing is automatically retried after timeout. Navigating away cancels execution; returning from the browser's back/forward cache restores the selected mode.
+The controller starts a fresh Worker for each execution and terminates it after completion, cancellation, or failure. **Timeout**, beside Run mode, adjusts the execution limit from **0.5 to 10.0 seconds**, in **0.1-second steps**, initially **1.5 seconds**. Dragging updates the displayed seconds; committing a change cancels obsolete work and schedules Auto, or waits for Run in Manual. The chosen limit is captured for each request and includes Worker startup and execution. If it expires, the Worker is terminated and the mode switches to Manual. Edit the input or timeout and choose Run to retry, or explicitly switch back to Auto. Nothing is automatically retried after timeout. Load sample keeps your selected timeout; reloading restores the default. Navigating away cancels execution; returning from the browser's back/forward cache restores the selected mode.
 
 ## Results and offsets
 
 Expand a match to inspect captures. Numbered groups and named groups are shown as separate entries; a named capture therefore also appears in the numbered list. Positions are zero-based UTF-16 code-unit offsets with an exclusive end: `[start, end)`. Emoji can occupy two code units. Lookaround captures can be outside the whole match. `(not matched)` has no offsets; `(empty)` has equal start and end. Empty whole matches have a visible marker in Highlight.
 
-Choose **Highlight** to inspect a read-only rendering of the executed text snapshot, or **Matches** to return to the list. Source text remains editable and selectable in its textarea. Syntax errors, no matches, waiting, running, timeout, input limits, and Worker failures have separate status messages below the workspace. JavaScript does not supply a reliable syntax-error position, so none is invented.
+Choose **Highlight** to inspect a read-only rendering of the executed text snapshot, or **Matches** to return to the list. Source text remains editable and selectable in its textarea. Match metadata, syntax errors, no matches, waiting, running, timeout, input limits, and Worker failures appear in the input heading beside the JavaScript badge (below the heading on mobile). The status uses a single-line-height viewport, vertically centered with the heading and badge, so updates do not move the pattern field or textarea. Longer messages wrap and scroll vertically within the focusable status area. JavaScript does not supply a reliable syntax-error position, so none is invented.
 
-**Restore sample**, below results beside Reset layout, restores the example pattern, flags, and text in the current run mode. In Manual, choose Run afterwards. There is no copy or save command yet; use normal text selection. Inputs and layout reset on reload.
+**Load sample**, below results beside Reset layout, loads the built-in example pattern, flags, and text in the current run mode. In Manual, choose Run afterwards. There is no copy or save command yet; use normal text selection. Inputs and layout reset on reload.
 
 ## Workspace layout
 
@@ -33,7 +33,8 @@ These provisional limits provide a starting guard while ReDoS and DOM performanc
 | Limit | Initial value |
 |---|---|
 | Pattern / test text | 10,000 / 1,000,000 UTF-16 code units |
-| Execution timeout / Auto debounce | 1,500 ms / 300 ms |
+| Execution timeout | 500–10,000 ms; initial 1,500 ms; step 100 ms |
+| Auto debounce | 300 ms |
 | Collected matches | 1,000 |
 | Collected capture entries | 10,000, counting numbered and named entries |
 | Visible match cards | First 100 |
@@ -64,7 +65,7 @@ The current flow stays within the tool, using native ES modules without a bundle
 | `render.js` | Text-only DOM rendering, bounded match list, highlight and status |
 | `split-pane.js` | Independent workspace height control |
 
-Requests include `requestId`, `engine`, `pattern`, `flags`, and `text`. Results include `requestId`, `engine`, `offsetUnit: 'utf-16'`, `status`, `matches`, `truncated`, `truncationReason`, `elapsedMs`, and `error`. Matches carry `start`, `end`, numbered `groups`, and `namedGroups`. Capture ranges have nullable `start` and `end`; named ranges use `name`, numbered ranges use `index`. Text is derived from the request snapshot instead of repeated in Worker messages. Errors carry `code`, `message`, and nullable `position`. Future engines must normalize their native offsets before returning this contract.
+Requests include `requestId`, `engine`, `pattern`, `flags`, `text`, and the controller's bounded `timeoutMs`. Timeout bounds, default and step live in `LIMITS`; the controller also clamps and rounds direct callers' settings. Results include `requestId`, `engine`, `offsetUnit: 'utf-16'`, `status`, `matches`, `truncated`, `truncationReason`, `elapsedMs`, and `error`. Matches carry `start`, `end`, numbered `groups`, and `namedGroups`. Capture ranges have nullable `start` and `end`; named ranges use `name`, numbered ranges use `index`. Text is derived from the request snapshot instead of repeated in Worker messages. Errors carry `code`, `message`, and nullable `position`. Future engines must normalize their native offsets before returning this contract.
 
 Next: measure ReDoS cancellation and Worker startup costs in real browsers; profile large-input rendering and memory; tune limits, incremental rendering and pagination as evidence warrants. Then specify PCRE2 WASM / Python runtime integration and their native offset conversion. PCRE2, Python, replacement, copy, and save are not implemented. Publication remains a separate step after verification.
 

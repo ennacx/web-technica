@@ -36,8 +36,6 @@ function fixture(){
         createDocumentFragment: () => new Element('fragment')
     };
     const get = (name) => nodes.get('regex-' + name);
-    get('pattern').value = '(?<name>a)';
-    get('text').value = 'aa';
     get('mode').value = 'auto';
     return { root, get, created, flags };
 }
@@ -79,7 +77,7 @@ test('renderer marks zero-width matches and bounds match lists, captures and hig
     assert.match(f.get('status').textContent, /first 100/);
 });
 
-test('index handles snapshots, IME, sample restore, rendering and page lifecycle', async (t) => {
+test('index handles empty startup, sample loading, snapshots, IME, rendering and page lifecycle', async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
     const f = fixture();
     const old = Object.fromEntries(['document', 'window', 'Worker', 'ResizeObserver', 'getComputedStyle'].map((name) => [name, globalThis[name]]));
@@ -96,11 +94,34 @@ test('index handles snapshots, IME, sample restore, rendering and page lifecycle
     };
     t.after(() => { lifecycle.pagehide?.(); Object.assign(globalThis, old); });
     await import('../src/tools/regex-tester/js/index.js');
+    assert.equal(f.get('timeout').min, String(LIMITS.timeoutMinMs));
+    assert.equal(f.get('timeout').max, String(LIMITS.timeoutMaxMs));
+    assert.equal(f.get('timeout').step, String(LIMITS.timeoutStepMs));
+    assert.equal(f.get('timeout-value').textContent, '1.5 s');
+    assert.equal(f.get('run').disabled, true);
+    assert.equal(f.get('status').textContent, 'Enter a pattern and test text.');
+    t.mock.timers.tick(500);
+    assert.equal(workers.length, 0, 'empty initial fields do not execute');
+    f.get('sample').fire('click');
+    const samplePattern = f.get('pattern').value;
+    const sampleText = f.get('text').value;
+    assert.ok(samplePattern.includes('(?<name>'));
+    assert.ok(sampleText.includes('alice@example.com'));
     assert.equal(f.get('match-count').textContent, 'Waiting…');
     t.mock.timers.tick(300);
     assert.equal(workers.length, 1);
     workers[0].onmessage({ data: executeJavaScript(workers[0].request) });
-    assert.equal(f.get('match-count').textContent, '2 matches');
+    assert.equal(f.get('match-count').textContent, '3 matches');
+    assert.deepEqual(executeJavaScript(workers[0].request).matches.map((match) => match.namedGroups.map((group) => group.name)), [
+        ['name', 'domain'], ['name', 'domain'], ['name', 'domain']
+    ]);
+    f.get('timeout').value = '2200';
+    f.get('timeout').fire('input');
+    assert.equal(f.get('timeout-value').textContent, '2.2 s');
+    assert.equal(f.get('timeout').attributes['aria-valuetext'], '2.2 seconds');
+    assert.equal(f.get('match-count').textContent, '3 matches', 'dragging only updates the displayed setting');
+    f.get('timeout').fire('change');
+    assert.equal(f.get('match-count').textContent, 'Waiting…', 'committing the setting schedules Auto');
     const snapshot = workers[0].request;
     f.get('pattern').value = 'new';
     f.get('pattern').fire('compositionstart');
@@ -109,7 +130,7 @@ test('index handles snapshots, IME, sample restore, rendering and page lifecycle
     f.get('run').fire('click');
     t.mock.timers.tick(500);
     assert.equal(workers.length, 1, 'composition defers both Auto and Run');
-    assert.equal(snapshot.pattern, '(?<name>a)', 'old snapshot is not mutated');
+    assert.equal(snapshot.pattern, samplePattern, 'old snapshot is not mutated');
     f.get('pattern').fire('compositionend');
     assert.equal(f.get('run').disabled, false);
     assert.equal(f.get('match-count').textContent, 'Waiting…');
@@ -123,17 +144,33 @@ test('index handles snapshots, IME, sample restore, rendering and page lifecycle
     f.get('text').fire('input');
     f.get('sample').fire('click');
     assert.equal(f.get('mode').value, 'manual');
-    assert.equal(f.get('pattern').value, '(?<name>a)');
-    assert.equal(f.get('text').value, 'aa');
+    assert.equal(f.get('pattern').value, samplePattern);
+    assert.equal(f.get('text').value, sampleText);
     assert.equal(f.get('flags-summary').textContent, 'gi');
     t.mock.timers.tick(500);
     assert.equal(workers.length, 1, 'Manual cancels the Auto scheduled at composition end');
     f.get('run').fire('click');
     assert.equal(workers[1].request.mode, 'manual');
+    assert.equal(workers[1].request.timeoutMs, 2200, 'Manual Run uses the selected timeout after sample restore');
     lifecycle.pagehide();
     assert.equal(workers[1].terminated, true);
     workers[1].onmessage({ data: executeJavaScript(workers[1].request) });
     assert.equal(f.get('match-count').textContent, 'Not run');
     lifecycle.pageshow({ persisted: true });
     assert.equal(f.get('mode').value, 'manual');
+    f.get('pattern').value = '';
+    f.get('pattern').fire('input');
+    assert.equal(f.get('run').disabled, true);
+    assert.equal(f.get('status').textContent, 'Enter a pattern.');
+    assert.equal(f.get('matches').children.length, 0);
+    f.get('run').fire('click');
+    assert.equal(workers.length, 2);
+    f.get('text').value = '';
+    f.get('text').fire('input');
+    assert.equal(f.get('status').textContent, 'Enter a pattern and test text.');
+    f.get('pattern').value = 'a';
+    f.get('pattern').fire('input');
+    assert.equal(f.get('status').textContent, 'Enter test text.');
+    f.get('sample').fire('click');
+    assert.equal(f.get('run').disabled, false);
 });

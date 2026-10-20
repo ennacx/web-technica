@@ -96,6 +96,12 @@ main.regex-tester {
   outline: none;
 }
 
+.regex-pattern-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+
 .regex-flags {
   display: flex;
   flex-wrap: wrap;
@@ -133,6 +139,28 @@ main.regex-tester {
 .regex-text-heading {
   flex: none;
   padding: 10px 20px;
+}
+
+.regex-timeout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.regex-timeout input {
+  flex: none;
+  width: 120px;
+  min-width: 0;
+  min-height: 44px;
+  accent-color: var(--color-accent);
+}
+.regex-timeout output {
+  flex: none;
+  width: 6ch;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
 
 #regex-text {
@@ -259,6 +287,7 @@ main.regex-tester {
 }
 
 .regex-status-bar {
+  justify-content: flex-end;
   min-height: 60px;
   padding-block: 8px;
   font-size: 12px;
@@ -279,7 +308,19 @@ main.regex-tester {
 }
 
 #regex-status {
+  min-width: 0;
+  height: 1.5em;
+  margin: 0;
+  overflow: auto;
   overflow-wrap: anywhere;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+}
+#regex-status:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: var(--focus-control-offset);
 }
 #regex-status[data-state=syntax-error], #regex-status[data-state=runtime-error], #regex-status[data-state=input-limit] {
   color: var(--color-danger);
@@ -302,12 +343,24 @@ main.regex-tester {
   .regex-results-toolbar {
     padding-inline: 16px;
   }
+  .regex-pattern-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .regex-pattern-heading .badge {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  #regex-status {
+    grid-column: 1/-1;
+    grid-row: 2;
+    text-align: left;
+  }
   .regex-text-heading,
   .regex-results-scroll {
     padding-inline: 16px;
   }
-  .regex-pattern-field input,
-  #regex-text {
+  #regex-text,
+  .regex-pattern-field input {
     font-size: 16px;
   }
   #regex-text {

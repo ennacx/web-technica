@@ -178,9 +178,15 @@ export function createRenderer(root){
                     );
 
                 get('match-count').textContent = label;
-                get('results-empty').textContent = (result?.error) ? 'No results. Check the status below.' : 'No results yet.';
+                get('results-empty').textContent = (result?.error) ? 'No results. Check the status above.' : 'No results yet.';
+                const missingInputMessage = (input?.pattern === '' && input?.text === '') ?
+                    'Enter a pattern and test text.' :
+                    (input?.pattern === '') ? 'Enter a pattern.' :
+                    (input?.text === '') ? 'Enter test text.' : null;
+
                 statusNode.textContent =
                     result?.error?.message ??
+                    missingInputMessage ??
                     ((status === 'scheduled') ?
                         'Waiting for input to settle…' :
                         ((status === 'running') ?

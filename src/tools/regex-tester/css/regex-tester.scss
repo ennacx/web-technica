@@ -97,6 +97,12 @@ main.regex-tester {
     }
 }
 
+.regex-pattern-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+}
+
 .regex-flags {
     display: flex;
     flex-wrap: wrap;
@@ -138,6 +144,30 @@ main.regex-tester {
 .regex-text-heading {
     flex: none;
     padding: 10px 20px;
+}
+
+.regex-timeout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    input {
+        flex: none;
+        width: 120px;
+        min-width: 0;
+        min-height: 44px;
+        accent-color: var(--color-accent);
+    }
+
+    output {
+        flex: none;
+        width: 6ch; // Reserve space for "10.0 s", including the unit and space.
+        color: var(--color-text);
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+        white-space: nowrap;
+    }
 }
 
 #regex-text {
@@ -282,6 +312,7 @@ main.regex-tester {
 }
 
 .regex-status-bar {
+    justify-content: flex-end;
     min-height: 60px;
     padding-block: 8px;
     font-size: 12px;
@@ -302,7 +333,20 @@ main.regex-tester {
 }
 
 #regex-status {
+    min-width: 0;
+    height: 1.5em;
+    margin: 0;
+    overflow: auto;
     overflow-wrap: anywhere;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: right;
+
+    &:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: var(--focus-control-offset);
+    }
 
     &[data-state="syntax-error"],
     &[data-state="runtime-error"],
@@ -333,13 +377,28 @@ main.regex-tester {
         padding-inline: 16px;
     }
 
+    .regex-pattern-heading {
+        grid-template-columns: minmax(0, 1fr) auto;
+
+        .badge {
+            grid-column: 2;
+            grid-row: 1;
+        }
+    }
+
+    #regex-status {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        text-align: left;
+    }
+
     .regex-text-heading,
     .regex-results-scroll {
         padding-inline: 16px;
     }
 
-    .regex-pattern-field input,
-    #regex-text {
+    #regex-text,
+    .regex-pattern-field input {
         font-size: 16px;
     }
 

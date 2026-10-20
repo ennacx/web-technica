@@ -19,8 +19,12 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
 <div id="regex-workspace" class="regex-workspace">
     <section id="regex-input-pane" class="regex-input-pane" aria-labelledby="regex-pattern-label">
         <div class="regex-pattern-settings">
-            <div class="regex-section-heading"><h2 id="regex-pattern-label"><label for="regex-pattern">Regular expression</label></h2><span class="badge">JavaScript</span></div>
-            <div class="regex-pattern-field"><span aria-hidden="true">/</span><input id="regex-pattern" type="text" value="(?&lt;name&gt;[\w.+-]+)@(?&lt;domain&gt;[\w.-]+\.[a-z]{2,})" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="regex-status"><span aria-hidden="true">/</span><span id="regex-flags-summary">gi</span></div>
+            <div class="regex-section-heading regex-pattern-heading">
+                <h2 id="regex-pattern-label"><label for="regex-pattern">Regular expression</label></h2>
+                <p id="regex-status" role="status" aria-live="polite" aria-atomic="true" tabindex="0" aria-label="Execution status">Not run.</p>
+                <span class="badge">JavaScript</span>
+            </div>
+            <div class="regex-pattern-field"><span aria-hidden="true">/</span><input id="regex-pattern" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="regex-status" placeholder="Enter a pattern without / delimiters, e.g. \b\w+\b"><span aria-hidden="true">/</span><span id="regex-flags-summary">gi</span></div>
             <div class="regex-options">
                 <div class="regex-flags" role="group" aria-label="Regular expression flags">
                     <label title="Global search"><input type="checkbox" value="g" checked>g <span>global</span></label>
@@ -29,14 +33,19 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
                     <label title="Dot matches newlines"><input type="checkbox" value="s">s <span>dot all</span></label>
                     <label title="Unicode mode"><input type="checkbox" value="u">u <span>unicode</span></label>
                 </div>
-                <div class="regex-run-controls"><label for="regex-mode">Run mode</label><select id="regex-mode" class="input"><option value="auto">Auto</option><option value="manual">Manual</option></select><button type="button" id="regex-run" class="button button-primary">Run</button></div>
+                <div class="regex-run-controls">
+                    <div class="regex-timeout">
+                        <label for="regex-timeout">Timeout</label>
+                        <input type="range" id="regex-timeout" aria-describedby="regex-timeout-help" disabled>
+                        <output id="regex-timeout-value" for="regex-timeout" aria-live="off">—</output>
+                        <span id="regex-timeout-help" class="visually-hidden">Maximum time per execution. Auto reruns after a change; Manual waits for Run.</span>
+                    </div>
+                    <label for="regex-mode">Run mode</label><select id="regex-mode" class="input"><option value="auto">Auto</option><option value="manual">Manual</option></select><button type="button" id="regex-run" class="button button-primary">Run</button>
+                </div>
             </div>
         </div>
         <div class="regex-text-heading regex-section-heading"><h2><label for="regex-text">Test text</label></h2><span id="regex-text-stats" class="field-help"></span></div>
-        <textarea id="regex-text" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="regex-status">Contact the team:
-  alice@example.com — Product
-  bob@web-technica.dev — Engineering
-  support@example.org — Support</textarea>
+        <textarea id="regex-text" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="regex-status" placeholder="Type or paste text to test your pattern, or choose Load sample below."></textarea>
     </section>
 
     <div id="regex-splitter" class="regex-splitter" role="separator" tabindex="0" aria-label="Resize input panel" aria-orientation="horizontal" aria-controls="regex-input-pane" aria-valuemin="400" aria-valuemax="1600" aria-valuenow="480" aria-describedby="regex-resize-help"><span aria-hidden="true"></span></div>
@@ -60,9 +69,8 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
 </div>
 
 <div class="regex-status-bar">
-    <p id="regex-status" role="status" aria-live="polite" aria-atomic="true">Not run.</p>
     <div class="regex-bottom-actions">
-        <button type="button" id="regex-sample" class="button">{{ icon('code') }} Restore sample</button>
+        <button type="button" id="regex-sample" class="button">{{ icon('code') }} Load sample</button>
         <button type="button" id="regex-reset-layout" class="button">{{ icon('refresh') }} Reset layout</button>
     </div>
 </div>

@@ -1,11 +1,11 @@
 import { createEngineAdapter } from './engine-adapter.js';
-import { LIMITS, failure, validateInput } from './result.js';
+import { LIMITS, failure, validateInput, normalizeTimeoutMs } from './result.js';
 
 export function createExecutionController({
     onState,
     createAdapter = createEngineAdapter,
     debounceMs = LIMITS.debounceMs,
-    timeoutMs = LIMITS.timeoutMs
+    timeoutMs = LIMITS.timeoutDefaultMs
 }){
     let sequence = 0;
     let debounce = null;
@@ -34,7 +34,8 @@ export function createExecutionController({
 
         stop();
 
-        input = { engine: 'javascript', ...snapshot };
+        input = { engine: 'javascript', ...snapshot,
+            timeoutMs: normalizeTimeoutMs(snapshot.timeoutMs ?? timeoutMs) };
         mode = (input.mode === 'manual') ? 'manual' : 'auto';
     }
 
@@ -44,6 +45,11 @@ export function createExecutionController({
         }
 
         debounce = null;
+
+        if(input.pattern === '' || input.text === ''){
+            emit('idle');
+            return;
+        }
 
         const request = { ...input, requestId: id };
         const invalid = validateInput(request);
@@ -79,8 +85,8 @@ export function createExecutionController({
                 mode = 'manual';
 
                 // finish terminates the running Worker; a timer alone cannot stop RegExp.
-                finish(failure(request, 'timeout', 'timeout', `Execution exceeded ${timeoutMs} ms. Switched to Manual; edit the pattern or text before retrying.`));
-            }, timeoutMs);
+                finish(failure(request, 'timeout', 'timeout', `Execution exceeded ${request.timeoutMs} ms. Switched to Manual; edit the pattern or text before retrying.`));
+            }, request.timeoutMs);
 
             adapter.execute(
                 request,
@@ -108,7 +114,7 @@ export function createExecutionController({
 
             invalidate(snapshot);
 
-            if(mode === 'manual' || composing){
+            if(mode === 'manual' || composing || input.pattern === '' || input.text === ''){
                 emit('idle');
 
                 return;
