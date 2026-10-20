@@ -24,11 +24,12 @@
     {
         "name": "Regex Tester",
         "slug": "regex-tester",
+        "url": "/regex-tester/",
         "description": "Test regular expressions with match highlighting and capture groups.",
         "offline": "ready",
         "category": "Test",
         "icon": "regex",
-        "status": "planned",
+        "status": "develop",
         "tags": ["Regex", "Pattern", "Match", "Replace"]
     },
     {

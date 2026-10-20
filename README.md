@@ -18,7 +18,7 @@ Tool pages with a status other than `published` use `noindex` and are excluded f
 |---|---|---|---|---|
 | [Password Generator](src/tools/pwdgen/README.md) | Passwords, hexadecimal strings, and UUID v4 | `published` | [Open](https://ennacx.github.io/web-technica/pwdgen/) | Offline ready |
 | [URL Inspector](src/tools/url-inspector/README.md) | Inspect, edit, and rebuild URLs and query parameters | `develop` | [Open mockup](https://ennacx.github.io/web-technica/url-inspector/) | Offline ready |
-| Regex Tester | Test regular expressions with match highlighting and capture groups | `planned` | Not yet available | Offline ready (planned) |
+| [Regex Tester](src/tools/regex-tester/README.md) | Resizable split-pane UI with sample matches and capture groups | `develop` (UI mockup) | [Open mockup](https://ennacx.github.io/web-technica/regex-tester/) | Offline ready (mockup) |
 | [JSON Editor](src/tools/json-editor/README.md) | Edit, format, minify, validate, and naturally sort JSON | `published` | [Open](https://ennacx.github.io/web-technica/json-editor/) | Offline ready |
 | [Keypair Generator](src/tools/keygen/README.md) | Generate key pairs and export PEM, OpenSSH, or PPK | `published` | [Open](https://ennacx.github.io/web-technica/keygen/) | Offline ready |
 | [SRI Hasher](src/tools/sri-hasher/README.md) | Generate integrity values and HTML tags for JS/CSS | `published` | [Open](https://ennacx.github.io/web-technica/sri-hasher/) | Limited offline |
@@ -39,7 +39,7 @@ Capability labels describe the tool's features, not the current connection or ca
 
 Use your browser's **Install app** command, or **Add to Home Screen** on iPhone and iPad. Installation availability depends on your browser. The installed app opens the tool list.
 
-After the first successful online load and offline cache setup, published tools and the URL Inspector mockup can be opened offline. Planned tools are not yet available. SRI hashing from a URL still needs an internet connection; hashing local files works offline. Only the site's static files are cached. Passwords, keys, passphrases, JSON documents and file names, URLs entered into URL Inspector, selected files, and fetched SRI resources are not stored in the offline cache.
+After the first successful online load and offline cache setup, published tools and the URL Inspector and Regex Tester mockups can be opened offline. Planned tools are not yet available. SRI hashing from a URL still needs an internet connection; hashing local files works offline. Only the site's static files are cached. Passwords, keys, passphrases, JSON documents and file names, URLs entered into URL Inspector, regex patterns and test text, selected files, and fetched SRI resources are not stored in the offline cache.
 
 Updates download in the background. When an update is ready, close all Web-Technica tabs and app windows, then reopen the app to apply it. Active tools are never automatically reloaded.
 

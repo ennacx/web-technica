@@ -39,3 +39,7 @@ export function querySel(selector, root = globalThis.document) {
 export function querySelAll(selector, root = globalThis.document) {
     return root.querySelectorAll(selector);
 }
+
+export function create(tag, root = globalThis.document) {
+    return root.createElement(tag);
+}

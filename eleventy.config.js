@@ -46,6 +46,11 @@ export default function(eleventyConfig){
     eleventyConfig.addWatchTarget('src/tools/json-editor/css/**/*.scss');
     eleventyConfig.watchIgnores.add('src/tools/json-editor/css/**/*.css');
     eleventyConfig.watchIgnores.add('src/tools/json-editor/css/**/*.css.map');
+    // regex-tester
+    eleventyConfig.addWatchTarget('src/tools/regex-tester/js/**/*.js');
+    eleventyConfig.addWatchTarget('src/tools/regex-tester/css/**/*.scss');
+    eleventyConfig.watchIgnores.add('src/tools/regex-tester/css/**/*.css');
+    eleventyConfig.watchIgnores.add('src/tools/regex-tester/css/**/*.css.map');
     // url-inspector
     eleventyConfig.addWatchTarget('src/tools/url-inspector/js/**/*.js');
     eleventyConfig.addWatchTarget('src/tools/url-inspector/css/**/*.scss');
@@ -75,7 +80,8 @@ export default function(eleventyConfig){
             'src/tools/keygen/css/keygen',
             'src/tools/sri-hasher/css/sri-hasher',
             'src/tools/json-editor/css/json-editor',
-            'src/tools/url-inspector/css/url-inspector'
+            'src/tools/url-inspector/css/url-inspector',
+            'src/tools/regex-tester/css/regex-tester'
         ];
 
         for(const entry of entries){
@@ -119,6 +125,9 @@ export default function(eleventyConfig){
         // json-editor
         'src/tools/json-editor/js/*.js': 'json-editor/js',
         'src/tools/json-editor/css/*.css': 'json-editor/css',
+        // regex-tester
+        'src/tools/regex-tester/js/*.js': 'regex-tester/js',
+        'src/tools/regex-tester/css/*.css': 'regex-tester/css',
         // url-inspector
         'src/tools/url-inspector/js/*.js': 'url-inspector/js',
         'src/tools/url-inspector/css/*.css': 'url-inspector/css',
