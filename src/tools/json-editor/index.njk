@@ -74,7 +74,12 @@ javascriptNotice: Enable JavaScript to use the JSON editor. Your data is process
             <pre id="json-code" tabindex="0" aria-label="JSON display, read only" aria-describedby="json-syntax json-error"></pre>
         </div>
 
+    </div>
+
+    <div id="json-action-notice" class="json-action-notice" hidden>
+        <span id="json-action-label" class="json-action-label">Last action:</span>
         <p id="json-action-status" class="json-action-status" role="status" aria-live="polite" aria-atomic="true" aria-label="Last action"></p>
+        <button type="button" id="json-action-dismiss" class="button button-icon" aria-label="Dismiss notification" title="Dismiss notification">×</button>
     </div>
 
     <div class="json-status-bar">

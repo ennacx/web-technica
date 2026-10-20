@@ -18,6 +18,7 @@ const copyButton = get('json-copy');
 const downloadButton = get('json-download');
 const sampleButton = get('json-sample');
 const status = get('json-action-status');
+const actionNotice = get('json-action-notice');
 const validateButton = get('json-validate');
 const syntax = get('json-syntax');
 const syntaxText = get('json-syntax-text');
@@ -41,6 +42,16 @@ let validationTimer;
 let renderedViewText = null;
 let composing = false;
 let applyingAssistance = false;
+
+function setAction(message){
+    status.textContent = message;
+    actionNotice.hidden = !message;
+}
+
+get('json-action-dismiss').addEventListener('click', () => {
+    (viewing ? code : input).focus({ preventScroll: true });
+    setAction('');
+});
 
 function showValidation(result){
     syntax.dataset.state = result.state;
@@ -164,7 +175,7 @@ function setMode(view){
 
     update(true);
 
-    status.textContent = '';
+    setAction('');
 
     get('json-mode-help').textContent = (view) ?
         'View: saved display settings apply to valid JSON. Validation uses the source. Copy and Save use the displayed text.' :
@@ -191,7 +202,7 @@ function setMode(view){
 input.addEventListener('input', () => {
     editorDocument.setSource(input.value);
 
-    status.textContent = '';
+    setAction('');
 
     update();
 });
@@ -235,7 +246,7 @@ input.addEventListener('beforeinput', (event) => {
     input.setSelectionRange(edit.caret, edit.caret);
     editorDocument.setSource(input.value);
 
-    status.textContent = '';
+    setAction('');
 
     update();
 });
@@ -286,7 +297,7 @@ filenameForm.addEventListener('submit', (event) => {
 
     closeFilenameEditor();
 
-    status.textContent = `File name changed to ${name}.`;
+    setAction(`File name changed to ${name}.`);
 });
 
 filenameInput.addEventListener('input', () => {
@@ -306,7 +317,7 @@ filenameInput.addEventListener('keydown', (event) => {
 
 validateButton.addEventListener('click', () => {
     const result = validate();
-    status.textContent = result.state === 'empty' ? 'Enter JSON to validate.' : '';
+    setAction(result.state === 'empty' ? 'Enter JSON to validate.' : '');
 });
 
 indentSelect.addEventListener('change', () => {
@@ -324,7 +335,7 @@ indentSelect.addEventListener('change', () => {
 
         update(true);
 
-        status.textContent = `Display indentation adjusted to ${nextWidth} spaces. Existing line breaks and inline spacing kept.`;
+        setAction(`Display indentation adjusted to ${nextWidth} spaces. Existing line breaks and inline spacing kept.`);
 
         return;
     }
@@ -381,12 +392,12 @@ indentSelect.addEventListener('change', () => {
 
     update(true);
 
-    status.textContent = `${(viewing) ? 'Display' : 'Source'} indentation adjusted to ${nextWidth} spaces. Existing line breaks and inline spacing kept.`;
+    setAction(`${(viewing) ? 'Display' : 'Source'} indentation adjusted to ${nextWidth} spaces. Existing line breaks and inline spacing kept.`);
 });
 
 prettyButton.addEventListener('click', () => {
     if(validate().state !== 'valid'){
-        status.textContent = 'Fix the syntax errors before formatting. Your text has been kept.';
+        setAction('Fix the syntax errors before formatting. Your text has been kept.');
 
         return;
     }
@@ -402,15 +413,15 @@ prettyButton.addEventListener('click', () => {
 
         update(true);
 
-        status.textContent = `${viewing ? 'Display' : 'Source'} formatted with ${indentSelect.value}-space indentation.`;
+        setAction(`${viewing ? 'Display' : 'Source'} formatted with ${indentSelect.value}-space indentation.`);
     } catch(e){
-        status.textContent = 'Could not format this document. Your text has been kept.';
+        setAction('Could not format this document. Your text has been kept.');
     }
 });
 
 minifyButton.addEventListener('click', () => {
     if(validate().state !== 'valid'){
-        status.textContent = 'Fix the syntax errors before minifying. Your text has been kept.';
+        setAction('Fix the syntax errors before minifying. Your text has been kept.');
 
         return;
     }
@@ -425,9 +436,9 @@ minifyButton.addEventListener('click', () => {
 
         update(true);
 
-        status.textContent = `${viewing ? 'Display' : 'Source'} minified.`;
+        setAction(`${viewing ? 'Display' : 'Source'} minified.`);
     } catch(e){
-        status.textContent = 'Could not minify this document. Your text has been kept.';
+        setAction('Could not minify this document. Your text has been kept.');
     }
 });
 
@@ -447,9 +458,9 @@ sortButton.addEventListener('click', () => {
 
         update(true);
 
-        status.textContent = `${viewing ? 'Display' : 'Source'} object keys sorted in ${(direction === 'asc') ? 'ascending' : 'descending'} natural order.`;
+        setAction(`${viewing ? 'Display' : 'Source'} object keys sorted in ${(direction === 'asc') ? 'ascending' : 'descending'} natural order.`);
     } catch(e){
-        status.textContent = 'Could not sort this document. Your text has been kept.';
+        setAction('Could not sort this document. Your text has been kept.');
     }
 });
 
@@ -465,16 +476,16 @@ sampleButton.addEventListener('click', () => {
     update(true);
     setMode(true);
 
-    status.textContent = 'Sample loaded. Select Edit to change it.';
+    setAction('Sample loaded. Select Edit to change it.');
 });
 
 copyButton.addEventListener('click', async () => {
     try{
         await copyText(editorDocument.text);
 
-        status.textContent = 'JSON text copied.';
+        setAction('JSON text copied.');
     } catch(e){
-        status.textContent = 'Could not copy. Select the text and copy it manually.';
+        setAction('Could not copy. Select the text and copy it manually.');
     }
 });
 
@@ -484,11 +495,11 @@ downloadButton.addEventListener('click', () => {
 
         const result = validate();
 
-        status.textContent = (result.state === 'valid') ?
+        setAction((result.state === 'valid') ?
             'Download requested.' :
-            'Download requested. The text is not valid JSON.';
+            'Download requested. The text is not valid JSON.');
     } catch(e){
-        status.textContent = 'Could not download. Copy the text to save it manually.';
+        setAction('Could not download. Copy the text to save it manually.');
     }
 });
 

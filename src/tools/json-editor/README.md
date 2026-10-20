@@ -14,7 +14,9 @@ The current release is Phase 1: a single-document code editor. Tree editing and 
 4. Select **View** to inspect the text with syntax colors and line numbers, or **Edit** to return to the editable source.
 5. Use the copy or save icon in the document bar to export the current mode's text.
 
-Action results, including failed copy or download attempts, appear in the editor's upper-right **Last action** notification. Typing or switching modes clears that notification.
+Action results, including failed copy or download attempts, appear in a compact, full-width **Last action** strip below the JSON area and above the validation footer. The strip does not cover the JSON. Use **Dismiss notification** to close it; typing or switching modes also clears it. Dismissing returns focus to the current Edit or View area without changing its contents.
+
+The file name and rename form use the space remaining beside the action group, without a fixed maximum form width. On narrow screens, Edit / View, Copy, and Save stay together on the right and move to another line only when the content no longer fits. Formatting actions and Indent share a row when space permits and wrap when needed.
 
 ## Edit and View are independent
 

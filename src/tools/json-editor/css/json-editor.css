@@ -27,11 +27,15 @@ main.json-editor {
   border-block-end: 1px solid var(--color-border);
 }
 
-.json-actions, .json-document-actions {
+.json-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+.json-actions .button {
+  flex: none;
+  white-space: nowrap;
 }
 
 .json-status-bar .json-format-help {
@@ -43,7 +47,9 @@ main.json-editor {
 
 .json-indent {
   display: flex;
+  flex: none;
   align-items: center;
+  margin-inline-start: auto;
   gap: 12px;
   color: var(--color-text-muted);
   font-size: 12px;
@@ -78,6 +84,17 @@ main.json-editor {
   color: var(--color-text-muted);
 }
 
+.json-document-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+.json-document-actions > * {
+  flex: none;
+}
 .json-document-actions > .button {
   padding-inline: 12px;
   font-size: 12px;
@@ -88,7 +105,7 @@ main.json-editor {
 }
 
 .json-filename-group {
-  flex: 1;
+  flex: 1 1 min-content;
   min-width: 0;
   max-width: 100%;
 }
@@ -119,7 +136,8 @@ main.json-editor {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  max-width: 420px;
+  width: 100%;
+  min-width: 0;
 }
 .json-filename-form .input {
   flex: 1;
@@ -286,35 +304,35 @@ main.json-editor {
   font-size: 12px;
 }
 
-.json-action-status {
-  position: absolute;
-  inset-block-start: 12px;
-  inset-inline-end: 16px;
-  z-index: 1;
-  max-inline-size: min(420px, 100% - 32px);
-  max-block-size: 180px;
-  overflow: auto;
-  margin: 0;
-  padding: 12px 16px;
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-control);
+.json-action-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 20px;
+  border-block-start: 1px solid var(--color-border);
   background: var(--color-surface-raised);
+}
+.json-action-notice .json-action-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.json-action-notice .button {
+  flex: none;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px;
+  margin-inline-start: auto;
+  border: none;
+}
+
+.json-action-status {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   color: var(--color-text);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.6;
   overflow-wrap: anywhere;
-}
-.json-action-status:empty {
-  display: none;
-}
-.json-action-status::before {
-  display: block;
-  margin-block-end: 4px;
-  color: var(--color-accent);
-  font-size: 11px;
-  font-weight: 600;
-  content: "Last action";
 }
 
 .json-status-actions {
@@ -348,18 +366,10 @@ main.json-editor {
   .json-actions {
     display: flex;
     flex-wrap: wrap;
-    width: 100%;
   }
   .json-actions .button {
     padding-inline: 12px;
     font-size: 12px;
-  }
-  .json-document-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .json-filename-group {
-    flex-basis: 100%;
   }
   .json-filename-form .input {
     font-size: 16px;
@@ -373,6 +383,15 @@ main.json-editor {
   }
   .json-status-bar {
     padding-inline: 16px;
+  }
+  .json-action-notice {
+    padding-inline: 16px 8px;
+  }
+  .json-action-notice .button {
+    min-width: 20px;
+    min-height: 20px;
+    max-width: 24px;
+    max-height: 24px;
   }
 }
 

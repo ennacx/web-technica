@@ -18,5 +18,12 @@ test('Eleventy resolves registry-based titles before rendering tool pages and st
         if(tool.status === 'develop'){
             assert.match(page.content, /data-tool-status="develop">\s*In development/);
         }
+        if(tool.slug === 'json-editor'){
+            const editor = page.content.indexOf('class="json-editor-body"');
+            const notice = page.content.indexOf('id="json-action-notice"');
+            const footer = page.content.indexOf('class="json-status-bar"');
+            assert.ok(editor < notice && notice < footer, 'JSON notification is between the editor and validation footer');
+            assert.match(page.content, /id="json-action-dismiss"[^>]*aria-label="Dismiss notification"/);
+        }
     }
 });
