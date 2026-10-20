@@ -125,8 +125,10 @@ export default function(eleventyConfig){
         // json-editor
         'src/tools/json-editor/js/*.js': 'json-editor/js',
         'src/tools/json-editor/css/*.css': 'json-editor/css',
-        // regex-tester
+        // regex-tester (native module Workers and engine modules use relative imports)
         'src/tools/regex-tester/js/*.js': 'regex-tester/js',
+        'src/tools/regex-tester/js/engines/*.js': 'regex-tester/js/engines',
+        'src/tools/regex-tester/js/workers/*.js': 'regex-tester/js/workers',
         'src/tools/regex-tester/css/*.css': 'regex-tester/css',
         // url-inspector
         'src/tools/url-inspector/js/*.js': 'url-inspector/js',

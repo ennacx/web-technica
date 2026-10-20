@@ -29,7 +29,7 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
                     <label title="Dot matches newlines"><input type="checkbox" value="s">s <span>dot all</span></label>
                     <label title="Unicode mode"><input type="checkbox" value="u">u <span>unicode</span></label>
                 </div>
-                <div class="regex-run-controls"><label for="regex-mode">Run mode</label><select id="regex-mode" class="input" disabled><option>Auto</option><option>Manual</option></select><button type="button" class="button button-primary" disabled>Run</button></div>
+                <div class="regex-run-controls"><label for="regex-mode">Run mode</label><select id="regex-mode" class="input"><option value="auto">Auto</option><option value="manual">Manual</option></select><button type="button" id="regex-run" class="button button-primary">Run</button></div>
             </div>
         </div>
         <div class="regex-text-heading regex-section-heading"><h2><label for="regex-text">Test text</label></h2><span id="regex-text-stats" class="field-help"></span></div>
@@ -42,17 +42,29 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
     <div id="regex-splitter" class="regex-splitter" role="separator" tabindex="0" aria-label="Resize input panel" aria-orientation="horizontal" aria-controls="regex-input-pane" aria-valuemin="400" aria-valuemax="1600" aria-valuenow="480" aria-describedby="regex-resize-help"><span aria-hidden="true"></span></div>
 
     <section id="regex-results-pane" class="regex-results-pane" aria-labelledby="regex-results-title">
-        <div class="regex-results-toolbar regex-section-heading"><h2 id="regex-results-title">Match results <span id="regex-match-count" class="badge">3 matches</span></h2><div class="regex-tabs" role="group" aria-label="Results view"><button id="regex-matches-tab" type="button" class="button" aria-pressed="true" aria-controls="regex-matches">Matches</button><button id="regex-preview-tab" type="button" class="button" aria-pressed="false" aria-controls="regex-preview">Highlight</button></div></div>
+        <div class="regex-results-toolbar regex-section-heading">
+            <h2 id="regex-results-title">Match results <span id="regex-match-count" class="badge">Not run</span></h2>
+            <div class="regex-tabs" role="group" aria-label="Results view">
+                <button type="button" id="regex-matches-tab" class="button" aria-pressed="true" aria-controls="regex-matches">Matches</button>
+                <button type="button" id="regex-preview-tab" class="button" aria-pressed="false" aria-controls="regex-preview">Highlight</button>
+            </div>
+        </div>
+
         <div id="regex-results-scroll" class="regex-results-scroll" tabindex="0" role="region" aria-label="Match results">
             <div id="regex-matches"></div>
-            <div id="regex-preview" hidden><pre>Contact the team:
-  <mark>alice@example.com</mark> — Product
-  <mark>bob@web-technica.dev</mark> — Engineering
-  <mark>support@example.org</mark> — Support</pre></div>
-            <p id="regex-results-empty" class="regex-empty" hidden>No results yet.</p>
+            <div id="regex-preview" hidden></div>
+
+            <p id="regex-results-empty" class="regex-empty">No results yet.</p>
         </div>
     </section>
 </div>
 
-<div class="regex-status-bar"><p id="regex-status" role="status" aria-live="polite">3 matches · 2 named groups per match.</p><div class="regex-bottom-actions"><button id="regex-sample" type="button" class="button">{{ icon('code') }} Restore sample</button><button id="regex-reset-layout" type="button" class="button">{{ icon('refresh') }} Reset layout</button></div></div>
+<div class="regex-status-bar">
+    <p id="regex-status" role="status" aria-live="polite" aria-atomic="true">Not run.</p>
+    <div class="regex-bottom-actions">
+        <button type="button" id="regex-sample" class="button">{{ icon('code') }} Restore sample</button>
+        <button type="button" id="regex-reset-layout" class="button">{{ icon('refresh') }} Reset layout</button>
+    </div>
+</div>
+
 <p id="regex-resize-help" class="field-help regex-resize-help">Drag to resize the input panel. Results keep their height; the page grows as needed. Double-click to reset. With the handle focused, use ↑ / ↓ to resize, Home / End for limits, or Enter to reset.</p>

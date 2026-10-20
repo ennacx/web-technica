@@ -269,6 +269,25 @@ main.regex-tester {
   margin-block-start: 4px;
 }
 
+.regex-render-note {
+  padding: 12px 16px;
+}
+
+.regex-zero-width {
+  display: inline-block;
+  min-width: 3px;
+}
+
+#regex-status {
+  overflow-wrap: anywhere;
+}
+#regex-status[data-state=syntax-error], #regex-status[data-state=runtime-error], #regex-status[data-state=input-limit] {
+  color: var(--color-danger);
+}
+#regex-status[data-state=timeout], #regex-status[data-state=limited] {
+  color: var(--color-warning);
+}
+
 @media (max-width: 767.98px) {
   main.regex-tester {
     width: calc(100% - 40px);

@@ -1,120 +1,97 @@
-import { getById, querySelAll, create as kreate } from '#utils/dom.js';
+import { getById, querySelAll } from '#utils/dom.js';
 import { setupSplitPane } from './split-pane.js';
+import { createExecutionController } from './controller.js';
+import { createRenderer } from './render.js';
 
 const get = (name) => getById(`regex-${name}`, document);
-const create = (tag) => kreate(tag, document);
 
 const pattern = get('pattern');
 const text = get('text');
+const mode = get('mode');
+const run = get('run');
 
-const initialPattern = pattern.value;
-const initialText = text.value;
 const flags = [...querySelAll('.regex-flags input', document)];
+const sample = {
+    pattern: pattern.value,
+    text: text.value,
+    flags: flags.map((flag) => (flag.checked))
+};
 
-let view = 'matches';
-let sampleVisible = true;
+let composing = false;
 
-// Fixture data only. No user-supplied regular expression is executed by this mockup.
-const samples = [
-    { value: 'alice@example.com', name: 'alice', domain: 'example.com' },
-    { value: 'bob@web-technica.dev', name: 'bob', domain: 'web-technica.dev' },
-    { value: 'support@example.org', name: 'support', domain: 'example.org' }
-];
-
-for(const [index, match] of samples.entries()){
-    const card = create('details');
-    card.className = 'regex-match';
-    card.open = (index === 0);
-
-    const summary = create('summary');
-
-    const value = create('code');
-    value.textContent = match.value;
-
-    const position = create('span');
-    position.className = 'field-help';
-
-    const start = initialText.indexOf(match.value);
-
-    position.textContent = `${start}–${start + match.value.length}`;
-
-    summary.append(`Match ${index + 1}`, value, position);
-
-    const groups = document.createElement('dl');
-
-    for(const [label, content] of [['Group 1 · name', match.name], ['Group 2 · domain', match.domain]]){
-        const key = document.createElement('dt');
-        const entry = document.createElement('dd');
-
-        key.textContent = label;
-        entry.textContent = content;
-        groups.append(key, entry);
+const renderer = createRenderer(document);
+const controller = createExecutionController({
+    onState(state){
+        mode.value = state.mode;
+        renderer.render(state);
     }
+});
 
-    card.append(summary, groups);
-
-    get('matches').append(card);
+function readInput(){
+    return {
+        engine: 'javascript',
+        pattern: pattern.value,
+        text: text.value,
+        flags: flags.filter((flag) => (flag.checked)).map((flag) => flag.value).join(''),
+        mode: mode.value
+    };
 }
 
-function renderView(){
-    for(const name of ['matches', 'preview']){
-        get(name).hidden = (!sampleVisible || name !== view);
-        get(`${name}-tab`).setAttribute('aria-pressed', String(name === view));
-    }
+function inputChanged(){
+    const snapshot = readInput();
 
-    get('results-empty').hidden = (sampleVisible);
+    get('flags-summary').textContent = snapshot.flags;
+    get('text-stats').textContent = `${snapshot.text.length} characters · ${snapshot.text.split('\n').length} lines`;
+
+    controller.update(snapshot, { composing });
 }
 
-function updateStats(){
-    get('text-stats').textContent = `${text.value.length} characters · ${text.value.split('\n').length} lines`;
-}
+for(const element of [pattern, text]){
+    element.addEventListener('input', inputChanged);
+    element.addEventListener('compositionstart', () => {
+        composing = true;
+        run.disabled = true;
 
-function edited(){
-    sampleVisible = false;
+        inputChanged();
+    });
 
-    get('match-count').textContent = 'Not run';
-    get('status').textContent = 'Input changed · Not run.';
-    get('flags-summary').textContent = flags.filter((flag) => flag.checked).map((flag) => flag.value).join('');
+    element.addEventListener('compositionend', () => {
+        composing = false;
+        run.disabled = false;
 
-    updateStats();
-
-    renderView();
-}
-
-pattern.addEventListener('input', edited);
-text.addEventListener('input', edited);
-
-flags.forEach((flag) => flag.addEventListener('change', edited));
-
-for(const name of ['matches', 'preview']){
-    get(`${name}-tab`).addEventListener('click', () => {
-        view = name;
-
-        renderView();
+        inputChanged();
     });
 }
+
+flags.forEach((flag) => flag.addEventListener('change', inputChanged));
+
+mode.addEventListener('change', inputChanged);
+
+run.addEventListener('click', () => {
+    if(!composing){
+        controller.run(readInput());
+    }
+});
 
 get('sample').addEventListener('click', () => {
-    pattern.value = initialPattern;
-    text.value = initialText;
+    pattern.value = sample.pattern;
+    text.value = sample.text;
 
-    flags.forEach((flag) => {
-        flag.checked = (flag.value === 'g' || flag.value === 'i');
+    flags.forEach((flag, i) => {
+        flag.checked = sample.flags[i];
     });
 
-    sampleVisible = true;
-
-    get('flags-summary').textContent = 'gi';
-    get('match-count').textContent = '3 matches';
-    get('status').textContent = '3 matches · 2 named groups per match.';
-
-    updateStats();
-
-    renderView();
+    inputChanged();
 });
 
 setupSplitPane(get('workspace'), get('splitter'), get('reset-layout'));
 
-updateStats();
+window.addEventListener('pagehide', () => controller.cancel());
 
-renderView();
+window.addEventListener('pageshow', (event) => {
+    if(event.persisted){
+        inputChanged();
+    }
+});
+
+inputChanged();

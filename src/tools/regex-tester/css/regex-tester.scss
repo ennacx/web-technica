@@ -292,6 +292,30 @@ main.regex-tester {
     margin-block-start: 4px;
 }
 
+.regex-render-note {
+    padding: 12px 16px;
+}
+
+.regex-zero-width {
+    display: inline-block;
+    min-width: 3px;
+}
+
+#regex-status {
+    overflow-wrap: anywhere;
+
+    &[data-state="syntax-error"],
+    &[data-state="runtime-error"],
+    &[data-state="input-limit"] {
+        color: var(--color-danger);
+    }
+
+    &[data-state="timeout"],
+    &[data-state="limited"] {
+        color: var(--color-warning);
+    }
+}
+
 @include mixin.mobile {
     main.regex-tester {
         width: calc(100% - 40px);

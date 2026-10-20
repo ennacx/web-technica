@@ -30,7 +30,7 @@
         "category": "Test",
         "icon": "regex",
         "status": "develop",
-        "tags": ["Regex", "Pattern", "Match", "Replace"]
+        "tags": ["Regex", "JavaScript", "Pattern", "Match", "Capture Groups"]
     },
     {
         "name": "JSON Editor",
