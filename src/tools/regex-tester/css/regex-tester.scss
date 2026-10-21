@@ -1,0 +1,506 @@
+@use "../../../assets/css/mixin";
+@use "../../../assets/css/variables";
+@use "sass:list";
+
+@for $index from 1 through list.length(variables.$regex-colors) {
+    .regex-workspace [data-regex-color="#{$index}"] {
+        --regex-color: var(--regex-color-#{$index});
+        --regex-color-soft: var(--regex-color-#{$index}-soft);
+    }
+}
+
+main.regex-tester {
+    width: min(100% - 64px, 1120px);
+    padding-block: 24px 48px;
+}
+
+.regex-bottom-actions,
+.regex-section-heading,
+.regex-options,
+.regex-status-bar,
+.regex-run-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.regex-status-bar .button {
+    font-size: 12px;
+}
+
+.regex-workspace {
+    --input-min: 400px;
+    --input-default: 480px;
+    --input-max: 1600px;
+    --results-min: 320px;
+    --results-default: 400px;
+    --results-max: 2400px;
+    --resize-handle-size: 24px;
+
+    display: grid;
+    grid-template-rows: minmax(var(--input-min), var(--input-height, var(--input-default))) var(--resize-handle-size) auto var(--resize-handle-size);
+
+    &[data-resizing] {
+        cursor: row-resize;
+        user-select: none;
+    }
+}
+
+.regex-input-pane, .regex-results-pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-panel);
+    background: var(--color-surface);
+}
+
+.regex-results-pane {
+    min-height: var(--results-min);
+    height: var(--results-height, var(--results-default));
+}
+
+.regex-pattern-settings {
+    flex: none;
+    padding: 16px 20px;
+    border-block-end: 1px solid var(--color-border);
+}
+
+.regex-section-heading {
+    h2 {
+        font-size: 13px;
+        font-weight: 600;
+    }
+}
+
+.regex-pattern-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-block: 12px;
+    padding-inline: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-bg);
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+
+    &:focus-within {
+        outline: 2px solid var(--color-accent);
+        outline-offset: var(--focus-control-offset);
+    }
+
+    input {
+        flex: 1;
+        min-width: 0;
+        min-height: 44px;
+        border: 0;
+        background: transparent;
+        color: var(--color-text);
+        font: inherit;
+        font-size: 14px;
+
+        &:focus-visible {
+            outline: none;
+        }
+    }
+}
+
+.regex-pattern-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+#regex-copy {
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+
+    &:hover:not(:disabled) {
+        background: var(--color-surface-raised);
+        color: var(--color-accent);
+    }
+}
+
+.regex-copy-notice {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+
+    p {
+        overflow-wrap: anywhere;
+    }
+
+    [data-state="success"] {
+        color: var(--color-success);
+    }
+
+    [data-state="error"] {
+        color: var(--color-danger);
+    }
+}
+
+.regex-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+
+    label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 32px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        cursor: pointer;
+
+        span {
+            color: var(--color-text-muted);
+            font-family: var(--font-ui);
+            font-size: 12px;
+        }
+
+        input {
+            accent-color: var(--color-accent);
+        }
+    }
+}
+
+.regex-run-controls {
+    justify-content: flex-end;
+    gap: 8px;
+    color: var(--color-text-muted);
+    font-size: 12px;
+
+    .input {
+        width: auto;
+        font-size: 12px;
+    }
+}
+
+.regex-text-heading {
+    flex: none;
+    padding: 10px 20px;
+}
+
+.regex-timeout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    input {
+        flex: none;
+        width: 120px;
+        min-width: 0;
+        min-height: 44px;
+        accent-color: var(--color-accent);
+    }
+
+    output {
+        flex: none;
+        width: 6ch; // Reserve space for "10.0 s", including the unit and space.
+        color: var(--color-text);
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+        white-space: nowrap;
+    }
+}
+
+.regex-editor {
+    position: relative;
+    isolation: isolate;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--color-bg);
+}
+
+.regex-highlight,
+.regex-input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    padding: 12px 20px;
+    font: 14px / 1.8 var(--font-mono);
+    font-variant-ligatures: none;
+    letter-spacing: normal;
+    word-spacing: normal;
+    tab-size: 8;
+    text-align: left;
+    white-space: pre;
+    overflow-wrap: normal;
+}
+
+.regex-highlight {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+    color: transparent;
+
+    mark {
+        padding: 0;
+        background: var(--regex-color-soft, var(--color-accent-soft));
+        color: inherit;
+        box-shadow: inset 0 -2px var(--regex-color, var(--color-accent));
+    }
+
+    .regex-zero-width {
+        position: relative;
+        background: transparent;
+        box-shadow: none;
+
+        &::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2px;
+            height: 1.5em;
+            background: var(--regex-color, var(--color-accent));
+        }
+    }
+}
+
+.regex-input {
+    position: relative;
+    z-index: 2;
+    display: block;
+    min-height: 0;
+    overflow: auto;
+    resize: none;
+    background: transparent;
+    color: var(--color-text);
+    caret-color: var(--color-text);
+}
+
+.regex-splitter {
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-control);
+    cursor: row-resize;
+    touch-action: none;
+    user-select: none;
+
+    &:hover,
+    &:focus-visible,
+    .regex-workspace[data-resizing] & {
+        background: var(--color-accent-soft);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: -2px;
+    }
+
+    span {
+        width: 48px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--color-text-muted);
+    }
+}
+
+.regex-results-toolbar {
+    flex: none;
+    padding: 10px 20px;
+    border-block-end: 1px solid var(--color-border);
+
+    h2 {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+}
+
+.regex-results-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px 20px;
+    overscroll-behavior: contain;
+}
+
+.regex-match {
+    border: 1px solid var(--color-border);
+    border-inline-start: 3px solid var(--regex-color, var(--color-border));
+    border-radius: var(--radius-control);
+    overflow: hidden;
+
+    & + .regex-match {
+        margin-block-start: 12px;
+    }
+
+    summary {
+        padding: 12px 16px;
+        cursor: pointer;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+        background: var(--regex-color-soft, transparent);
+
+        code {
+            margin-inline: 12px;
+            color: var(--regex-color, var(--color-accent));
+        }
+    }
+}
+
+.regex-match {
+    dl {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        gap: 8px 20px;
+        padding: 12px 16px;
+        border-block-start: 1px solid var(--color-border);
+        font-size: 12px;
+
+        dt {
+            color: var(--regex-color, var(--color-text-muted));
+        }
+
+        dd {
+            margin: 0;
+            overflow-wrap: anywhere;
+            font-family: var(--font-mono);
+            padding: 2px 6px;
+            border-inline-start: 2px solid var(--regex-color, var(--color-border));
+            border-radius: 3px;
+            background: var(--regex-color-soft, transparent);
+        }
+    }
+}
+
+.regex-empty {
+    padding-block: 24px;
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.regex-status-bar {
+    justify-content: flex-end;
+    min-height: 60px;
+    padding-block: 8px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+.regex-resize-help {
+    margin-block-start: 4px;
+}
+
+.regex-render-note {
+    padding: 12px 16px;
+}
+
+#regex-status {
+    min-width: 0;
+    height: 1.5em;
+    margin: 0;
+    overflow: auto;
+    overflow-wrap: anywhere;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: right;
+
+    &:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: var(--focus-control-offset);
+    }
+
+    &[data-state="syntax-error"],
+    &[data-state="runtime-error"],
+    &[data-state="input-limit"] {
+        color: var(--color-danger);
+    }
+
+    &[data-state="timeout"],
+    &[data-state="limited"] {
+        color: var(--color-warning);
+    }
+}
+
+@include mixin.mobile {
+    main.regex-tester {
+        width: calc(100% - 40px);
+        padding-block: 16px 32px;
+    }
+
+    .regex-workspace {
+        --input-min: 480px;
+        --input-default: 560px;
+        --resize-handle-size: 32px;
+    }
+
+    .regex-pattern-settings,
+    .regex-results-toolbar {
+        padding-inline: 16px;
+    }
+
+    .regex-pattern-heading {
+        grid-template-columns: minmax(0, 1fr) auto;
+
+        .badge {
+            grid-column: 2;
+            grid-row: 1;
+        }
+    }
+
+    #regex-status {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        text-align: left;
+    }
+
+    .regex-text-heading,
+    .regex-results-scroll {
+        padding-inline: 16px;
+    }
+
+    .regex-highlight,
+    .regex-input,
+    .regex-pattern-field input {
+        font-size: 16px;
+    }
+
+    .regex-highlight,
+    .regex-input {
+        padding-inline: 16px;
+    }
+
+    .regex-flags {
+        gap: 4px 12px;
+
+        label {
+            min-height: 44px;
+
+            span {
+                display: none;
+            }
+        }
+    }
+
+    .regex-match {
+        summary {
+            padding-inline: 12px;
+        }
+    }
+}

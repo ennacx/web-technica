@@ -24,12 +24,13 @@
     {
         "name": "Regex Tester",
         "slug": "regex-tester",
+        "url": "/regex-tester/",
         "description": "Test regular expressions with match highlighting and capture groups.",
         "offline": "ready",
         "category": "Test",
         "icon": "regex",
-        "status": "planned",
-        "tags": ["Regex", "Pattern", "Match", "Replace"]
+        "status": "develop",
+        "tags": ["Regex", "JavaScript", "Pattern", "Match", "Capture Groups"]
     },
     {
         "name": "JSON Editor",

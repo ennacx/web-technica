@@ -1,0 +1,83 @@
+---
+toolSlug: regex-tester
+description: Test regular expressions and inspect matches and capture groups.
+permalink: /regex-tester/index.html
+pageClass: regex-tester
+pageStylesheet: /regex-tester/css/regex-tester.css
+pageScript: /regex-tester/js/index.js
+toolIntro:
+    - Explore patterns, test text, and match results in one workspace.
+processingNotice:
+    icon: lock
+    title: Your text stays here
+    description: No uploads or browser storage.
+javascriptNotice: Enable JavaScript to use Regex Tester.
+---
+
+{% from "components/icons.njk" import icon %}
+
+<div id="regex-workspace" class="regex-workspace">
+    <section id="regex-input-pane" class="regex-input-pane" aria-labelledby="regex-pattern-label">
+        <div class="regex-pattern-settings">
+            <div class="regex-section-heading regex-pattern-heading">
+                <h2 id="regex-pattern-label"><label for="regex-pattern">Regular expression</label></h2>
+                <p id="regex-status" role="status" aria-live="polite" aria-atomic="true" tabindex="0" aria-label="Execution status">Not run.</p>
+                <span class="badge">JavaScript</span>
+            </div>
+            <div class="regex-pattern-field"><span aria-hidden="true">/</span><input id="regex-pattern" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="regex-status" placeholder="Enter a pattern without / delimiters, e.g. \b\w+\b"><span aria-hidden="true">/</span><span id="regex-flags-summary">gi</span><button type="button" id="regex-copy" class="button button-icon" aria-label="Copy regular expression" title="Copy regular expression" disabled>{{ icon('copy') }}</button></div>
+            <div class="regex-options">
+                <div class="regex-flags" role="group" aria-label="Regular expression flags">
+                    <label title="Global search"><input type="checkbox" value="g" checked>g <span>global</span></label>
+                    <label title="Ignore case"><input type="checkbox" value="i" checked>i <span>ignore case</span></label>
+                    <label title="Multiline anchors"><input type="checkbox" value="m">m <span>multiline</span></label>
+                    <label title="Dot matches newlines"><input type="checkbox" value="s">s <span>dot all</span></label>
+                    <label title="Unicode mode"><input type="checkbox" value="u">u <span>unicode</span></label>
+                </div>
+                <div class="regex-run-controls">
+                    <div class="regex-timeout">
+                        <label for="regex-timeout">Timeout</label>
+                        <input type="range" id="regex-timeout" aria-describedby="regex-timeout-help" disabled>
+                        <output id="regex-timeout-value" for="regex-timeout" aria-live="off">—</output>
+                        <span id="regex-timeout-help" class="visually-hidden">Maximum time per execution. Auto reruns after a change; Manual waits for Run.</span>
+                    </div>
+                    <label for="regex-mode">Run mode</label><select id="regex-mode" class="input"><option value="auto">Auto</option><option value="manual">Manual</option></select><button type="button" id="regex-run" class="button button-primary">Run</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="regex-text-heading regex-section-heading"><h2><label for="regex-text">Test text</label></h2><span id="regex-text-stats" class="field-help"></span></div>
+        <div class="regex-editor">
+            <pre id="regex-highlight" class="regex-highlight" aria-hidden="true"></pre>
+            <textarea id="regex-text" class="regex-input" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="regex-status" placeholder="Type or paste text to test your pattern, or choose Load sample below."></textarea>
+        </div>
+    </section>
+
+    <div id="regex-splitter" class="regex-splitter" role="separator" tabindex="0" aria-label="Resize input panel" aria-orientation="horizontal" aria-controls="regex-input-pane" aria-valuemin="400" aria-valuemax="1600" aria-valuenow="480" aria-describedby="regex-resize-help"><span aria-hidden="true"></span></div>
+
+    <section id="regex-results-pane" class="regex-results-pane" aria-labelledby="regex-results-title">
+        <div class="regex-results-toolbar regex-section-heading">
+            <h2 id="regex-results-title">Match results <span id="regex-match-count" class="badge">Not run</span></h2>
+        </div>
+
+        <div id="regex-results-scroll" class="regex-results-scroll" tabindex="0" role="region" aria-label="Match results">
+            <div id="regex-matches"></div>
+
+            <p id="regex-results-empty" class="regex-empty">No results yet.</p>
+        </div>
+    </section>
+
+    <div id="regex-results-splitter" class="regex-splitter" role="separator" tabindex="0" aria-label="Resize match results panel" aria-orientation="horizontal" aria-controls="regex-results-pane" aria-valuemin="320" aria-valuemax="2400" aria-valuenow="400" aria-describedby="regex-resize-help"><span aria-hidden="true"></span></div>
+</div>
+
+<div class="regex-status-bar">
+    <div id="regex-copy-notice" class="regex-copy-notice" hidden>
+        <p id="regex-copy-status" role="status" aria-live="polite" aria-atomic="true"></p>
+        <button type="button" id="regex-copy-dismiss" class="button" aria-label="Dismiss copy notification">Dismiss</button>
+    </div>
+    <div class="regex-bottom-actions">
+        <button type="button" id="regex-sample" class="button">{{ icon('code') }} Load sample</button>
+        <button type="button" id="regex-reset-layout" class="button">{{ icon('refresh') }} Reset layout</button>
+    </div>
+</div>
+
+<p id="regex-resize-help" class="field-help regex-resize-help">Drag the handle below each panel to resize it independently; the page grows as needed. Double-click a handle to reset that panel, or choose Reset layout to reset both. With a handle focused, use ↑ / ↓ to resize, Home / End for limits, or Enter to reset.</p>
