@@ -19,9 +19,9 @@
         "test": "node --test"
     },
     "devDependencies": {
-        "@11ty/eleventy": "3.1.6",
-        "@resvg/resvg-js": "2.6.2",
-        "sass": "1.105.1"
+        "@11ty/eleventy": "^3.1.7",
+        "@resvg/resvg-js": "^2.6.2",
+        "sass": "^1.106.0"
     },
     "allowScripts": {
         "@parcel/watcher@2.6.0": true,
