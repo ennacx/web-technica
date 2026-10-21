@@ -30,7 +30,7 @@ function fixture(){
     const created = [];
     const flags = ['g', 'i', 'm', 's', 'u'].map((value) => Object.assign(new Element('input'), { value, checked: value === 'g' || value === 'i' }));
     const root = {
-        defaultView: { HTMLElement: Element },
+        defaultView: { HTMLElement: Element, getComputedStyle: () => ({ getPropertyValue: () => '10' }) },
         getElementById: (id) => nodes.get(id),
         querySelectorAll: () => flags,
         createElement(tag){ const element = new Element(tag); created.push(element); return element; },
@@ -105,6 +105,28 @@ test('overlay preserves tabs, Unicode, trailing lines, selection and viewport ge
         assert.equal(textarea.selectionStart, 1);
         assert.equal(textarea.selectionEnd, 5);
     }
+});
+
+test('match palette cycles after ten and pairs card/overlay colors; capture rows use stable slots', () => {
+    const f = fixture();
+    const renderer = createRenderer(f.root);
+    const input = { engine: 'javascript', pattern: '(?<first>a)(b)', text: 'ab '.repeat(12), flags: 'g' };
+    renderer.render({ status: 'success', input, result: executeJavaScript(input) });
+    const cards = f.get('matches').children;
+    const marks = f.get('highlight').children.filter((node) => node?.tag === 'mark');
+    const colors = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '1', '2'];
+    assert.deepEqual(cards.map((node) => node.dataset.regexColor), colors);
+    assert.deepEqual(marks.map((node) => node.dataset.regexColor), colors);
+    for(const card of cards){
+        const list = card.children.find((node) => node.tag === 'dl');
+        assert.deepEqual(list.children.map((node) => node.dataset.regexColor), ['1', '1', '2', '2', '3', '3']);
+        assert.match(card.textContent, /Group 1/);
+        assert.match(card.textContent, /Named · first/);
+    }
+    const zero = { ...input, pattern: '(?=a)' };
+    renderer.render({ status: 'success', input: zero, result: executeJavaScript(zero) });
+    assert.deepEqual(f.get('highlight').children.filter((node) => node?.tag === 'mark').map((node) => node.dataset.regexColor), colors);
+    assert.equal(f.get('highlight').textContent, input.text);
 });
 
 test('index handles empty startup, sample loading, snapshots, IME, rendering and page lifecycle', async (t) => {

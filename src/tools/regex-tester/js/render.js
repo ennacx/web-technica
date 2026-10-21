@@ -19,6 +19,13 @@ export function createRenderer(root){
 
     let hasResult = false;
 
+    // パレットのカラーは `_variables.scss` に定義され、レンダリング時は循環的に割り当てられる
+    const paletteSize = root.defaultView?.getComputedStyle?.(get('matches'))?.getPropertyValue('--regex-color-count');
+    const colorCount = Math.max(1, Number.parseInt(paletteSize, 10) || 1);
+    function colorize(node, index){
+        node.dataset.regexColor = String(index % colorCount + 1);
+    }
+
     function showView(){
         get('matches').hidden = (!hasResult);
         get('results-empty').hidden = (hasResult);
@@ -67,6 +74,9 @@ export function createRenderer(root){
             card.open = (i === 0);
             position.title = 'UTF-16 offsets, end exclusive';
 
+            // カラー適用
+            colorize(card, i);
+
             summary.append(`Match ${i + 1}`, make('code', { text: value(text, match), className: undefined }), position);
             card.append(summary);
 
@@ -75,14 +85,18 @@ export function createRenderer(root){
                 ...match.namedGroups.map((group) => ({ ...group, label: `Named · ${group.name}` }))
             ];
 
+            // マッチ結果の詳細
             if(captures.length){
                 const list = make('dl');
 
-                for(const group of captures.slice(0, LIMITS.displayedGroups)){
-                    list.append(
-                        make('dt', { text: group.label, className: undefined }),
-                        make('dd', { text: `${value(text, group)}  ${offset(group)}`, className: undefined })
-                    );
+                for(const [groupIndex, group] of captures.slice(0, LIMITS.displayedGroups).entries()){
+                    const label = make('dt', { text: group.label });
+                    const entry = make('dd', { text: `${value(text, group)} ${offset(group)}` });
+
+                    colorize(label, groupIndex);
+                    colorize(entry, groupIndex);
+
+                    list.append(label, entry);
                 }
 
                 card.append(list);
@@ -111,7 +125,7 @@ export function createRenderer(root){
 
         let cursor = 0;
 
-        for(const match of result.matches){
+        for(const [index, match] of result.matches.entries()){
             if(match.start > end || (match.start === end && end < text.length)){
                 break;
             }
@@ -124,6 +138,8 @@ export function createRenderer(root){
             });
 
             mark.title = `Match at ${offset(match)} (UTF-16)`;
+
+            colorize(mark, index);
 
             if(match.start === match.end){
                 mark.className = 'regex-zero-width';

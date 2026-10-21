@@ -1,4 +1,13 @@
 @use "../../../assets/css/mixin";
+@use "../../../assets/css/variables";
+@use "sass:list";
+
+@for $index from 1 through list.length(variables.$regex-colors) {
+    .regex-workspace [data-regex-color="#{$index}"] {
+        --regex-color: var(--regex-color-#{$index});
+        --regex-color-soft: var(--regex-color-#{$index}-soft);
+    }
+}
 
 main.regex-tester {
     width: min(100% - 64px, 1120px);
@@ -244,9 +253,9 @@ main.regex-tester {
 
     mark {
         padding: 0;
-        background: var(--color-accent-soft);
+        background: var(--regex-color-soft, var(--color-accent-soft));
         color: inherit;
-        box-shadow: inset 0 -2px var(--color-accent);
+        box-shadow: inset 0 -2px var(--regex-color, var(--color-accent));
     }
 
     .regex-zero-width {
@@ -261,7 +270,7 @@ main.regex-tester {
             top: 0;
             width: 2px;
             height: 1.5em;
-            background: var(--color-accent);
+            background: var(--regex-color, var(--color-accent));
         }
     }
 }
@@ -328,6 +337,7 @@ main.regex-tester {
 
 .regex-match {
     border: 1px solid var(--color-border);
+    border-inline-start: 3px solid var(--regex-color, var(--color-border));
     border-radius: var(--radius-control);
     overflow: hidden;
 
@@ -340,10 +350,11 @@ main.regex-tester {
         cursor: pointer;
         font-size: 13px;
         overflow-wrap: anywhere;
+        background: var(--regex-color-soft, transparent);
 
         code {
             margin-inline: 12px;
-            color: var(--color-accent);
+            color: var(--regex-color, var(--color-accent));
         }
     }
 }
@@ -358,13 +369,17 @@ main.regex-tester {
         font-size: 12px;
 
         dt {
-            color: var(--color-text-muted);
+            color: var(--regex-color, var(--color-text-muted));
         }
 
         dd {
             margin: 0;
             overflow-wrap: anywhere;
             font-family: var(--font-mono);
+            padding: 2px 6px;
+            border-inline-start: 2px solid var(--regex-color, var(--color-border));
+            border-radius: 3px;
+            background: var(--regex-color-soft, transparent);
         }
     }
 }
