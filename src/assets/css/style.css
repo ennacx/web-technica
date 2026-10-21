@@ -42,6 +42,9 @@ button:disabled {
 /*
  * ツール詳細ページでも使える、共通の基本部品。
  */
+/*
+ * 共通の mixin。
+ */
 .icon {
   display: inline-block;
   flex: none;
@@ -465,9 +468,6 @@ input::placeholder, textarea::placeholder {
 
 /*
  * 全ページに共通する外枠・ヘッダー・フッター。
- */
-/*
- * 共通の mixin。
  */
 .site-shell {
   display: flex;

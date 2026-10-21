@@ -11,10 +11,10 @@ main.json-editor {
 }
 
 .json-workspace {
-  overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
+  overflow: hidden;
 }
 
 .json-toolbar {

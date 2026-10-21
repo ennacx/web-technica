@@ -92,15 +92,16 @@ main.regex-tester {
   user-select: none;
 }
 
-.regex-input-pane, .regex-results-pane {
+.regex-input-pane,
+.regex-results-pane {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
 }
 
 .regex-results-pane {

@@ -16,3 +16,29 @@
         opacity: 1;
     }
 }
+
+// ツール本文の基本幅・余白。モバイル時の適用位置は各ツールで選ぶ。
+@mixin tool-page($max-width: 1120px) {
+    width: min(100% - 64px, $max-width);
+    padding-block: 24px 48px;
+}
+
+@mixin tool-page-mobile {
+    width: calc(100% - 40px);
+    padding-block: 16px 32px;
+}
+
+// パネルの表面。paddingやoverflowは用途ごとに指定する。
+@mixin panel-surface {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-panel);
+    background: var(--color-surface);
+}
+
+@mixin toolbar-row($gap: 12px) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: $gap;
+}

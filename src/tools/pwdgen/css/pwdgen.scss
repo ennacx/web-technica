@@ -2,8 +2,7 @@
 
 // pwdgen独自の配置。部品の配色・基本形状は共通SCSSに置く。
 main.pwdgen {
-    width: min(100% - 64px, 960px);
-    padding-block: 24px 48px;
+    @include mixin.tool-page(960px);
 }
 
 .pwdgen-settings {
@@ -230,8 +229,7 @@ main.pwdgen {
 
 @include mixin.mobile {
     main.pwdgen {
-        width: calc(100% - 40px);
-        padding-block: 16px 32px;
+        @include mixin.tool-page-mobile;
     }
 
     .pwdgen {

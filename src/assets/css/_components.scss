@@ -2,6 +2,8 @@
  * ツール詳細ページでも使える、共通の基本部品。
  */
 
+@use "mixin";
+
 .icon {
     display: inline-block;
     flex: none;
@@ -141,9 +143,7 @@
 // 共通のツール画面・フォーム部品。
 .panel {
     padding: 28px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-panel);
-    background: var(--color-surface);
+    @include mixin.panel-surface;
 }
 
 .breadcrumbs {

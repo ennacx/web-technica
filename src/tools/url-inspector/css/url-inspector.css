@@ -1,3 +1,10 @@
+@charset "UTF-8";
+/*
+ * 共通の mixin。
+ */
+/*
+ * 共通の寸法・フォント。テーマ色はCSSカスタムプロパティで公開する。
+ */
 main.url-inspector {
   width: min(100% - 64px, 1120px);
   padding-block: 24px 48px;
@@ -21,11 +28,11 @@ main.url-inspector {
 }
 
 .url-panel {
-  min-width: 0;
-  padding: 24px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
+  min-width: 0;
+  padding: 24px;
 }
 
 .url-section-heading {

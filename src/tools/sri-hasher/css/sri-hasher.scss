@@ -2,8 +2,7 @@
 
 // SRI固有の配置。フォームやパネルの基本形状は共通SCSSを使用する。
 main.sri-hasher {
-    width: min(100% - 64px, 1120px);
-    padding-block: 24px 48px;
+    @include mixin.tool-page;
 }
 
 .sri-layout {
@@ -85,8 +84,7 @@ main.sri-hasher {
 
 @include mixin.mobile {
     main.sri-hasher {
-        width: calc(100% - 40px);
-        padding-block: 16px 32px;
+        @include mixin.tool-page-mobile;
     }
 
     .sri-layout {

@@ -1,23 +1,18 @@
 @use "../../../assets/css/mixin";
 
 main.json-editor {
-    width: min(100% - 64px, 1120px);
-    padding-block: 24px 48px;
+    @include mixin.tool-page;
 }
 
 .json-workspace {
+    @include mixin.panel-surface;
+
     overflow: hidden;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-panel);
-    background: var(--color-surface);
 }
 
 .json-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    @include mixin.toolbar-row(16px);
+
     padding: 16px 20px;
     border-block-end: 1px solid var(--color-border);
 }
@@ -57,11 +52,8 @@ main.json-editor {
 }
 
 .json-document-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    @include mixin.toolbar-row;
+
     padding: 12px 20px;
     border-block-end: 1px solid var(--color-border);
     background: var(--color-bg);
@@ -252,11 +244,8 @@ main.json-editor {
 }
 
 .json-status-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px 20px;
+    @include mixin.toolbar-row(8px 20px);
+
     padding: 12px 20px;
     border-block-start: 1px solid var(--color-border);
     color: var(--color-text-muted);
@@ -309,11 +298,8 @@ main.json-editor {
 }
 
 .json-below-editor {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    @include mixin.toolbar-row;
+
     margin-block-start: 16px;
 
     .button {
@@ -380,8 +366,7 @@ main.json-editor {
 
 @include mixin.mobile {
     main.json-editor {
-        width: calc(100% - 40px);
-        padding-block: 16px 32px;
+        @include mixin.tool-page-mobile;
     }
 
     .json-toolbar, .json-document-bar {

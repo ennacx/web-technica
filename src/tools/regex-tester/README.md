@@ -85,7 +85,8 @@ The current flow stays within the tool, using native ES modules without a bundle
 | `engines/javascript.js` | Native RegExp execution and normalized ranges |
 | `result.js` | Shared result / error contract and provisional limits |
 | `render.js` | Text-only DOM rendering, bounded match list, highlight and status |
-| `split-pane.js` | Independent workspace height control |
+
+Shared site components provide copy-button snapshot handling, text notices, and independent panel height control (`#components/copy-button.js`, `notice.js`, and `split-pane.js`). Line counting uses `#utils/text.js`. The regex execution controller, Worker lifecycle, limits, and renderer remain specific to this tool.
 
 Requests include `requestId`, `engine`, `pattern`, `flags`, `text`, and the controller's bounded `timeoutMs`. Timeout bounds, default and step live in `LIMITS`; the controller also clamps and rounds direct callers' settings. Results include `requestId`, `engine`, `offsetUnit: 'utf-16'`, `status`, `matches`, `truncated`, `truncationReason`, `elapsedMs`, and `error`. Matches carry `start`, `end`, numbered `groups`, and `namedGroups`. Capture ranges have nullable `start` and `end`; named ranges use `name`, numbered ranges use `index`. Text is derived from the request snapshot instead of repeated in Worker messages. Errors carry `code`, `message`, and nullable `position`. Future engines must normalize their native offsets before returning this contract.
 
