@@ -79,6 +79,10 @@ Clearing a JavaScript value or resetting the UI does not guarantee immediate era
 | Generation fails or APIs are unavailable | Use a supported browser on HTTPS or localhost; large RSA keys and passphrase derivation can take time |
 | Copy fails | Use the corresponding download button or copy the visible text manually |
 
+## Roadmap
+
+The long-term goal is a browser-based alternative to PuTTYgen. Planned import features include passphrase-protected PPK files, public-key and fingerprint inspection, MAC and key-pair consistency checks, and private-key format conversion. Import and conversion of existing files are not implemented yet; the current tool generates and exports new key pairs.
+
 ## License
 
 Part of Web-Technica, licensed under [MIT](../../../LICENSE). The browser bundle includes third-party cryptographic libraries; their license texts are available from [Third-party licenses](https://ennacx.github.io/web-technica/keygen/js/THIRD-PARTY-LICENSES.txt).

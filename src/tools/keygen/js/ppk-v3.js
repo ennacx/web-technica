@@ -137,7 +137,7 @@ export class PPKv3 {
      *
      * @description この関数は、提供されたパスフレーズからArgon2idを用いて暗号化鍵およびMAC鍵を導出する。
      *              次に、導出された暗号化鍵と初期化ベクトル (IV) を使用し、AES-CBC方式で秘密鍵を暗号化する。
-     *              WebCryptoにおけるパディングの仕様上の競合を回避するため、本関数ではパディングを行わないAES-CBC暗号化を独自に実装している。
+     *              PPKのランダムパディングを維持するため、@noble/ciphersでPKCS#7を無効にしたAES-CBC暗号化を行う。
      *              また、Argon2idの設定に関するメタデータも生成され、結果とともに返す。
 	 */
 	static async #argon2KeyDerivation(passphrase, paddedPrivkey){

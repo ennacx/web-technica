@@ -3,11 +3,11 @@
     "private": true,
     "type": "module",
     "dependencies": {
+        "@noble/ciphers": "^2.4.0",
         "@noble/curves": "^2.0.1",
         "@stablelib/chacha20poly1305": "^2.0.1",
         "argon2-browser": "^1.18.0",
-        "bcrypt-pbkdf": "^1.0.2",
-        "crypto-js": "^4.2.0"
+        "bcrypt-pbkdf": "^1.0.2"
     },
     "devDependencies": {
         "esbuild": "^0.25.0"

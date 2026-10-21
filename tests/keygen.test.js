@@ -93,6 +93,10 @@ test('encrypted PKCS#8 and PPK decrypt to the advertised public key', async () =
     assert.deepEqual(publicDER(privateKey), createPublicKey(result.publicPEM).export({ type: 'spki', format: 'der' }));
     assert.throws(() => createPrivateKey({ key: result.privatePEM, passphrase: 'wrong' }));
     await verifyPPK(result, passphrase);
+    await assert.rejects(() => verifyPPK(result, 'wrong-passphrase'), 'PPK MAC rejects a wrong passphrase');
+    const tampered = { ...result, ppk: result.ppk.replace(/(Private-Lines: \d+\r?\n)([A-Za-z0-9+/])/, (_, prefix, first) => prefix + (first === 'A' ? 'B' : 'A')) };
+    assert.notEqual(tampered.ppk, result.ppk);
+    await assert.rejects(() => verifyPPK(tampered, passphrase), 'PPK MAC rejects modified ciphertext');
 });
 
 test('OpenSSH AES-CTR and custom IETF ChaCha output decrypt and contain the expected key', async () => {

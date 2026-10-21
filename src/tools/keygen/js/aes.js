@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import { cbc } from '@noble/ciphers/aes.js';
 
 /**
  * パディングなしのCBCモードで、AES暗号化を用いて平文を暗号化する。
@@ -10,18 +10,19 @@ import CryptoJS from 'crypto-js';
  */
 export function aesCbcEncryptRawNoPadding(keyBytes, ivBytes, plaintext){
     // PPKは独自のパディング済みデータを暗号化するため、PKCS#7を追加しない。
-    const encrypted = CryptoJS.AES.encrypt(
-        CryptoJS.lib.WordArray.create(plaintext),
-        CryptoJS.lib.WordArray.create(keyBytes),
-        {
-            iv: CryptoJS.lib.WordArray.create(ivBytes),
-            mode: CryptoJS.mode.CBC,
-            padding: CryptoJS.pad.NoPadding
-        }
-    ).ciphertext;
+    return cbc(keyBytes, ivBytes, { disablePadding: true }).encrypt(plaintext);
+}
 
-    return Uint8Array.from(
-        { length: encrypted.sigBytes },
-        (_, i) => (encrypted.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 255
-    );
+/**
+ * PPK用のCBC復号。ランダムパディングを含む平文をそのまま返す。
+ * この処理だけではパスフレーズの正否や改ざんを判定できない。
+ * インポート時には、復号後の平文を含むPPKのMACを検証してから利用すること。
+ *
+ * @param {Uint8Array} keyBytes
+ * @param {Uint8Array} ivBytes
+ * @param {Uint8Array} ciphertext
+ * @returns {Uint8Array}
+ */
+export function aesCbcDecryptRawNoPadding(keyBytes, ivBytes, ciphertext){
+    return cbc(keyBytes, ivBytes, { disablePadding: true }).decrypt(ciphertext);
 }
