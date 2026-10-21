@@ -145,7 +145,10 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     } } };
     globalThis.document = f.root;
     globalThis.window = { addEventListener(name, fn){ lifecycle[name] = fn; } };
-    globalThis.getComputedStyle = () => ({ getPropertyValue: (name) => ({ '--input-min': '400px', '--input-max': '1600px', '--input-default': '480px' })[name] });
+    globalThis.getComputedStyle = () => ({ getPropertyValue: (name) => ({
+        '--input-min': '400px', '--input-max': '1600px', '--input-default': '480px',
+        '--results-min': '320px', '--results-max': '2400px', '--results-default': '400px'
+    })[name] });
     globalThis.ResizeObserver = class {
         constructor(callback){ this.callback = callback; }
         observe(target){ observers.push({ target, callback: this.callback }); }

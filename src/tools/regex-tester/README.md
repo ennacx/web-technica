@@ -44,7 +44,7 @@ The **Copy regular expression** icon at the right of the pattern field copies th
 
 ## Workspace layout
 
-Drag the horizontal handle with a mouse, pen, or touch to resize the input panel. The workspace has no fixed total height: enlarging the input panel grows the page without shrinking results. Input height ranges from 400 to 1600 pixels (mobile minimum: 480), with an initial height of 480 pixels (mobile: 560). Results have their own viewport-based height of 320–560 pixels. These are provisional UI sizes. Double-click the handle or choose **Reset layout** to restore the initial input height. With the handle focused, use Up / Down to move by 10 pixels (Shift: 50), Home / End to reach the limits, and Enter to reset.
+Drag the horizontal handle below either panel with a mouse, pen, or touch to resize that panel independently. The workspace has no fixed total height: enlarging either panel grows the page without shrinking the other. Input height ranges from 400 to 1600 pixels (mobile minimum: 480), with an initial height of 480 pixels (mobile: 560). Results range from 320 to 2400 pixels, initially 400 pixels. Both panels scroll independently. These are provisional UI sizes. Double-click a handle to restore that panel's initial height, or choose **Reset layout** to reset both panels. With a handle focused, use Up / Down to move by 10 pixels (Shift: 50), Home / End to reach the limits, and Enter to reset that panel.
 
 Test text and results scroll independently. The stacked layout remains on mobile; the page also scrolls when taller than the viewport.
 

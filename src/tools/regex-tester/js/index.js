@@ -170,6 +170,11 @@ get('sample').addEventListener('click', () => {
 });
 
 setupSplitPane(get('workspace'), get('splitter'), get('reset-layout'));
+setupSplitPane(get('workspace'), get('results-splitter'), get('reset-layout'), {
+    pane: get('results-pane'),
+    name: 'results',
+    label: 'Match results'
+});
 
 window.addEventListener('pagehide', () => controller.cancel());
 

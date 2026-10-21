@@ -1,13 +1,17 @@
-// Kept local to this prototype until another tool needs a resizable workspace.
-export function setupSplitPane(workspace, splitter, resetButton){
+// Each handle changes only its own panel; the workspace grows with its children.
+export function setupSplitPane(workspace, splitter, resetButton, {
+    pane = workspace.firstElementChild,
+    name = 'input',
+    label = 'Input'
+} = {}){
     let requestedHeight = null;
     let drag = null;
 
     function measure(){
         const style = getComputedStyle(workspace);
-        const min = Number.parseFloat(style.getPropertyValue('--input-min'));
-        const max = Number.parseFloat(style.getPropertyValue('--input-max'));
-        const initial = Number.parseFloat(style.getPropertyValue('--input-default'));
+        const min = Number.parseFloat(style.getPropertyValue(`--${name}-min`));
+        const max = Number.parseFloat(style.getPropertyValue(`--${name}-max`));
+        const initial = Number.parseFloat(style.getPropertyValue(`--${name}-default`));
 
         return { min, max, initial };
     }
@@ -15,11 +19,13 @@ export function setupSplitPane(workspace, splitter, resetButton){
     function render(){
         const { min, max, initial } = measure();
         const height = Math.max(min, Math.min(max, requestedHeight ?? initial));
-        workspace.style.setProperty('--input-height', `${height}px`);
+
+        workspace.style.setProperty(`--${name}-height`, `${height}px`);
+
         splitter.setAttribute('aria-valuemin', min);
         splitter.setAttribute('aria-valuemax', max);
         splitter.setAttribute('aria-valuenow', Math.round(height));
-        splitter.setAttribute('aria-valuetext', `Input height ${Math.round(height)} pixels`);
+        splitter.setAttribute('aria-valuetext', `${label} height ${Math.round(height)} pixels`);
     }
 
     function setHeight(height){
@@ -61,7 +67,7 @@ export function setupSplitPane(workspace, splitter, resetButton){
         drag = {
             id: event.pointerId,
             y: event.pageY,
-            height: workspace.firstElementChild.getBoundingClientRect().height
+            height: pane.getBoundingClientRect().height
         };
 
         splitter.setPointerCapture(event.pointerId);
@@ -84,7 +90,7 @@ export function setupSplitPane(workspace, splitter, resetButton){
 
     splitter.addEventListener('keydown', (event) => {
         const { min, max } = measure();
-        const current = workspace.firstElementChild.getBoundingClientRect().height;
+        const current = pane.getBoundingClientRect().height;
         const step = event.shiftKey ? 50 : 10;
 
         switch(event.key){

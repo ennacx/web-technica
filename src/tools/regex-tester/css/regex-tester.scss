@@ -35,8 +35,12 @@ main.regex-tester {
     --input-default: 480px;
     --input-max: 1600px;
     --results-min: 320px;
+    --results-default: 400px;
+    --results-max: 2400px;
+    --resize-handle-size: 24px;
+
     display: grid;
-    grid-template-rows: minmax(var(--input-min), var(--input-height, var(--input-default))) 24px auto;
+    grid-template-rows: minmax(var(--input-min), var(--input-height, var(--input-default))) var(--resize-handle-size) auto var(--resize-handle-size);
 
     &[data-resizing] {
         cursor: row-resize;
@@ -57,7 +61,7 @@ main.regex-tester {
 
 .regex-results-pane {
     min-height: var(--results-min);
-    height: clamp(var(--results-min), 45dvh, 560px);
+    height: var(--results-height, var(--results-default));
 }
 
 .regex-pattern-settings {
@@ -443,7 +447,7 @@ main.regex-tester {
     .regex-workspace {
         --input-min: 480px;
         --input-default: 560px;
-        grid-template-rows: minmax(var(--input-min), var(--input-height, var(--input-default))) 32px auto;
+        --resize-handle-size: 32px;
     }
 
     .regex-pattern-settings,
