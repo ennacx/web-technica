@@ -1,6 +1,8 @@
 import { getById, querySelAll } from '#utils/dom.js';
-import { copyText } from '#utils/clipboard.js';
-import { setupSplitPane } from './split-pane.js';
+import { lineCount } from '#utils/text.js';
+import { bindCopyButton } from '#components/copy-button.js';
+import { createNotice } from '#components/notice.js';
+import { setupSplitPane } from '#components/split-pane.js';
 import { createExecutionController } from './controller.js';
 import { createRenderer } from './render.js';
 import { LIMITS, normalizeTimeoutMs } from './result.js';
@@ -13,6 +15,12 @@ const mode = get('mode');
 const run = get('run');
 const timeout = get('timeout');
 const copy = get('copy');
+
+const copyNotice = createNotice(get('copy-status'), {
+    container: get('copy-notice'),
+    dismiss: get('copy-dismiss'),
+    focusTarget: copy
+});
 
 timeout.min = String(LIMITS.timeoutMinMs);
 timeout.max = String(LIMITS.timeoutMaxMs);
@@ -77,12 +85,12 @@ function inputChanged(){
 
     ++inputRevision;
 
-    get('copy-notice').hidden = true;
-    get('copy-status').textContent = '';
+    copyNotice.clear();
+
     get('flags-summary').textContent = snapshot.flags;
     get('text-stats').textContent = [
         `${snapshot.text.length} characters`,
-        `${snapshot.text.split('\n').length} lines`
+        `${lineCount(snapshot.text)} lines`
     ].join(' · ');
 
     controller.update(snapshot, { composing });
@@ -120,42 +128,26 @@ run.addEventListener('click', () => {
     }
 });
 
-copy.addEventListener('click', async () => {
-    if(copy.disabled){
-        return;
-    }
-
-    const snapshot = readInput();
-    const revision = inputRevision;
-
-    copying = true;
-    copy.disabled = true;
-
-    get('copy-status').textContent = '';
-    get('copy-notice').hidden = false;
-
-    try{
-        await copyText(`/${snapshot.pattern}/${snapshot.flags}`, document);
-
-        if(revision === inputRevision){
-            get('copy-status').textContent = 'Regular expression copied.';
-            get('copy-status').dataset.state = 'success';
-        }
-    } catch(e){
-        if(revision === inputRevision){
-            get('copy-status').textContent = 'Copy failed. Check clipboard permissions and try again.';
-            get('copy-status').dataset.state = 'error';
-        }
-    } finally{
+bindCopyButton(copy, {
+    document,
+    read: () => ({ ...readInput(), revision: inputRevision }),
+    getText: (snapshot) => `/${snapshot.pattern}/${snapshot.flags}`,
+    isCurrent: (snapshot) => snapshot.revision === inputRevision,
+    onStart(){
+        copying = true;
+        copy.disabled = true;
+        copyNotice.show('');
+    },
+    onSuccess(){
+        copyNotice.show('Regular expression copied.', 'success');
+    },
+    onError(){
+        copyNotice.show('Copy failed. Check clipboard permissions and try again.', 'error');
+    },
+    onSettled(){
         copying = false;
         copy.disabled = (composing || pattern.value === '');
     }
-});
-
-get('copy-dismiss').addEventListener('click', () => {
-    get('copy-notice').hidden = true;
-
-    copy.focus();
 });
 
 get('sample').addEventListener('click', () => {

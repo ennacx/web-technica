@@ -1,9 +1,8 @@
 import { randomBytes } from '#utils/crypto.js';
-// CDN
+import { Bytes } from '#utils/bytes.js';
+import { lineCount } from '#utils/text.js';
 import argon2 from "argon2-browser/dist/argon2-bundled.min.js";
 import { aesCbcEncryptRawNoPadding } from './aes.js';
-// Local
-import { Bytes } from '#utils/bytes.js';
 import { Helper } from "./helper.js";
 import { RFC4253 } from "./rfc4253.js";
 
@@ -239,8 +238,8 @@ export class PPKv3 {
 	static #output(algorithmName, encryption, comment, pubB64, privB64, macHex, kdLines) {
 		const pubLines     = Helper.stringWrap(pubB64);
 		const privLines    = Helper.stringWrap(privB64);
-		const pubLineCount = Helper.lineCount(pubLines);
-		const prvLineCount = Helper.lineCount(privLines);
+		const pubLineCount = lineCount(pubLines);
+		const prvLineCount = lineCount(privLines);
 
 		// FIXME: 順番重要
 		return Helper.implode([

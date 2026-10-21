@@ -1,9 +1,10 @@
 import { getById, querySel } from '#utils/dom.js';
-import { copyText } from '#utils/clipboard.js';
+import { bindCopyButton } from '#components/copy-button.js';
 import { validateURL, validateFile, fetchContent, sriFromArrayBuffer, makeHtmlTag } from './sri-hasher.js';
 
 export function initializeSriHasher(document){
     const root = querySel('[data-sri-hasher]', document);
+
     if(!root || root.dataset.ready){
         return;
     }
@@ -172,21 +173,15 @@ export function initializeSriHasher(document){
     });
 
     function bindCopy(button, property, message){
-        button.addEventListener('click', async () => {
-            const snapshot = current;
-            if(button.disabled || !snapshot){
-                return;
-            }
-
-            try{
-                await copyText(snapshot[property], document);
-                if(current === snapshot) {
-                    status.textContent = message;
-                }
-            } catch(e){
-                if(current === snapshot){
-                    status.textContent = 'Copy failed. Select the text and copy it manually.';
-                }
+        bindCopyButton(button, {
+            document,
+            read: () => current,
+            getText: (snapshot) => snapshot[property],
+            onSuccess(){
+                status.textContent = message;
+            },
+            onError(){
+                status.textContent = 'Copy failed. Select the text and copy it manually.';
             }
         });
     }

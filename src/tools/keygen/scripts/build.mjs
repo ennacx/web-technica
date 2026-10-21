@@ -15,7 +15,8 @@ export async function buildKeygen(){
         format: 'esm',
         target: 'es2020',
         external: [
-            '#utils/*'
+            '#utils/*',
+            '#components/*'
         ],
         legalComments: 'linked',
         metafile: true,

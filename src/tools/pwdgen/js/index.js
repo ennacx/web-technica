@@ -7,20 +7,23 @@ import {
 
 import { getById, querySel } from "#utils/dom.js";
 import { numberFormat } from "#utils/format.js";
-import { copyText } from "#utils/clipboard.js";
+import { lineCount } from '#utils/text.js';
 import { downloadText } from "#utils/download.js";
+import { bindCopyButton, createCopyFeedback } from '#components/copy-button.js';
 
 // UI state stays in memory. Generated values never enter storage, URLs, or logs.
 export function initializePwdgen(document){
-    const root = document.querySelector('[data-pwdgen]');
-    if (!root || root.dataset.ready) {
+    const root = querySel('[data-pwdgen]', document);
+
+    if(!root || root.dataset.ready){
         return;
     }
 
     root.dataset.ready = 'true';
 
-    const window = document.defaultView;
     const get = (id) => getById(id, document);
+
+    const window = document.defaultView;
 
     const form = get('pwdgen-form');
     const settings = get('pwdgen-settings');
@@ -48,7 +51,7 @@ export function initializePwdgen(document){
     let currentPassword = '';
     let busy = false;
 
-    const copyTimers = new Map();
+    const { reset: resetCopy, show: showCopied } = createCopyFeedback(window);
 
     get('symbol-samples').textContent = SYMBOL;
     get('mislead-samples').textContent = `(${MISLEAD_SYMBOLS.split('').join(', ')})`;
@@ -56,7 +59,9 @@ export function initializePwdgen(document){
 
     function updateRange(){
         slider.value = length.value;
+
         const progress = (Number(slider.value) - PWD_LEN_MIN) / (PWD_LEN_MAX - PWD_LEN_MIN) * 100;
+
         slider.style.setProperty('--range-progress', `${progress}%`);
     }
 
@@ -71,6 +76,7 @@ export function initializePwdgen(document){
         mathRadio.disabled = uuidMode;
 
         uuid.disabled = (typeof globalThis.crypto?.randomUUID !== 'function');
+
         if(uuidMode){
             length.value = '36';
             unique.checked = false;
@@ -115,6 +121,7 @@ export function initializePwdgen(document){
     uuid.addEventListener('change', () => {
         if(uuid.checked){
             hex.checked = false;
+
             types.forEach((input) => { input.checked = false; });
         } else{
             restoreDefaults();
@@ -145,8 +152,8 @@ export function initializePwdgen(document){
         const fullWidth = Array.from(SYMBOL_ZEN);
         const symbols = Array.from(SYMBOL);
 
-        ignored.value = [...new Set(Array
-            .from(ignored.value, (character) => {
+        ignored.value = [...new Set(
+            Array.from(ignored.value, (character) => {
                 const index = fullWidth.indexOf(character);
 
                 return (index >= 0) ? symbols[index] : character;
@@ -185,13 +192,6 @@ export function initializePwdgen(document){
     function clearError(){
         error.hidden = true;
         error.textContent = '';
-    }
-
-    function resetCopy(button){
-        window.clearTimeout(copyTimers.get(button));
-
-        querySel('[data-icon-copy]', button).hidden = false;
-        querySel('[data-icon-check]', button).hidden = true;
     }
 
     function clearSingle(){
@@ -267,6 +267,7 @@ export function initializePwdgen(document){
             showSingle(result, options);
         } catch(e){
             clearSingle();
+
             showError('Generation failed. Web Crypto may be unavailable or blocked. Review your options and try again.');
         }
     });
@@ -354,10 +355,14 @@ export function initializePwdgen(document){
             showError('Batch generation failed. Review your options and try again.');
         } finally{
             busy = false;
-            settings.disabled = false;
-            count.disabled = preset.disabled = false;
 
-            generateButtons.forEach((button) => { button.disabled = false; });
+            settings.disabled = false;
+            count.disabled = false;
+            preset.disabled = false;
+
+            generateButtons.forEach((button) => {
+                button.disabled = false;
+            });
 
             get('batch-section').setAttribute('aria-busy', 'false');
 
@@ -373,31 +378,20 @@ export function initializePwdgen(document){
             count.value = preset.value;
         }
     });
-    count.addEventListener('input', () => { preset.value = ''; });
+
+    count.addEventListener('input', () => {
+        preset.value = '';
+    });
 
     function bindCopy(button, getText, status, message){
-        button.addEventListener('click', async () => {
-            if(button.disabled || !getText()){
-                return;
-            }
-
-            const copiedText = getText();
-
-            try{
-                await copyText(copiedText, document);
-
-                // A new generation may finish while clipboard permission is pending.
-                if(copiedText === getText()){
-                    resetCopy(button);
-
-                    button.querySelector('[data-icon-copy]').hidden = true;
-                    button.querySelector('[data-icon-check]').hidden = false;
-
-                    copyTimers.set(button, window.setTimeout(() => resetCopy(button), 2000));
-
-                    status.textContent = message;
-                }
-            } catch(e){
+        bindCopyButton(button, {
+            document,
+            read: getText,
+            onSuccess(){
+                showCopied(button);
+                status.textContent = message;
+            },
+            onError(){
                 status.textContent = 'Copy failed. Select the text and copy it manually.';
             }
         });
@@ -412,7 +406,7 @@ export function initializePwdgen(document){
         }
 
         try{
-            downloadText(batch.value, `passwords_${batch.value.split('\n').length}.txt`, document);
+            downloadText(batch.value, `passwords_${lineCount(batch.value)}.txt`, document);
 
             get('bulk-status').textContent = 'Download started.';
         } catch(e){

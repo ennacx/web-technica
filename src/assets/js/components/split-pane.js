@@ -1,4 +1,5 @@
-// Each handle changes only its own panel; the workspace grows with its children.
+// 各ハンドルは自身のパネルのみを変化させ、ワークスペースは子要素の拡大に合わせて大きくなる。
+// ホスト側のCSSは --<name>-min/max/default を提供し、--<name>-height を利用する。
 export function setupSplitPane(workspace, splitter, resetButton, {
     pane = workspace.firstElementChild,
     name = 'input',
@@ -38,6 +39,7 @@ export function setupSplitPane(workspace, splitter, resetButton, {
 
     function reset(){
         requestedHeight = null;
+
         render();
     }
 
@@ -91,7 +93,7 @@ export function setupSplitPane(workspace, splitter, resetButton, {
     splitter.addEventListener('keydown', (event) => {
         const { min, max } = measure();
         const current = pane.getBoundingClientRect().height;
-        const step = event.shiftKey ? 50 : 10;
+        const step = (event.shiftKey) ? 50 : 10;
 
         switch(event.key){
             case 'ArrowUp':

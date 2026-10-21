@@ -14,21 +14,8 @@ export class Helper {
 	 * @param {number} [width=64] - The maximum width of a line before wrapping. Defaults to 64 if not provided.
 	 * @returns {string} The string formatted with line breaks.
 	 */
-	static stringWrap(str, width = 64) {
+	static stringWrap(str, width = 64){
 		return str.replace(new RegExp(`(.{1,${width}})`, "g"), (match, grp1) => (grp1) ? `${grp1}\n` : "").trimEnd();
-	}
-
-	/**
-	 * Calculates the number of lines in a given string.
-	 *
-	 * This function splits the input string by newline characters ("\n") and counts the number of resulting segments,
-	 * effectively determining the number of lines in the input.
-	 *
-	 * @param {string} str - The input string to evaluate.
-	 * @returns {number} The number of lines in the input string.
-	 */
-	static lineCount(str) {
-		return str.split("\n").length;
 	}
 
 	/**
@@ -41,12 +28,12 @@ export class Helper {
 	 * @param {boolean} [opt.ignoreEmptyLines=true] - A flag indicating whether empty strings should be ignored.
 	 * @return {string} - The concatenated string with specified separator and optional filtering applied.
 	 */
-	static implode(array, opt = {separator: "\n", ignoreEmptyLines: true}) {
+	static implode(array, opt = {separator: "\n", ignoreEmptyLines: true}){
 		if(opt.ignoreEmptyLines){
-			array = array.filter((e) => e !== "");
+			array = array.filter((e) => (e !== ''));
 		}
 
-		return array.filter((e) => typeof e === 'string' || e instanceof String).join(opt.separator ?? "\n");
+		return array.filter((e) => (typeof e === 'string' || e instanceof String)).join(opt.separator ?? "\n");
 	}
 
 	/**
@@ -58,10 +45,10 @@ export class Helper {
 	 * @param {string} [addLabel=""] - An additional prefix to append to the label string. Defaults to an empty string.
 	 * @return {string} The PEM formatted string representation of the input buffer.
 	 */
-	static toPEM(buffer, label, wrapWidth = 64, addLabel = "") {
+	static toPEM(buffer, label, wrapWidth = 64, addLabel = ''){
 		const base64 = this.stringWrap(Bytes.toBase64(buffer), wrapWidth);
 
-		if(addLabel !== ""){
+		if(addLabel !== ''){
 			label = `${addLabel} ${label}`;
 		}
 

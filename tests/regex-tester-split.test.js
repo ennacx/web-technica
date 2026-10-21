@@ -1,7 +1,7 @@
 ﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { setupSplitPane } from '../src/tools/regex-tester/js/split-pane.js';
+import { setupSplitPane } from '../src/assets/js/components/split-pane.js';
 
 test('input resizing grows the workspace without borrowing height from results', (t) => {
     const previousStyle = globalThis.getComputedStyle;

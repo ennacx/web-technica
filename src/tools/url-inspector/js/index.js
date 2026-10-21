@@ -1,5 +1,6 @@
 import { getById } from '#utils/dom.js';
-import { copyText } from '#utils/clipboard.js';
+import { bindCopyButton } from '#components/copy-button.js';
+import { createNotice } from '#components/notice.js';
 import { componentNames, UrlInspectorDocument } from './document.js';
 import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegments, canHaveCredentials } from './components.js';
 
@@ -14,9 +15,7 @@ const componentInputs = Object.fromEntries(componentNames.map((name) => [name, g
 
 const sample = 'https://example.com:8443/search?q=mirrorless+camera&tag=photo&tag=travel&page=2#results';
 
-function announce(message){
-    get('action-status').textContent = message;
-}
+const { show: announce } = createNotice(get('action-status'));
 
 function render({ rows = true, components = true } = {}){
     if(current.value !== state.currentUrl){
@@ -224,12 +223,13 @@ get('store').addEventListener('click', () => {
     announce('Current URL stored as Original.');
 });
 
-get('copy').addEventListener('click', async () => {
-    try{
-        await copyText(state.currentUrl);
-
+bindCopyButton(get('copy'), {
+    document,
+    read: () => state.currentUrl,
+    onSuccess(){
         announce('Current URL copied, including any credentials.');
-    } catch(e){
+    },
+    onError(){
         announce('Copy unavailable. Select and copy the Current URL manually.');
     }
 });
@@ -305,7 +305,7 @@ rowsElement.addEventListener('click', (event) => {
 
     const id = Number(button.dataset.id);
     const action = button.dataset.action;
-    const index = state.rows.findIndex((row) => row.id === id);
+    const index = state.rows.findIndex((row) => (row.id === id));
 
     const deleteAction = (action === 'delete');
 

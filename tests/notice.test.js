@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createNotice } from '../src/assets/js/components/notice.js';
+
+test('notices keep hostile text literal, clear state and restore the current focus target on dismiss', () => {
+    const status = { dataset: {} };
+    const container = { hidden: true };
+    const dismiss = { addEventListener(name, handler){ this[name] = handler; } };
+    const focused = [];
+    const editor = { focus(options){ focused.push(['editor', options]); } };
+    const viewer = { focus(options){ focused.push(['viewer', options]); } };
+    let target = editor;
+    const notice = createNotice(status, { container, dismiss, focusTarget: () => target });
+    notice.show('<img src=x onerror=alert(1)>', 'error');
+    assert.equal(status.textContent, '<img src=x onerror=alert(1)>');
+    assert.equal(status.dataset.state, 'error');
+    assert.equal(container.hidden, false);
+    target = viewer;
+    dismiss.click();
+    assert.equal(container.hidden, true);
+    assert.equal(status.textContent, '');
+    assert.equal(status.dataset.state, undefined);
+    assert.deepEqual(focused, [['viewer', { preventScroll: true }]]);
+    notice.show('', 'pending');
+    assert.equal(container.hidden, false, 'pending operation can reserve its notification strip');
+    notice.show('Copied');
+    assert.equal(status.dataset.state, undefined, 'success must not retain a previous error style');
+    const statusOnly = createNotice(status);
+    statusOnly.show('URL updated');
+    statusOnly.clear();
+    assert.equal(status.textContent, '');
+});

@@ -1,5 +1,7 @@
 import { getById } from '#utils/dom.js';
-import { copyText } from '#utils/clipboard.js';
+import { bindCopyButton } from '#components/copy-button.js';
+import { createNotice } from '#components/notice.js';
+import { lineCount } from '#utils/text.js';
 import { downloadText } from '#utils/download.js';
 import { prettyPrintJson, minifyJson, changeJsonIndent } from './formatter.js';
 import { JsonEditorDocument } from './document.js';
@@ -43,15 +45,19 @@ let renderedViewText = null;
 let composing = false;
 let applyingAssistance = false;
 
-function setAction(message){
-    status.textContent = message;
-    actionNotice.hidden = !message;
-}
-
-get('json-action-dismiss').addEventListener('click', () => {
-    (viewing ? code : input).focus({ preventScroll: true });
-    setAction('');
+const notice = createNotice(status, {
+    container: actionNotice,
+    dismiss: get('json-action-dismiss'),
+    focusTarget: () => viewing ? code : input
 });
+
+function setAction(message){
+    if(message){
+        notice.show(message);
+    } else{
+        notice.clear();
+    }
+}
 
 function showValidation(result){
     syntax.dataset.state = result.state;
@@ -126,7 +132,7 @@ function renderSource(){
     fragment.append(document.createTextNode(source.slice(position) || (source ? '' : 'Your JSON will appear here.')));
     code.append(fragment);
 
-    const count = source.split('\n').length;
+    const count = lineCount(source);
 
     lines.textContent = Array.from({ length: count }, (_, index) => index + 1).join('\n');
     renderedViewText = source;
@@ -139,7 +145,7 @@ function update(immediate = false){
     get('json-sort-desc-icon').hidden = (nextDirection !== 'desc');
 
     const length = editorDocument.text.length;
-    const count = editorDocument.text.split('\n').length;
+    const count = lineCount(editorDocument.text);
 
     get('json-stats').textContent = `${length.toLocaleString('en-US')} characters · ${count.toLocaleString('en')} line${(count === 1) ? '' : 's'}`;
 
@@ -479,12 +485,13 @@ sampleButton.addEventListener('click', () => {
     setAction('Sample loaded. Select Edit to change it.');
 });
 
-copyButton.addEventListener('click', async () => {
-    try{
-        await copyText(editorDocument.text);
-
+bindCopyButton(copyButton, {
+    document,
+    read: () => editorDocument.text,
+    onSuccess(){
         setAction('JSON text copied.');
-    } catch(e){
+    },
+    onError(){
         setAction('Could not copy. Select the text and copy it manually.');
     }
 });
