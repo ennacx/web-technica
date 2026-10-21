@@ -16,7 +16,8 @@
         "build:keygen": "npm run build --workspace @web-technica/keygen",
         "build": "eleventy",
         "build:pages": "eleventy --pathprefix=/web-technica/",
-        "test": "node --test"
+        "test": "node --test",
+        "verify:release": "node scripts/verify-release.mjs"
     },
     "devDependencies": {
         "@11ty/eleventy": "^3.1.7",
