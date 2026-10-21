@@ -35,13 +35,29 @@ test('asset plan covers every routed tool regardless of publication state, and o
     assert.equal(new Set(plan.stylesheets).size, plan.stylesheets.length);
 });
 
-test('asset allowlist retains shared modules and Worker imports while excluding tool/build sources', () => {
-    const files = mappedFiles(createAssetPlan(tools));
+test('keygen generated assets are explicitly allowlisted without requiring a prior build', () => {
+    const plan = createAssetPlan(tools);
+    const keygen = Object.fromEntries(Object.entries(plan.passthrough)
+        .filter(([source]) => source.startsWith('src/tools/keygen/')));
+    assert.deepEqual(keygen, {
+        'src/tools/keygen/css/*.css': 'keygen/css',
+        'src/tools/keygen/js/app.js': 'keygen/js/app.js',
+        'src/tools/keygen/js/app.js.LEGAL.txt': 'keygen/js/app.js.LEGAL.txt',
+        'src/tools/keygen/js/THIRD-PARTY-LICENSES.txt': 'keygen/js/THIRD-PARTY-LICENSES.txt'
+    }, 'only the bundle, its licenses and CSS may be published as runtime assets');
+});
+
+test('native asset allowlist retains shared modules and Worker imports while excluding tool/build sources', () => {
+    const plan = createAssetPlan(tools);
+    // Generated keygen files are absent before CI's build step. Check their
+    // declarations above; enumerate source assets independently of local build state.
+    const passthrough = Object.fromEntries(Object.entries(plan.passthrough)
+        .filter(([source]) => !source.startsWith('src/tools/keygen/js/')));
+    const files = mappedFiles({ passthrough });
     for(const filename of [
         'assets/js/components/copy-button.js', 'assets/js/components/notice.js',
         'assets/js/components/split-pane.js', 'assets/js/utils/text.js',
-        'regex-tester/js/workers/javascript.worker.js', 'regex-tester/js/engines/javascript.js',
-        'keygen/js/app.js', 'keygen/js/app.js.LEGAL.txt', 'keygen/js/THIRD-PARTY-LICENSES.txt'
+        'regex-tester/js/workers/javascript.worker.js', 'regex-tester/js/engines/javascript.js'
     ]){
         assert.ok(files.has(filename), filename);
     }
