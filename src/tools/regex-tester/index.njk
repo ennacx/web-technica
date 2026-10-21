@@ -24,7 +24,7 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
                 <p id="regex-status" role="status" aria-live="polite" aria-atomic="true" tabindex="0" aria-label="Execution status">Not run.</p>
                 <span class="badge">JavaScript</span>
             </div>
-            <div class="regex-pattern-field"><span aria-hidden="true">/</span><input id="regex-pattern" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="regex-status" placeholder="Enter a pattern without / delimiters, e.g. \b\w+\b"><span aria-hidden="true">/</span><span id="regex-flags-summary">gi</span></div>
+            <div class="regex-pattern-field"><span aria-hidden="true">/</span><input id="regex-pattern" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="regex-status" placeholder="Enter a pattern without / delimiters, e.g. \b\w+\b"><span aria-hidden="true">/</span><span id="regex-flags-summary">gi</span><button type="button" id="regex-copy" class="button button-icon" aria-label="Copy regular expression" title="Copy regular expression" disabled>{{ icon('copy') }}</button></div>
             <div class="regex-options">
                 <div class="regex-flags" role="group" aria-label="Regular expression flags">
                     <label title="Global search"><input type="checkbox" value="g" checked>g <span>global</span></label>
@@ -69,6 +69,10 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
 </div>
 
 <div class="regex-status-bar">
+    <div id="regex-copy-notice" class="regex-copy-notice" hidden>
+        <p id="regex-copy-status" role="status" aria-live="polite" aria-atomic="true"></p>
+        <button type="button" id="regex-copy-dismiss" class="button" aria-label="Dismiss copy notification">Dismiss</button>
+    </div>
     <div class="regex-bottom-actions">
         <button type="button" id="regex-sample" class="button">{{ icon('code') }} Load sample</button>
         <button type="button" id="regex-reset-layout" class="button">{{ icon('refresh') }} Reset layout</button>

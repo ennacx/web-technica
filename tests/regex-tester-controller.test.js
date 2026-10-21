@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createExecutionController } from '../src/tools/regex-tester/js/controller.js';
 import { createResult, LIMITS, normalizeTimeoutMs } from '../src/tools/regex-tester/js/result.js';
+import { executeJavaScript } from '../src/tools/regex-tester/js/engines/javascript.js';
 
 const sample = { engine: 'javascript', pattern: 'a', text: 'abc', flags: 'g', mode: 'auto' };
 function fixture(t){
@@ -170,3 +171,54 @@ test('empty pattern or text cancels work and never schedules or runs a Worker in
     f.tick(300);
     assert.equal(f.adapters.length, 2, 'whitespace is meaningful input and is not trimmed');
 });
+
+// Guard empty form values, not patterns whose matches happen to be empty.
+// Exercise the controller-to-engine boundary so trimming or broadening the guard
+// cannot silently disable whitespace, empty groups, or lookahead patterns.
+const inputBoundaryCases = [
+    { pattern: '', text: 'ABCDE', ranges: null },
+    { pattern: ' ', text: 'A B C', ranges: [[1, 2], [3, 4]] },
+    { pattern: '(?:)', text: 'ABCDE', ranges: [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]] },
+    { pattern: '(?=B)', text: 'ABCDE', ranges: [[1, 1]] },
+    { pattern: 'A', text: '', ranges: null }
+];
+
+for(const mode of ['auto', 'manual']){
+    for(const { pattern, text, ranges } of inputBoundaryCases){
+        test(`${mode} input boundary: pattern ${JSON.stringify(pattern)}, text ${JSON.stringify(text)}`, (t) => {
+            const f = fixture(t);
+            const snapshot = { ...sample, pattern, text, flags: 'g', mode };
+            f.controller.update(snapshot);
+            if(ranges === null){
+                assert.equal(f.latest().status, 'idle');
+                f.tick(LIMITS.debounceMs);
+                f.controller.run(snapshot);
+                assert.equal(f.latest().status, 'idle');
+                assert.equal(f.adapters.length, 0, 'no adapter or Worker is created');
+                assert.ok(f.states.every((state) => state.status === 'idle'), 'empty inputs are never scheduled or running');
+                return;
+            }
+            if(mode === 'auto'){
+                assert.equal(f.latest().status, 'scheduled');
+                f.tick(LIMITS.debounceMs - 1);
+                assert.equal(f.adapters.length, 0);
+                f.tick(1);
+            } else {
+                assert.equal(f.latest().status, 'idle');
+                f.tick(LIMITS.debounceMs);
+                assert.equal(f.adapters.length, 0, 'Manual waits for Run');
+                f.controller.run(snapshot);
+            }
+            assert.equal(f.latest().status, 'running');
+            assert.equal(f.adapters.length, 1);
+            const adapter = f.adapters[0];
+            assert.equal(adapter.request.pattern, pattern, 'pattern is passed through without trimming or rewriting');
+            assert.equal(adapter.request.text, text);
+            adapter.reply(executeJavaScript(adapter.request));
+            assert.equal(f.latest().status, 'success');
+            assert.equal(f.latest().result.error, null);
+            assert.deepEqual(f.latest().result.matches.map((match) => [match.start, match.end]), ranges);
+            assert.equal(adapter.terminated, true);
+        });
+    }
+}

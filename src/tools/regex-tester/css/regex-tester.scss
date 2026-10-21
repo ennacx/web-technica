@@ -103,6 +103,41 @@ main.regex-tester {
     align-items: center;
 }
 
+#regex-copy {
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+
+    &:hover:not(:disabled) {
+        background: var(--color-surface-raised);
+        color: var(--color-accent);
+    }
+}
+
+.regex-copy-notice {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+
+    p {
+        overflow-wrap: anywhere;
+    }
+
+    [data-state="success"] {
+        color: var(--color-success);
+    }
+
+    [data-state="error"] {
+        color: var(--color-danger);
+    }
+}
+
 .regex-flags {
     display: flex;
     flex-wrap: wrap;

@@ -40,7 +40,7 @@ test('g controls global search; i, m, s and u retain native semantics', () => {
     assert.equal(execute('\\u{1F600}', '😀', 'gu').matches[0].end, 2);
 });
 
-test('empty and zero-width patterns terminate with Unicode-aware advancement', () => {
+test('native engine handles empty and zero-width matches independently of the controller input guard', () => {
     assert.deepEqual(execute('', '😀', 'gu').matches.map((match) => match.start), [0, 2]);
     assert.deepEqual(execute('', '😀', 'g').matches.map((match) => match.start), [0, 1, 2]);
     assert.equal(execute('', '', '').matches.length, 1);

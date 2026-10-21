@@ -10,6 +10,22 @@ Enter a pattern without surrounding `/` delimiters and enter your test text. Bot
 
 **Auto**, the default, waits 300 ms after the last input change. **Manual** waits for **Run**. Run also executes immediately in Auto. Changing pattern, flags, text, or mode cancels pending and running work and clears obsolete results. IME composition postpones Auto until composition ends. Results view changes do not execute the engine.
 
+### Empty input versus zero-width matches
+
+Only an empty input string suppresses execution; a nonempty pattern that matches an empty range still executes. These boundary cases are regression-tested through the controller and JavaScript engine with `g`, in both Auto and Manual. Manual requires Run for executable cases. Offsets below are zero-based UTF-16, end-exclusive.
+
+| Pattern | Test text | Expected behavior |
+|---|---|---|
+| `''` (empty input) | `ABCDE` | `idle`; no execution or Worker creation |
+| `' '` (one space) | `A B C` | Executes; two matches at `[1, 2)` and `[3, 4)` |
+| `(?:)` | `ABCDE` | Executes; six zero-width matches at offsets 0 through 5 |
+| `(?=B)` | `ABCDE` | Executes; one zero-width lookahead match at `[1, 1)` |
+| `A` | `''` (empty input) | `idle`; no execution or Worker creation |
+
+The input guard belongs to the execution controller. Low-level native-engine tests also cover empty patterns to verify JavaScript matching semantics; they do not enable empty-form execution in the UI.
+
+### Execution timeout
+
 The controller starts a fresh Worker for each execution and terminates it after completion, cancellation, or failure. **Timeout**, beside Run mode, adjusts the execution limit from **0.5 to 10.0 seconds**, in **0.1-second steps**, initially **1.5 seconds**. Dragging updates the displayed seconds; committing a change cancels obsolete work and schedules Auto, or waits for Run in Manual. The chosen limit is captured for each request and includes Worker startup and execution. If it expires, the Worker is terminated and the mode switches to Manual. Edit the input or timeout and choose Run to retry, or explicitly switch back to Auto. Nothing is automatically retried after timeout. Load sample keeps your selected timeout; reloading restores the default. Navigating away cancels execution; returning from the browser's back/forward cache restores the selected mode.
 
 ## Results and offsets
@@ -18,7 +34,9 @@ Expand a match to inspect captures. Numbered groups and named groups are shown a
 
 Choose **Highlight** to inspect a read-only rendering of the executed text snapshot, or **Matches** to return to the list. Source text remains editable and selectable in its textarea. Match metadata, syntax errors, no matches, waiting, running, timeout, input limits, and Worker failures appear in the input heading beside the JavaScript badge (below the heading on mobile). The status uses a single-line-height viewport, vertically centered with the heading and badge, so updates do not move the pattern field or textarea. Longer messages wrap and scroll vertically within the focusable status area. JavaScript does not supply a reliable syntax-error position, so none is invented.
 
-**Load sample**, below results beside Reset layout, loads the built-in example pattern, flags, and text in the current run mode. In Manual, choose Run afterwards. There is no copy or save command yet; use normal text selection. Inputs and layout reset on reload.
+The **Copy regular expression** icon at the right of the pattern field copies the entered pattern wrapped in `/` delimiters, followed by the selected flags. For example, `[^1-9a-t]` with `g` and `i` becomes `/[^1-9a-t]/gi`. The pattern is kept as entered; copying does not rewrite or validate its syntax. Only checked flags are copied, including none if all are unchecked; the internal `d` flag is not added. Copy works without test text or a completed execution, including while fixing syntax errors, and is disabled for an empty pattern or during IME composition. Success or failure appears in a separate dismissible notification below results; execution status stays intact. If clipboard access fails, check browser permissions and try again, or copy manually.
+
+**Load sample**, below results beside Reset layout, loads the built-in example pattern, flags, and text in the current run mode. In Manual, choose Run afterwards. Match-result copying and saving are not implemented; use normal text selection. Inputs and layout reset on reload.
 
 ## Workspace layout
 
@@ -67,6 +85,6 @@ The current flow stays within the tool, using native ES modules without a bundle
 
 Requests include `requestId`, `engine`, `pattern`, `flags`, `text`, and the controller's bounded `timeoutMs`. Timeout bounds, default and step live in `LIMITS`; the controller also clamps and rounds direct callers' settings. Results include `requestId`, `engine`, `offsetUnit: 'utf-16'`, `status`, `matches`, `truncated`, `truncationReason`, `elapsedMs`, and `error`. Matches carry `start`, `end`, numbered `groups`, and `namedGroups`. Capture ranges have nullable `start` and `end`; named ranges use `name`, numbered ranges use `index`. Text is derived from the request snapshot instead of repeated in Worker messages. Errors carry `code`, `message`, and nullable `position`. Future engines must normalize their native offsets before returning this contract.
 
-Next: measure ReDoS cancellation and Worker startup costs in real browsers; profile large-input rendering and memory; tune limits, incremental rendering and pagination as evidence warrants. Then specify PCRE2 WASM / Python runtime integration and their native offset conversion. PCRE2, Python, replacement, copy, and save are not implemented. Publication remains a separate step after verification.
+Next: measure ReDoS cancellation and Worker startup costs in real browsers; profile large-input rendering and memory; tune limits, incremental rendering and pagination as evidence warrants. Then specify PCRE2 WASM / Python runtime integration and their native offset conversion. PCRE2, Python, replacement, match-result copying, and save are not implemented. Publication remains a separate step after verification.
 
 Native matching and capture-index behavior follow the [ECMAScript RegExp specification](https://tc39.es/ecma262/multipage/text-processing.html#sec-regexp-prototype-matchall).

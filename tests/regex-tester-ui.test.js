@@ -20,7 +20,8 @@ function fixture(){
         append(...nodes){ for(const node of nodes){ this.children.push(...(node.tag === 'fragment' ? node.children : [node])); } }
         replaceChildren(...nodes){ this.children = []; this.append(...nodes); }
         addEventListener(name, fn){ this.listeners[name] = fn; }
-        fire(name){ this.listeners[name]?.({ preventDefault(){} }); }
+        fire(name){ return this.listeners[name]?.({ preventDefault(){} }); }
+        focus(){}
         setAttribute(name, value){ this.attributes[name] = String(value); }
     }
     const template = readFileSync('src/tools/regex-tester/index.njk', 'utf8');
@@ -83,6 +84,13 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     const old = Object.fromEntries(['document', 'window', 'Worker', 'ResizeObserver', 'getComputedStyle'].map((name) => [name, globalThis[name]]));
     const lifecycle = {};
     const workers = [];
+    const copied = [];
+    let rejectCopy = false;
+    f.root.defaultView.isSecureContext = true;
+    f.root.defaultView.navigator = { clipboard: { async writeText(value){
+        if(rejectCopy){ throw new Error('Denied'); }
+        copied.push(value);
+    } } };
     globalThis.document = f.root;
     globalThis.window = { addEventListener(name, fn){ lifecycle[name] = fn; } };
     globalThis.getComputedStyle = () => ({ getPropertyValue: (name) => ({ '--input-min': '400px', '--input-max': '1600px', '--input-default': '480px' })[name] });
@@ -99,6 +107,7 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     assert.equal(f.get('timeout').step, String(LIMITS.timeoutStepMs));
     assert.equal(f.get('timeout-value').textContent, '1.5 s');
     assert.equal(f.get('run').disabled, true);
+    assert.equal(f.get('copy').disabled, true);
     assert.equal(f.get('status').textContent, 'Enter a pattern and test text.');
     t.mock.timers.tick(500);
     assert.equal(workers.length, 0, 'empty initial fields do not execute');
@@ -127,6 +136,7 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     f.get('pattern').fire('compositionstart');
     f.get('pattern').fire('input');
     assert.equal(f.get('run').disabled, true);
+    assert.equal(f.get('copy').disabled, true);
     f.get('run').fire('click');
     t.mock.timers.tick(500);
     assert.equal(workers.length, 1, 'composition defers both Auto and Run');
@@ -173,4 +183,36 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     assert.equal(f.get('status').textContent, 'Enter test text.');
     f.get('sample').fire('click');
     assert.equal(f.get('run').disabled, false);
+
+    f.get('text').value = '';
+    f.get('text').fire('input');
+    f.get('pattern').value = '[^1-9a-t]';
+    f.get('pattern').fire('input');
+    assert.equal(f.get('copy').disabled, false, 'copy does not require test text or a completed run');
+    const executionStatus = f.get('status').textContent;
+    const pendingCopy = f.get('copy').fire('click');
+    assert.equal(f.get('copy').disabled, true, 'prevent duplicate clipboard requests');
+    await pendingCopy;
+    assert.equal(copied.at(-1), '/[^1-9a-t]/gi');
+    assert.equal(f.get('copy-status').textContent, 'Regular expression copied.');
+    assert.equal(f.get('status').textContent, executionStatus, 'copy does not overwrite execution status');
+    assert.equal(workers.length, 2, 'copy does not execute the regex');
+    f.get('copy-dismiss').fire('click');
+    assert.equal(f.get('copy-notice').hidden, true);
+    f.flags.forEach((flag) => { flag.checked = false; });
+    f.flags[0].fire('change');
+    await f.get('copy').fire('click');
+    assert.equal(copied.at(-1), '/[^1-9a-t]/');
+    f.get('pattern').value = '(';
+    f.get('pattern').fire('input');
+    await f.get('copy').fire('click');
+    assert.equal(copied.at(-1), '/(/', 'copy is available while fixing syntax errors');
+    rejectCopy = true;
+    await f.get('copy').fire('click');
+    assert.equal(f.get('copy-status').dataset.state, 'error');
+    assert.equal(f.get('copy').disabled, false, 'clipboard failure permits retry');
+    f.get('pattern').value = '';
+    f.get('pattern').fire('input');
+    assert.equal(f.get('copy').disabled, true);
+    assert.equal(f.get('copy-notice').hidden, true);
 });
