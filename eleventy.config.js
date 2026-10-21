@@ -8,6 +8,11 @@ import { isToolAvailable, groupAvailableTools } from './scripts/tool-status.mjs'
 export default function(eleventyConfig){
     const assets = createAssetPlan(JSON.parse(readFileSync('src/_data/tools.json', 'utf8')));
 
+    // watch時も再読込し、バージョンの正本はルートpackage.jsonだけにする。
+    eleventyConfig.addGlobalData('siteVersion', () =>
+        JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version
+    );
+
     // XMLは最初のバイトで必ずXML宣言をしなければならないため、ビルド時に先頭と文末をtrimする。
     eleventyConfig.addTransform('trimXml', function(content){
         if((this.page.outputPath || '').endsWith('.xml')){
@@ -19,11 +24,13 @@ export default function(eleventyConfig){
 
     // サイトマップのコレクションを登録
     eleventyConfig.addCollection('sitemap', (collectionApi) => {
-        return collectionApi.getAll().filter((item) => (
-            item.outputPath?.endsWith('.html')
-            && item.data.sitemap !== false
-            && !item.data.noindex
-        )).sort((a, b) => a.url.localeCompare(b.url));
+        return collectionApi.getAll()
+            .filter((item) => (
+                item.outputPath?.endsWith('.html')
+                && item.data.sitemap !== false
+                && !item.data.noindex
+            ))
+            .sort((a, b) => a.url.localeCompare(b.url));
     });
 
     // 共通

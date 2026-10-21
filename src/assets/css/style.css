@@ -666,9 +666,15 @@ main.container {
   height: 24px;
 }
 
+.footer-version,
 .footer-copyright {
   color: var(--color-text-muted);
   font-size: 12px;
+}
+.footer-version a,
+.footer-copyright a {
+  color: var(--color-text-muted);
+  text-decoration: none;
 }
 
 .footer-nav {

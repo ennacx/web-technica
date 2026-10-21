@@ -218,9 +218,15 @@ main.container {
     }
 }
 
+.footer-version,
 .footer-copyright {
     color: var(--color-text-muted);
     font-size: 12px;
+
+    a {
+        color: var(--color-text-muted);
+        text-decoration: none;
+    }
 }
 
 .footer-nav {

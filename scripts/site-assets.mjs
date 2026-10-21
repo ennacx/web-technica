@@ -13,6 +13,7 @@ export function createAssetPlan(tools){
     ];
     // Watch対象
     const watchTargets = [
+        'package.json',
         'src/assets/js/**/*.js',
         'src/assets/css/**/*.scss',
         'src/assets/img/brand/logo.svg',
