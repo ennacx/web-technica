@@ -2,13 +2,13 @@
 
 [Open Regex Tester](https://ennacx.github.io/web-technica/regex-tester/) · [Web-Technica overview](../../../README.md)
 
-Test JavaScript regular expressions in a dedicated module Worker. Inspect whole matches, numbered and named captures, and a read-only highlighted view of the test text. This initial implementation remains **In development**; PCRE2 and Python engines are planned and are not selectable yet.
+Test JavaScript regular expressions in a dedicated module Worker. Inspect whole matches and captures in the results list while match highlights appear directly behind the editable test text. This initial implementation remains **In development**; PCRE2 and Python engines are planned and are not selectable yet.
 
 ## Pattern, flags, and execution
 
 Enter a pattern without surrounding `/` delimiters and enter your test text. Both inputs start empty. Choose Load sample to try an email-matching example with named captures; it uses the same execution path as your input. Available flags are `g` (all matches), `i` (ignore case), `m` (multiline anchors), `s` (dot matches newlines), and `u` (Unicode mode). Without `g`, only the first match is returned. If either the pattern or test text is empty, Auto does not schedule execution and Run is disabled. Clearing either input cancels pending or running work and clears results; the status identifies the missing input. Whitespace is meaningful and is not trimmed. Nonempty patterns that produce zero-width matches, such as `(?:)` or lookarounds, remain supported. The engine adds `d` internally to obtain exact capture offsets.
 
-**Auto**, the default, waits 300 ms after the last input change. **Manual** waits for **Run**. Run also executes immediately in Auto. Changing pattern, flags, text, or mode cancels pending and running work and clears obsolete results. IME composition postpones Auto until composition ends. Results view changes do not execute the engine.
+**Auto**, the default, waits 300 ms after the last input change. **Manual** waits for **Run**. Run also executes immediately in Auto. Changing pattern, flags, text, or mode cancels pending and running work and clears obsolete matches and highlights. IME composition postpones Auto until composition ends. Scrolling or resizing the editor synchronizes its highlight layer without executing the engine.
 
 ### Empty input versus zero-width matches
 
@@ -30,9 +30,11 @@ The controller starts a fresh Worker for each execution and terminates it after 
 
 ## Results and offsets
 
-Expand a match to inspect captures. Numbered groups and named groups are shown as separate entries; a named capture therefore also appears in the numbered list. Positions are zero-based UTF-16 code-unit offsets with an exclusive end: `[start, end)`. Emoji can occupy two code units. Lookaround captures can be outside the whole match. `(not matched)` has no offsets; `(empty)` has equal start and end. Empty whole matches have a visible marker in Highlight.
+Expand a match to inspect captures. Numbered groups and named groups are shown as separate entries; a named capture therefore also appears in the numbered list. Positions are zero-based UTF-16 code-unit offsets with an exclusive end: `[start, end)`. Emoji can occupy two code units. Lookaround captures can be outside the whole match. `(not matched)` has no offsets; `(empty)` has equal start and end. Empty whole matches have a thin vertical marker in the test-text editor, without inserting a character or shifting following text.
 
-Choose **Highlight** to inspect a read-only rendering of the executed text snapshot, or **Matches** to return to the list. Source text remains editable and selectable in its textarea. Match metadata, syntax errors, no matches, waiting, running, timeout, input limits, and Worker failures appear in the input heading beside the JavaScript badge (below the heading on mobile). The status uses a single-line-height viewport, vertically centered with the heading and badge, so updates do not move the pattern field or textarea. Longer messages wrap and scroll vertically within the focusable status area. JavaScript does not supply a reliable syntax-error position, so none is invented.
+The lower results panel is dedicated to Matches; there are no results-view tabs. A pointer-transparent, screen-reader-hidden layer behind the test textarea paints match backgrounds and zero-width markers. The textarea keeps its native text, caret, selection, placeholder, and IME behavior. Font metrics, padding and tab stops are shared between layers; horizontal and vertical scroll offsets and the viewport excluding native scrollbars are synchronized. Input changes and pending/error states clear highlights while the entire source remains readable and editable. The backing layer preserves the full text (and a final empty line for a trailing newline) so highlighting limits do not alter scroll geometry.
+
+Match metadata, syntax errors, no matches, waiting, running, timeout, input limits, and Worker failures appear in the input heading beside the JavaScript badge (below the heading on mobile). The status uses a single-line-height viewport, vertically centered with the heading and badge, so updates do not move the pattern field or textarea. Longer messages wrap and scroll vertically within the focusable status area. JavaScript does not supply a reliable syntax-error position, so none is invented.
 
 The **Copy regular expression** icon at the right of the pattern field copies the entered pattern wrapped in `/` delimiters, followed by the selected flags. For example, `[^1-9a-t]` with `g` and `i` becomes `/[^1-9a-t]/gi`. The pattern is kept as entered; copying does not rewrite or validate its syntax. Only checked flags are copied, including none if all are unchecked; the internal `d` flag is not added. Copy works without test text or a completed execution, including while fixing syntax errors, and is disabled for an empty pattern or during IME composition. Success or failure appears in a separate dismissible notification below results; execution status stays intact. If clipboard access fails, check browser permissions and try again, or copy manually.
 
@@ -57,10 +59,10 @@ These provisional limits provide a starting guard while ReDoS and DOM performanc
 | Collected capture entries | 10,000, counting numbered and named entries |
 | Visible match cards | First 100 |
 | Visible capture entries per card | First 100 |
-| Highlighted text | First 100,000 UTF-16 code units |
+| Highlighted ranges | Within the first 100,000 UTF-16 code units; the full test text remains visible |
 | Match / capture value in list | First 1,000 code units per value, followed by an ellipsis if shortened |
 
-Reaching an execution limit sets a truncation reason and can leave a partial result. This is distinct from no matches. Reaching the display limit shortens rendering while retaining the collected result. Highlight shows collected matches only, and its status identifies truncated results and shortened text. Narrow the input or pattern to inspect later results.
+Reaching an execution limit sets a truncation reason and can leave a partial result. This is distinct from no matches. Reaching the display limit shortens rendering while retaining the collected result. The overlay highlights collected matches only, and its status identifies truncated results and the highlight range limit. Test text beyond the highlight limit stays visible and editable. Narrow the input or pattern to inspect later matches.
 
 ## Compatibility, privacy, and offline use
 

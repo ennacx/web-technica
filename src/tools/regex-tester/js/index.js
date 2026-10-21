@@ -54,6 +54,10 @@ const controller = createExecutionController({
     }
 });
 
+// テキストエリア内でのハイライト同期
+text.addEventListener('scroll', () => renderer.syncHighlight());
+new ResizeObserver(() => renderer.syncHighlight()).observe(text);
+
 function readInput(){
     return {
         engine: 'javascript',

@@ -32,6 +32,9 @@ test('Eleventy resolves registry-based titles before rendering tool pages and st
             assert.ok(heading < status && status < patternField, 'execution status is in the input heading');
             assert.equal(page.content.match(/id="regex-status"/g).length, 1, 'one live status region');
             assert.match(page.content.slice(status, patternField), /tabindex="0"/);
+            assert.match(page.content, /<pre id="regex-highlight"[^>]*aria-hidden="true"/);
+            assert.match(page.content, /<textarea id="regex-text" class="regex-input"/);
+            assert.doesNotMatch(page.content, /regex-preview|regex-matches-tab|regex-preview-tab/);
         }
     }
 });

@@ -44,8 +44,12 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
                 </div>
             </div>
         </div>
+
         <div class="regex-text-heading regex-section-heading"><h2><label for="regex-text">Test text</label></h2><span id="regex-text-stats" class="field-help"></span></div>
-        <textarea id="regex-text" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="regex-status" placeholder="Type or paste text to test your pattern, or choose Load sample below."></textarea>
+        <div class="regex-editor">
+            <pre id="regex-highlight" class="regex-highlight" aria-hidden="true"></pre>
+            <textarea id="regex-text" class="regex-input" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-describedby="regex-status" placeholder="Type or paste text to test your pattern, or choose Load sample below."></textarea>
+        </div>
     </section>
 
     <div id="regex-splitter" class="regex-splitter" role="separator" tabindex="0" aria-label="Resize input panel" aria-orientation="horizontal" aria-controls="regex-input-pane" aria-valuemin="400" aria-valuemax="1600" aria-valuenow="480" aria-describedby="regex-resize-help"><span aria-hidden="true"></span></div>
@@ -53,15 +57,10 @@ javascriptNotice: Enable JavaScript to use Regex Tester.
     <section id="regex-results-pane" class="regex-results-pane" aria-labelledby="regex-results-title">
         <div class="regex-results-toolbar regex-section-heading">
             <h2 id="regex-results-title">Match results <span id="regex-match-count" class="badge">Not run</span></h2>
-            <div class="regex-tabs" role="group" aria-label="Results view">
-                <button type="button" id="regex-matches-tab" class="button" aria-pressed="true" aria-controls="regex-matches">Matches</button>
-                <button type="button" id="regex-preview-tab" class="button" aria-pressed="false" aria-controls="regex-preview">Highlight</button>
-            </div>
         </div>
 
         <div id="regex-results-scroll" class="regex-results-scroll" tabindex="0" role="region" aria-label="Match results">
             <div id="regex-matches"></div>
-            <div id="regex-preview" hidden></div>
 
             <p id="regex-results-empty" class="regex-empty">No results yet.</p>
         </div>

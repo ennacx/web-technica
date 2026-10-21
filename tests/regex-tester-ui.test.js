@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { executeJavaScript } from '../src/tools/regex-tester/js/engines/javascript.js';
-import { LIMITS } from '../src/tools/regex-tester/js/result.js';
+import { LIMITS, failure } from '../src/tools/regex-tester/js/result.js';
 
 const { createRenderer } = await import('../src/tools/regex-tester/js/render.js');
 
@@ -13,6 +13,7 @@ function fixture(){
     class Element {
         constructor(tag){
             Object.assign(this, { tag, children: [], listeners: {}, attributes: {}, dataset: {}, value: '', checked: false,
+                clientWidth: 320, clientHeight: 180, scrollTop: 0, scrollLeft: 0,
                 style: { setProperty(name, value){ this[name] = value; } } });
         }
         set textContent(value){ this.children = [String(value)]; }
@@ -45,17 +46,17 @@ test('renderer uses UTF-16 capture positions and text nodes, preserving hostile 
     const f = fixture();
     const renderer = createRenderer(f.root);
     const input = { requestId: 1, engine: 'javascript', pattern: '(?<tag><img[^>]+>)', text: '😀<img src=x onerror=alert(1)>', flags: 'g' };
+    f.get('text').value = input.text;
     renderer.render({ status: 'success', input, result: executeJavaScript(input) });
     assert.match(f.get('matches').textContent, /Named · tag/);
     assert.match(f.get('matches').textContent, /\[2, 30\)/);
-    assert.equal(f.get('preview').textContent, input.text);
+    assert.equal(f.get('highlight').textContent, input.text);
     assert.ok(!f.created.some((node) => node.tag === 'img'));
-    f.get('preview-tab').fire('click');
-    assert.equal(f.get('preview').hidden, false);
-    assert.equal(f.get('matches').hidden, true);
+    assert.equal(f.get('matches').hidden, false);
     renderer.render({ status: 'scheduled', input, result: null });
     assert.equal(f.get('matches').children.length, 0);
-    assert.equal(f.get('preview').children.length, 0);
+    assert.equal(f.get('highlight').children.length, 0);
+    assert.equal(f.get('text').value, input.text, 'clearing results never hides or changes native textarea text');
     assert.equal(f.get('match-count').textContent, 'Waiting…');
 });
 
@@ -65,17 +66,45 @@ test('renderer marks zero-width matches and bounds match lists, captures and hig
     const empty = { engine: 'javascript', pattern: '(?<empty>)', text: '😀', flags: 'gu' };
     renderer.render({ status: 'success', input: empty, result: executeJavaScript(empty) });
     assert.equal(f.created.filter((node) => node.className === 'regex-zero-width').length, 2);
+    assert.ok(f.created.filter((node) => node.className === 'regex-zero-width').every((node) => node.textContent === ''), 'zero-width marks insert no glyph or width');
+    assert.equal(f.get('highlight').textContent, empty.text);
     const large = { engine: 'javascript', pattern: '()'.repeat(101), text: 'a'.repeat(200000), flags: 'g' };
     const result = executeJavaScript(large);
     renderer.render({ status: 'success', input: large, result });
     assert.ok(f.get('matches').children.length <= LIMITS.displayedMatches);
     assert.match(f.get('matches').textContent, /capture entries/);
     assert.match(f.get('status').textContent, /limit/);
-    assert.match(f.get('preview').textContent, /first 100,000 UTF-16/);
+    assert.equal(f.get('highlight').textContent, large.text, 'plain tail preserves scroll extents after highlight cap');
+    assert.match(f.get('status').textContent, /first 100,000 UTF-16/);
     const lots = { engine: 'javascript', pattern: 'a', text: 'a'.repeat(200), flags: 'g' };
     renderer.render({ status: 'success', input: lots, result: executeJavaScript(lots) });
     assert.equal(f.get('matches').children.length, LIMITS.displayedMatches);
     assert.match(f.get('status').textContent, /first 100/);
+});
+
+test('overlay preserves tabs, Unicode, trailing lines, selection and viewport geometry across states', () => {
+    const f = fixture();
+    const renderer = createRenderer(f.root);
+    const input = { requestId: 9, engine: 'javascript', pattern: '(?=B)|日本', text: '\t😀 B\n日本\n', flags: 'gu' };
+    const textarea = f.get('text');
+    textarea.value = input.text;
+    textarea.selectionStart = 1;
+    textarea.selectionEnd = 5;
+    textarea.scrollTop = 32;
+    textarea.scrollLeft = 64;
+    renderer.render({ status: 'success', input, result: executeJavaScript(input) });
+    assert.equal(f.get('highlight').textContent, input.text + '\u200b', 'trailing newline retains its final line box');
+    assert.equal(f.get('highlight').scrollTop, 32);
+    assert.equal(f.get('highlight').scrollLeft, 64);
+    assert.equal(f.get('highlight').style.width, '320px');
+    assert.equal(f.get('highlight').style.height, '180px');
+    for(const status of ['idle', 'scheduled', 'running', 'syntax-error', 'timeout', 'input-limit']){
+        renderer.render({ status, input, result: status.includes('error') || status === 'timeout' || status === 'input-limit' ? failure(input, status, status, 'Test error') : null });
+        assert.equal(f.get('highlight').children.length, 0);
+        assert.equal(textarea.value, input.text);
+        assert.equal(textarea.selectionStart, 1);
+        assert.equal(textarea.selectionEnd, 5);
+    }
 });
 
 test('index handles empty startup, sample loading, snapshots, IME, rendering and page lifecycle', async (t) => {
@@ -84,6 +113,7 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     const old = Object.fromEntries(['document', 'window', 'Worker', 'ResizeObserver', 'getComputedStyle'].map((name) => [name, globalThis[name]]));
     const lifecycle = {};
     const workers = [];
+    const observers = [];
     const copied = [];
     let rejectCopy = false;
     f.root.defaultView.isSecureContext = true;
@@ -94,7 +124,10 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     globalThis.document = f.root;
     globalThis.window = { addEventListener(name, fn){ lifecycle[name] = fn; } };
     globalThis.getComputedStyle = () => ({ getPropertyValue: (name) => ({ '--input-min': '400px', '--input-max': '1600px', '--input-default': '480px' })[name] });
-    globalThis.ResizeObserver = class { observe(){} };
+    globalThis.ResizeObserver = class {
+        constructor(callback){ this.callback = callback; }
+        observe(target){ observers.push({ target, callback: this.callback }); }
+    };
     globalThis.Worker = class {
         constructor(){ workers.push(this); }
         postMessage(request){ this.request = request; }
@@ -121,6 +154,17 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     assert.equal(workers.length, 1);
     workers[0].onmessage({ data: executeJavaScript(workers[0].request) });
     assert.equal(f.get('match-count').textContent, '3 matches');
+    assert.equal(f.get('highlight').textContent, sampleText);
+    f.get('text').scrollTop = 40;
+    f.get('text').scrollLeft = 80;
+    f.get('text').fire('scroll');
+    assert.equal(f.get('highlight').scrollTop, 40);
+    assert.equal(f.get('highlight').scrollLeft, 80);
+    f.get('text').clientWidth = 280;
+    f.get('text').clientHeight = 240;
+    observers.find((observer) => observer.target === f.get('text')).callback();
+    assert.equal(f.get('highlight').style.width, '280px');
+    assert.equal(f.get('highlight').style.height, '240px');
     assert.deepEqual(executeJavaScript(workers[0].request).matches.map((match) => match.namedGroups.map((group) => group.name)), [
         ['name', 'domain'], ['name', 'domain'], ['name', 'domain']
     ]);
@@ -137,6 +181,7 @@ test('index handles empty startup, sample loading, snapshots, IME, rendering and
     f.get('pattern').fire('input');
     assert.equal(f.get('run').disabled, true);
     assert.equal(f.get('copy').disabled, true);
+    assert.equal(f.get('highlight').children.length, 0, 'IME immediately clears stale highlight');
     f.get('run').fire('click');
     t.mock.timers.tick(500);
     assert.equal(workers.length, 1, 'composition defers both Auto and Run');

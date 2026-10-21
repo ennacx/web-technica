@@ -17,24 +17,23 @@ export function createRenderer(root){
         return node;
     };
 
-    let view = 'matches';
     let hasResult = false;
 
     function showView(){
-        for(const name of ['matches', 'preview']){
-            get(name).hidden = (!hasResult || view !== name);
-            get(`${name}-tab`).setAttribute('aria-pressed', String(view === name));
-        }
-
+        get('matches').hidden = (!hasResult);
         get('results-empty').hidden = (hasResult);
     }
 
-    for(const name of ['matches', 'preview']){
-        get(`${name}-tab`).addEventListener('click', () => {
-            view = name;
+    function syncHighlight(){
+        const input = get('text');
+        const highlight = get('highlight');
 
-            showView();
-        });
+        // 背景 (Backdrop) のViewportからネイティブのスクロールバーを除外する
+        // コンテンツのメトリクス (フォント、パディング、行の高さ、タブ) はCSSにおいてtextareaと共有される
+        highlight.style.width = `${input.clientWidth}px`;
+        highlight.style.height = `${input.clientHeight}px`;
+        highlight.scrollTop = input.scrollTop;
+        highlight.scrollLeft = input.scrollLeft;
     }
 
     function value(text, range){
@@ -120,7 +119,7 @@ export function createRenderer(root){
             fragment.append(root.createTextNode(text.slice(cursor, match.start)));
 
             const mark = make('mark', {
-                text: (match.start === match.end) ? '│' : text.slice(match.start, Math.min(match.end, end)),
+                text: text.slice(match.start, Math.min(match.end, end)),
                 className: undefined
             });
 
@@ -140,23 +139,22 @@ export function createRenderer(root){
             }
         }
 
-        fragment.append(root.createTextNode(text.slice(cursor, end)));
+        // 背景のスクロール範囲がずれないようソース全体を保持
+        // 適用範囲はハイライトのみであり、上限を超えた部分のテキストも引き続き編集可能
+        fragment.append(root.createTextNode(text.slice(cursor)));
 
-        const pre = make('pre');
-        pre.append(fragment);
-
-        const preview = get('preview');
-        preview.replaceChildren(pre);
-
-        if(end < text.length){
-            preview.append(make('p', {
-                text: `Highlight shows the first ${end.toLocaleString('en')} UTF-16 code units.`,
-                className: 'field-help regex-render-note'
-            }));
+        // <pre>要素では textareaと同様、末尾の改行のために空の行ボックスが必要
+        if(text.endsWith('\n')){
+            fragment.append(root.createTextNode('\u200b'));
         }
+
+        get('highlight').replaceChildren(fragment);
+
+        syncHighlight();
     }
 
     return {
+        syncHighlight,
         render(state){
             const { status, result, input } = state;
             const statusNode = get('status');
@@ -168,7 +166,7 @@ export function createRenderer(root){
 
             if(!hasResult){
                 get('matches').replaceChildren();
-                get('preview').replaceChildren();
+                get('highlight').replaceChildren();
 
                 const label = (status === 'running') ?
                     'Running…' :
@@ -223,7 +221,7 @@ export function createRenderer(root){
                     notes.push('Some capture entries are omitted.');
                 }
                 if(input.text.length > LIMITS.highlightedLength){
-                    notes.push('Highlight text is shortened.');
+                    notes.push(`Highlights are limited to the first ${LIMITS.highlightedLength.toLocaleString('en')} UTF-16 code units; test text is kept in full.`);
                 }
 
                 if(notes.length){
