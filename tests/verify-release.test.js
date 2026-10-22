@@ -28,6 +28,7 @@ test('release snapshot includes working changes but excludes dependencies and ev
     write('src/assets/css/style.css', 'stale tracked compiled CSS');
     write('src/assets/css/style.css.map', '{}');
     write('src/assets/img/brand/icon-192.png', 'stale tracked icon');
+    write('src/assets/img/brand/social-card.png', 'stale tracked social image');
     write('src/tools/keygen/js/app.js', 'stale tracked bundle');
     write('src/tools/keygen/js/app.js.LEGAL.txt', 'stale licenses');
     write('src/tools/keygen/js/THIRD-PARTY-LICENSES.txt', 'stale licenses');
@@ -47,6 +48,7 @@ test('release snapshot includes working changes but excludes dependencies and ev
     for(const file of [
         '.git', 'node_modules', 'dist', 'ignored-local.txt', 'src/deleted.js',
         'src/assets/css/style.css', 'src/assets/css/style.css.map', 'src/assets/img/brand/icon-192.png',
+        'src/assets/img/brand/social-card.png',
         'src/tools/keygen/js/app.js', 'src/tools/keygen/js/app.js.LEGAL.txt',
         'src/tools/keygen/js/THIRD-PARTY-LICENSES.txt'
     ]){

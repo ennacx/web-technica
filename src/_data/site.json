@@ -4,5 +4,12 @@
     "language": "en",
     "description": "A collection of lightweight, privacy-friendly web utilities for developers.",
     "repositoryUrl": "https://github.com/ennacx/web-technica",
+    "social": {
+        "locale": "en_US",
+        "image": "/assets/img/brand/social-card.png",
+        "imageWidth": 1200,
+        "imageHeight": 630,
+        "imageAlt": "Web-Technica: lightweight, privacy-friendly developer tools, with the mint and teal W logo."
+    },
     "googleSiteVerification": "cZ3FtJVJaD71x9Uprm1SfpFpvaq38OaxHMgQHzrpT9I"
 }

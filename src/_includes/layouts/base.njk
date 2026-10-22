@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ site.language }}">
+<html lang="{{ site.language }}" prefix="og: https://ogp.me/ns#">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{ description or site.description }}">
+    <meta name="description" content="{{ (description or site.description) | escape }}">
     <meta name="theme-color" content="#151a20">
 
     {% if site.googleSiteVerification %}
@@ -16,7 +16,9 @@
         <link rel="canonical" href="{{ page.url | absoluteUrl(site.url) | escape }}">
     {% endif %}
 
-    <title>{% if title %}{{ title }} | {% endif %}{{ site.name }}</title>
+    <title>{% if title %}{{ title | escape }} | {% endif %}{{ site.name | escape }}</title>
+
+    {% include "components/social-meta.njk" %}
 
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | url }}">
     {% if pageStylesheet %}

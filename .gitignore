@@ -2,6 +2,7 @@
 .npm-cache/
 node_modules/
 dist/
+src/assets/img/brand/social-card.png
 
 # keygen
 src/tools/keygen/js/app.js

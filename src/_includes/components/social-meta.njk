@@ -1,0 +1,20 @@
+{% set socialTitle = site.name %}
+{% if title %}{% set socialTitle = title ~ ' | ' ~ site.name %}{% endif %}
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ site.name | escape }}">
+<meta property="og:locale" content="{{ site.social.locale | escape }}">
+<meta property="og:title" content="{{ socialTitle | escape }}">
+<meta property="og:description" content="{{ (description or site.description) | escape }}">
+<meta property="og:url" content="{{ page.url | absoluteUrl(site.url) | escape }}">
+<meta property="og:image" content="{{ site.social.image | absoluteUrl(site.url) | escape }}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="{{ site.social.imageWidth }}">
+<meta property="og:image:height" content="{{ site.social.imageHeight }}">
+<meta property="og:image:alt" content="{{ site.social.imageAlt | escape }}">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ socialTitle | escape }}">
+<meta name="twitter:description" content="{{ (description or site.description) | escape }}">
+<meta name="twitter:image" content="{{ site.social.image | absoluteUrl(site.url) | escape }}">
+<meta name="twitter:image:alt" content="{{ site.social.imageAlt | escape }}">

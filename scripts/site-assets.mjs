@@ -17,11 +17,14 @@ export function createAssetPlan(tools){
         'src/assets/js/**/*.js',
         'src/assets/css/**/*.scss',
         'src/assets/img/brand/logo.svg',
-        'src/_includes/pwa/service-worker.js'
+        'src/_includes/social-card.svg',
+        'src/_includes/pwa/service-worker.js',
+        'src/_data/site.json'
     ];
     // Watch無視
     const watchIgnores = [
         'src/assets/img/brand/icon-*.png',
+        'src/assets/img/brand/social-card.png',
         'src/assets/css/**/*.css',
         'src/assets/css/**/*.css.map'
     ];

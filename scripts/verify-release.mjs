@@ -17,6 +17,7 @@ function generatedFiles(repository){
     return [
         ...plan.stylesheets.flatMap((entry) => [`${entry}.css`, `${entry}.css.map`]),
         ...[180, 192, 512].map((size) => `src/assets/img/brand/icon-${size}.png`),
+        'src/assets/img/brand/social-card.png',
         'src/tools/keygen/js/app.js',
         'src/tools/keygen/js/app.js.map',
         'src/tools/keygen/js/app.js.LEGAL.txt',
@@ -85,6 +86,7 @@ function clearGenerated(project){
 export function verifyReleaseOutput(project, prefix){
     const output = path.join(project, 'dist');
     const tools = readJson(path.join(project, 'src/_data/tools.json'));
+    const site = readJson(path.join(project, 'src/_data/site.json'));
     const version = readJson(path.join(project, 'package.json')).version;
     const worker = readFileSync(path.join(output, 'sw.js'), 'utf8');
     const precache = worker.match(/const PRECACHE_URLS = (\[[\s\S]*?\]);/);
@@ -95,6 +97,7 @@ export function verifyReleaseOutput(project, prefix){
     const expected = new Set([
         'index.html', '404.html', 'offline.html',
         'manifest.webmanifest', 'sitemap.xml',
+        site.social.image.slice(1),
         // 各ツールのindex.html
         ...tools.filter((tool) => tool.url).map((tool) => `${tool.slug}/index.html`),
         // keygen
@@ -138,6 +141,10 @@ export function verifyReleaseOutput(project, prefix){
 
             assert.equal(imports['#utils/'], `${prefix}assets/js/utils/`, `Wrong import map: ${file}`);
             assert.equal(imports['#components/'], `${prefix}assets/js/components/`, `Wrong component import map: ${file}`);
+
+            const imageUrl = new URL(prefix + site.social.image.slice(1), site.url).href;
+            assert(html.includes(`property="og:image" content="${imageUrl}"`), `Wrong social image URL: ${file}`);
+            assert(html.includes('name="twitter:card" content="summary_large_image"'), `Missing X card: ${file}`);
         }
     }
 

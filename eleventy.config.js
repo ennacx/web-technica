@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { buildKeygen } from './src/tools/keygen/scripts/build.mjs';
-import { buildPwaIcons, buildServiceWorker } from './scripts/build-pwa.mjs';
-import { buildStylesheets } from './scripts/build-css.mjs';
-import { createAssetPlan } from './scripts/site-assets.mjs';
 import { isToolAvailable, groupAvailableTools } from './scripts/tool-status.mjs';
+import { createAssetPlan } from './scripts/site-assets.mjs';
+import { buildStylesheets } from './scripts/build-css.mjs';
+import { buildSocialImage } from './scripts/build-social-image.mjs';
+import { buildPwaIcons, buildServiceWorker } from './scripts/build-pwa.mjs';
 
 export default function(eleventyConfig){
     const assets = createAssetPlan(JSON.parse(readFileSync('src/_data/tools.json', 'utf8')));
@@ -43,6 +44,7 @@ export default function(eleventyConfig){
 
     eleventyConfig.on('eleventy.before', async () => {
         buildPwaIcons();
+        buildSocialImage(eleventyConfig.pathPrefix);
 
         // keygenのビルド
         await buildKeygen();
