@@ -3,8 +3,9 @@ import { buildKeygen } from './src/tools/keygen/scripts/build.mjs';
 import { isToolAvailable, groupAvailableTools } from './scripts/tool-status.mjs';
 import { createAssetPlan } from './scripts/site-assets.mjs';
 import { buildStylesheets } from './scripts/build-css.mjs';
-import { buildSocialImage } from './scripts/build-social-image.mjs';
+import { buildWebFonts } from './scripts/build-fonts.mjs';
 import { buildPwaIcons, buildServiceWorker } from './scripts/build-pwa.mjs';
+import { buildSocialImage } from './scripts/build-social-image.mjs';
 
 export default function(eleventyConfig){
     const assets = createAssetPlan(JSON.parse(readFileSync('src/_data/tools.json', 'utf8')));
@@ -43,6 +44,9 @@ export default function(eleventyConfig){
     }
 
     eleventyConfig.on('eleventy.before', async () => {
+        // TTF → WOFF2変換
+        await buildWebFonts();
+
         buildPwaIcons();
         buildSocialImage(eleventyConfig.pathPrefix);
 

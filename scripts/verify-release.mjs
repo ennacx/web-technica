@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import { createAssetPlan } from './site-assets.mjs';
+import { fontSources } from './build-fonts.mjs';
 
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 
@@ -15,6 +16,8 @@ function generatedFiles(repository){
     const plan = createAssetPlan(readJson(path.join(repository, 'src/_data/tools.json')));
 
     return [
+        'src/assets/fonts/THIRD-PARTY-LICENSES.txt',
+        ...fontSources.map((source) => source.replace(/\.ttf$/, '.woff2')),
         ...plan.stylesheets.flatMap((entry) => [`${entry}.css`, `${entry}.css.map`]),
         ...[180, 192, 512].map((size) => `src/assets/img/brand/icon-${size}.png`),
         'src/assets/img/brand/social-card.png',
@@ -104,6 +107,10 @@ export function verifyReleaseOutput(project, prefix){
         'keygen/js/app.js', 'keygen/js/app.js.LEGAL.txt', 'keygen/js/THIRD-PARTY-LICENSES.txt'
     ]);
     const plan = createAssetPlan(tools);
+    for(const source of fontSources){
+        expected.add(`assets/fonts/${path.basename(source, '.ttf')}.woff2`);
+    }
+    expected.add('assets/fonts/THIRD-PARTY-LICENSES.txt');
 
     for(const [source, destination] of Object.entries(plan.passthrough)){
         const matches = [...globSync(source, { cwd: project })];
@@ -129,6 +136,9 @@ export function verifyReleaseOutput(project, prefix){
 
         if(file.endsWith('.html')){
             const html = readFileSync(path.join(output, file), 'utf8');
+
+            assert(html.includes(`href="${prefix}assets/fonts/THIRD-PARTY-LICENSES.txt"`), `Missing font license link: ${file}`);
+
             const footer = html.match(/<small\b[^>]*class="[^"]*\bfooter-version\b[^"]*"[^>]*>([\s\S]*?)<\/small>/);
 
             assert.equal(footer?.[1].replace(/<[^>]*>/g, '').trim(), `v${version}`, `Missing footer version: ${file}`);
@@ -149,7 +159,7 @@ export function verifyReleaseOutput(project, prefix){
     }
 
     for(const file of globSync('**/*', { cwd: output })){
-        assert((!/(?:\.scss|\.map|README\.md|package(?:-lock)?\.json)$|(?:^|[\\/])(?:node_modules|scripts|nodejs)(?:[\\/]|$)/.test(file)), `Development file published: ${file}`);
+        assert((!/(?:\.ttf|\.scss|\.map|README\.md|package(?:-lock)?\.json)$|(?:^|[\\/])(?:node_modules|scripts|nodejs)(?:[\\/]|$)/.test(file)), `Development file published: ${file}`);
     }
 
     console.log(`[verify:release] ${prefix}: ${expected.size} required pages/assets and PWA cache verified`);

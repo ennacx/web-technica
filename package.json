@@ -22,7 +22,8 @@
     "devDependencies": {
         "@11ty/eleventy": "^3.1.7",
         "@resvg/resvg-js": "^2.6.2",
-        "sass": "^1.106.0"
+        "sass": "^1.106.0",
+        "wawoff2": "^2.0.1"
     },
     "allowScripts": {
         "@parcel/watcher@2.6.0": true,

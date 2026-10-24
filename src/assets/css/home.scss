@@ -15,6 +15,13 @@ main {
     isolation: isolate;
     padding-block: 64px 48px;
     overflow: hidden;
+
+    h1 {
+        font-family: var(--font-brand);
+        font-size: clamp(32px, 5vw, 50px);
+        letter-spacing: -0.045em;
+        line-height: 1.2;
+    }
 }
 
 .home-watermark {
@@ -37,12 +44,6 @@ main {
     color: var(--color-text-muted);
     font-size: 11px;
     letter-spacing: 0.13em;
-}
-
-.home-hero h1 {
-    font-size: clamp(32px, 5vw, 50px);
-    letter-spacing: -0.045em;
-    line-height: 1.2;
 }
 
 .home-lead {

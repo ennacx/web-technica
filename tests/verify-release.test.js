@@ -29,6 +29,9 @@ test('release snapshot includes working changes but excludes dependencies and ev
     write('src/assets/css/style.css.map', '{}');
     write('src/assets/img/brand/icon-192.png', 'stale tracked icon');
     write('src/assets/img/brand/social-card.png', 'stale tracked social image');
+    write('src/assets/fonts/Inter-VariableFont_opsz,wght.ttf', 'font source');
+    write('src/assets/fonts/Inter-VariableFont_opsz,wght.woff2', 'stale tracked font');
+    write('src/assets/fonts/THIRD-PARTY-LICENSES.txt', 'stale tracked font licenses');
     write('src/tools/keygen/js/app.js', 'stale tracked bundle');
     write('src/tools/keygen/js/app.js.LEGAL.txt', 'stale licenses');
     write('src/tools/keygen/js/THIRD-PARTY-LICENSES.txt', 'stale licenses');
@@ -45,10 +48,13 @@ test('release snapshot includes working changes but excludes dependencies and ev
     assert.equal(readFileSync(path.join(snapshot, 'src/example.js'), 'utf8'), 'current working source');
     assert.equal(readFileSync(path.join(snapshot, 'src/new-module.js'), 'utf8'), 'untracked new source');
     assert.ok(existsSync(path.join(snapshot, 'src/assets/css/style.scss')));
+    assert.ok(existsSync(path.join(snapshot, 'src/assets/fonts/Inter-VariableFont_opsz,wght.ttf')));
     for(const file of [
         '.git', 'node_modules', 'dist', 'ignored-local.txt', 'src/deleted.js',
         'src/assets/css/style.css', 'src/assets/css/style.css.map', 'src/assets/img/brand/icon-192.png',
         'src/assets/img/brand/social-card.png',
+        'src/assets/fonts/Inter-VariableFont_opsz,wght.woff2',
+        'src/assets/fonts/THIRD-PARTY-LICENSES.txt',
         'src/tools/keygen/js/app.js', 'src/tools/keygen/js/app.js.LEGAL.txt',
         'src/tools/keygen/js/THIRD-PARTY-LICENSES.txt'
     ]){

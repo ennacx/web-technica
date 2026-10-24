@@ -5,9 +5,10 @@
  */
 
 $sp-width-criteria: 767.98px;
-$sans-serif-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-$serif-font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
-$monospace-font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+$sans-serif-font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+$brand-font-family: "Space Grotesk", $sans-serif-font-family;
+$monospace-font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
 // For Regex Tester: muted pastels for dark schemes.
 $regex-colors: (
@@ -38,13 +39,17 @@ $regex-colors: (
         --color-danger: #e49a9a;
         --color-warning: #e4c78c;
         --color-success: #86cfa4;
+
         --regex-color-count: #{list.length($regex-colors)};
+
         @for $index from 1 through list.length($regex-colors) {
             $color: list.nth($regex-colors, $index);
             --regex-color-#{$index}: #{$color};
             --regex-color-#{$index}-soft: #{rgba($color, 0.2)};
         }
+
         --font-ui: #{$sans-serif-font-family};
+        --font-brand: #{$brand-font-family};
         --font-mono: #{$monospace-font-family};
         --radius-control: 8px;
         --focus-control-offset: -2px;

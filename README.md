@@ -45,4 +45,4 @@ Updates download in the background. When an update is ready, close all Web-Techn
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The bundled fonts retain their own licenses; see [Font licenses](https://ennacx.github.io/web-technica/assets/fonts/THIRD-PARTY-LICENSES.txt).

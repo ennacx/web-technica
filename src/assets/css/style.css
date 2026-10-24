@@ -3,6 +3,60 @@
  * 共通の寸法・フォント。テーマ色はCSSカスタムプロパティで公開する。
  */
 /*
+ * Space Grotesk
+ *
+ * Style: Normal (variable)
+ * Weight: 300–700
+ * Griff: 968
+ * Type: TrueType
+ * Version: 2.000
+ * License: https://scripts.sil.org/OFL
+ * @link https://fonts.google.com/specimen/Space+Grotesk
+ */
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../fonts/SpaceGrotesk-VariableFont_wght.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+/*
+ * Inter
+ *
+ * Style: Normal (variable)
+ * Weight: 100–900
+ * Griff: 2,926
+ * Type: TrueType
+ * Version: 4.001;git-66647c0bb
+ * License: https://openfontlicense.org
+ * @link https://fonts.google.com/specimen/Inter
+ */
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/Inter-VariableFont_opsz,wght.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+/*
+ * JetBrains Mono
+ *
+ * Style: Normal (variable)
+ * Weight: 100–800
+ * Griff: 1,168
+ * Type: TrueType
+ * Version: 2.211
+ * License: https://openfontlicense.org
+ * @link https://fonts.google.com/specimen/JetBrains+Mono
+ */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMono-VariableFont_wght.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+/*
  * 最小限のリセット。標準の操作・フォーカス・リストの意味を維持する。
  */
 *,
@@ -505,6 +559,7 @@ main.container {
 }
 
 .brand {
+  font-family: var(--font-brand);
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -802,8 +857,9 @@ main.container {
   --regex-color-9-soft: rgba(155, 169, 237, 0.2);
   --regex-color-10: #e19991;
   --regex-color-10-soft: rgba(225, 153, 145, 0.2);
-  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Noto Sans JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Consolas, Liberation Mono, monospace;
+  --font-ui: Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Noto Sans JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif;
+  --font-brand: Space Grotesk, Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Noto Sans JP, Hiragino Kaku Gothic ProN, Meiryo, sans-serif;
+  --font-mono: JetBrains Mono, ui-monospace, SFMono-Regular, Consolas, Liberation Mono, monospace;
   --radius-control: 8px;
   --focus-control-offset: -2px;
   --radius-panel: 12px;

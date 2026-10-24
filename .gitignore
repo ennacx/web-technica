@@ -2,7 +2,13 @@
 .npm-cache/
 node_modules/
 dist/
+
+# Images
 src/assets/img/brand/social-card.png
+
+# Fonts
+src/assets/fonts/*.woff2
+src/assets/fonts/THIRD-PARTY-LICENSES.txt
 
 # keygen
 src/tools/keygen/js/app.js

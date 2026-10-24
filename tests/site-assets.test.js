@@ -1,10 +1,45 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { globSync, readFileSync, statSync } from 'node:fs';
+import { globSync, readFileSync, statSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createAssetPlan } from '../scripts/site-assets.mjs';
+import { compile } from 'sass';
+import { buildWebFonts, fontSources } from '../scripts/build-fonts.mjs';
 
 const tools = JSON.parse(readFileSync('src/_data/tools.json', 'utf8'));
+
+test('TTF sources generate the browser fonts referenced by CSS and allowlisted with licenses', async (t) => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'web-technica-font-test-'));
+    t.after(() => rmSync(directory, { recursive: true, force: true }));
+    await buildWebFonts(directory);
+    const plan = createAssetPlan(tools);
+    const files = mappedFiles(plan);
+    assert.equal(plan.passthrough['src/assets/fonts/*.woff2'], 'assets/fonts');
+    assert.ok(plan.watchTargets.includes('src/assets/fonts/*.ttf'));
+    assert.ok(plan.watchIgnores.includes('src/assets/fonts/*.woff2'));
+    for(const filename of files.keys()) assert.doesNotMatch(filename, /\.ttf$/);
+    const css = compile('src/assets/css/style.scss').css;
+    const faces = [...css.matchAll(/@font-face\s*\{([^}]+)\}/g)];
+    assert.equal(faces.length, 3);
+    for(const [, face] of faces){
+        const url = face.match(/url\("([^"]+)"\)/)[1];
+        const target = path.posix.normalize(path.posix.join('assets/css', url));
+        assert.equal(path.posix.dirname(target), 'assets/fonts');
+        assert.ok(fontSources.some((source) => path.basename(source, '.ttf') + '.woff2' === path.basename(target)));
+        assert.equal(readFileSync(path.join(directory, path.basename(target))).subarray(0, 4).toString(), 'wOF2');
+        assert.match(face, /font-weight: \d+ \d+/);
+        assert.match(face, /font-display: swap/);
+    }
+    assert.equal(plan.passthrough['src/assets/fonts/THIRD-PARTY-LICENSES.txt'], 'assets/fonts/THIRD-PARTY-LICENSES.txt');
+    assert.ok(plan.watchIgnores.includes('src/assets/fonts/THIRD-PARTY-LICENSES.txt'));
+    const combined = readFileSync(path.join(directory, 'THIRD-PARTY-LICENSES.txt'), 'utf8');
+    for(const family of ['Inter', 'SpaceGrotesk', 'JetBrainsMono']){
+        assert.ok(!files.has(`assets/fonts/OFL-${family}.txt`));
+        const original = readFileSync(`src/assets/fonts/OFL-${family}.txt`, 'utf8');
+        assert.ok(combined.includes(original), `${family}: preserve the complete copyright and license text`);
+    }
+});
 
 function mappedFiles(plan){
     const files = new Map();
@@ -63,7 +98,7 @@ test('native asset allowlist retains shared modules and Worker imports while exc
     }
     assert.ok(!files.has('regex-tester/js/split-pane.js'), 'removed tool-local component must not enter the PWA cache');
     for(const filename of files.keys()){
-        assert.doesNotMatch(filename, /(?:\.scss|\.map|README\.md|package(?:-lock)?\.json)$/);
+        assert.doesNotMatch(filename, /(?:\.ttf|\.scss|\.map|README\.md|package(?:-lock)?\.json)$/);
         assert.doesNotMatch(filename, /(?:^|\/)(?:node_modules|scripts|nodejs)\//);
         if(filename.startsWith('keygen/')){
             assert.match(filename, /^keygen\/(?:css\/keygen\.css|js\/(?:app\.js(?:\.LEGAL\.txt)?|THIRD-PARTY-LICENSES\.txt))$/);

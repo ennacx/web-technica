@@ -16,6 +16,8 @@ export function createAssetPlan(tools){
         'package.json',
         'src/assets/js/**/*.js',
         'src/assets/css/**/*.scss',
+        'src/assets/fonts/*.ttf',
+        'src/assets/fonts/OFL-*.txt',
         'src/assets/img/brand/logo.svg',
         'src/_includes/social-card.svg',
         'src/_includes/pwa/service-worker.js',
@@ -23,6 +25,8 @@ export function createAssetPlan(tools){
     ];
     // Watch無視
     const watchIgnores = [
+        'src/assets/fonts/THIRD-PARTY-LICENSES.txt',
+        'src/assets/fonts/*.woff2',
         'src/assets/img/brand/icon-*.png',
         'src/assets/img/brand/social-card.png',
         'src/assets/css/**/*.css',
@@ -33,6 +37,8 @@ export function createAssetPlan(tools){
         'src/assets/js/utils/*.js': 'assets/js/utils',
         'src/assets/js/components/*.js': 'assets/js/components',
         'src/assets/css/*.css': 'assets/css',
+        'src/assets/fonts/*.woff2': 'assets/fonts',
+        'src/assets/fonts/THIRD-PARTY-LICENSES.txt': 'assets/fonts/THIRD-PARTY-LICENSES.txt',
         'src/assets/img': 'assets/img'
     };
 
