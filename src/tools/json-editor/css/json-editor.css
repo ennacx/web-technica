@@ -178,7 +178,9 @@ main.json-editor {
   background: var(--color-bg);
 }
 
-.json-input, .json-display {
+.json-input,
+.json-display,
+.json-tree-panel {
   min-height: 400px;
   height: clamp(320px, 48vh, 640px);
   font-family: var(--font-mono);
@@ -222,6 +224,80 @@ main.json-editor {
   text-align: right;
   white-space: pre;
   user-select: none;
+}
+
+.json-tree-panel {
+  overflow: auto;
+  padding: 20px;
+  color: var(--color-text);
+}
+.json-tree-panel:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: var(--focus-control-offset);
+}
+
+.json-tree-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: max-content;
+  min-width: 100%;
+}
+.json-tree-list .json-tree-list {
+  margin-inline-start: 10px;
+  padding-inline-start: 20px;
+  border-inline-start: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.json-tree-row,
+.json-tree-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  min-height: 36px;
+  white-space: pre;
+}
+
+.json-tree-row {
+  padding-inline-start: 24px;
+}
+
+.json-tree-toggle {
+  margin-inline-start: -24px;
+  padding: 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  gap: 12px;
+}
+.json-tree-toggle:hover {
+  background: var(--color-surface-raised);
+}
+.json-tree-toggle svg {
+  flex: none;
+  align-self: center;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.json-tree-toggle[aria-expanded=true] svg {
+  transform: rotate(90deg);
+}
+
+.json-tree-summary,
+.json-tree-message {
+  color: var(--color-text-muted);
+}
+
+.json-tree-more {
+  padding: 4px 24px;
 }
 
 .json-token-key {
@@ -377,9 +453,17 @@ main.json-editor {
   .json-input {
     padding: 16px;
   }
-  .json-input, .json-display {
+  .json-input,
+  .json-display,
+  .json-tree-panel {
     min-height: 320px;
     font-size: 16px;
+  }
+  .json-tree-panel {
+    padding: 16px;
+  }
+  .json-tree-toggle {
+    min-height: 44px;
   }
   .json-status-bar {
     padding-inline: 16px;

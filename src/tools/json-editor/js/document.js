@@ -6,6 +6,9 @@ export class JsonEditorDocument {
     filename = 'document.json';
     source = '';
     mode = 'edit';
+    revision = 0;
+    validation = null;
+    parsed = undefined;
     editIndent = 2;
     editSort = null;
     view = {
@@ -18,7 +21,7 @@ export class JsonEditorDocument {
     };
 
     get text(){
-        return (this.mode === 'edit') ? this.source : this.getViewText();
+        return (this.mode === 'view') ? this.getViewText() : this.source;
     }
 
     get indent(){
@@ -48,6 +51,7 @@ export class JsonEditorDocument {
     }
 
     sortKeys(direction){
+        if(this.mode === 'tree') return false;
         if(!['asc', 'desc'].includes(direction)){
             throw new RangeError('Choose asc or desc.');
         }
@@ -69,7 +73,11 @@ export class JsonEditorDocument {
     // Syntax and error positions always refer to the editable source, never
     // to generated display text or its cache.
     validateSource(){
-        return validateJson(this.source);
+        if(!this.validation){
+            this.parsed = undefined;
+            this.validation = validateJson(this.source, (parsed) => { this.parsed = parsed; });
+        }
+        return this.validation;
     }
 
     setSource(text){
@@ -78,12 +86,15 @@ export class JsonEditorDocument {
         }
 
         this.source = text;
+        this.revision++;
+        this.validation = null;
+        this.parsed = undefined;
 
         this.invalidateView();
     }
 
     setText(text){
-        if(this.mode === 'view'){
+        if(this.mode !== 'edit'){
             throw new TypeError('View text is generated from source and settings.');
         } else{
             this.setSource(text);
@@ -91,6 +102,7 @@ export class JsonEditorDocument {
     }
 
     setIndent(width){
+        if(this.mode === 'tree') return false;
         if(![2, 4, 8].includes(width)){
             throw new RangeError('Choose 2, 4, or 8 spaces.');
         }

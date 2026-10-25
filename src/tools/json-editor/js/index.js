@@ -6,6 +6,7 @@ import { downloadText } from '#utils/download.js';
 import { prettyPrintJson, minifyJson, changeJsonIndent } from './formatter.js';
 import { JsonEditorDocument } from './document.js';
 import { planJsonInput } from './input-assist.js';
+import { createTreeRenderer } from './tree-renderer.js';
 
 const get = (id) => getById(id, document);
 
@@ -16,6 +17,9 @@ const code = get('json-code');
 const lines = get('json-lines');
 const editButton = get('json-edit');
 const viewButton = get('json-view');
+const treeButton = get('json-tree');
+const treePanel = get('json-tree-panel');
+const treeRenderer = createTreeRenderer(treePanel, document);
 const copyButton = get('json-copy');
 const downloadButton = get('json-download');
 const sampleButton = get('json-sample');
@@ -40,6 +44,7 @@ const renameButton = get('json-rename');
 const editorDocument = new JsonEditorDocument();
 
 let viewing = false;
+let mode = 'edit';
 let validationTimer;
 let renderedViewText = null;
 let composing = false;
@@ -48,7 +53,7 @@ let applyingAssistance = false;
 const notice = createNotice(status, {
     container: actionNotice,
     dismiss: get('json-action-dismiss'),
-    focusTarget: () => viewing ? code : input
+    focusTarget: () => mode === 'tree' ? treePanel : viewing ? code : input
 });
 
 function setAction(message){
@@ -74,14 +79,15 @@ function showValidation(result){
 
     input.setAttribute('aria-invalid', String(result.state === 'invalid'));
 
-    prettyButton.disabled = (result.state !== 'valid');
-    minifyButton.disabled = (result.state !== 'valid');
-    sortButton.disabled = (result.state !== 'valid');
-    indentSelect.disabled = (viewing && result.state !== 'valid');
+    prettyButton.disabled = (mode === 'tree' || result.state !== 'valid');
+    minifyButton.disabled = (mode === 'tree' || result.state !== 'valid');
+    sortButton.disabled = (mode === 'tree' || result.state !== 'valid');
+    indentSelect.disabled = (mode === 'tree' || (viewing && result.state !== 'valid'));
 
     formatHelp.hidden = (result.state !== 'invalid');
     formatHelp.textContent = (result.state === 'invalid') ?
-        ((viewing) ?
+        (mode === 'tree' ?
+            'Tree requires valid JSON. Fix the syntax errors in Edit. Your display settings are kept.' : (viewing) ?
             'Showing the original text. Fix the syntax errors in Edit to use formatting, sorting, and Indent. Your display settings are kept.' :
             'Formatting and sorting are unavailable until the syntax errors are fixed. You can still edit the JSON and adjust Indent.'
         ) :
@@ -94,6 +100,7 @@ function validate(){
     const result = editorDocument.validateSource();
 
     showValidation(result);
+    if(mode === 'tree') treeRenderer.render(editorDocument);
 
     return result;
 }
@@ -171,9 +178,11 @@ function update(immediate = false){
     }
 }
 
-function setMode(view){
-    viewing = view;
-    editorDocument.mode = (view) ? 'view' : 'edit';
+function setMode(nextMode){
+    mode = nextMode;
+    viewing = mode === 'view';
+    const view = viewing;
+    editorDocument.mode = mode;
 
     indentSelect.value = String(editorDocument.indent);
     input.style.tabSize = String(editorDocument.editIndent);
@@ -183,7 +192,8 @@ function setMode(view){
 
     setAction('');
 
-    get('json-mode-help').textContent = (view) ?
+    get('json-mode-help').textContent = mode === 'tree' ?
+        'Tree: read-only source structure. Expand nodes with Enter or Space. Copy, Save, and statistics use the source; display settings are kept.' : (view) ?
         'View: saved display settings apply to valid JSON. Validation uses the source. Copy and Save use the displayed text.' :
         'Edit: operations, validation, Copy, and Save use the source.';
 
@@ -194,13 +204,15 @@ function setMode(view){
         button.title = label;
     }
 
-    input.hidden = view;
+    input.hidden = mode !== 'edit';
     display.hidden = !view;
+    treePanel.hidden = mode !== 'tree';
 
-    editButton.setAttribute('aria-pressed', String(!view));
+    editButton.setAttribute('aria-pressed', String(mode === 'edit'));
     viewButton.setAttribute('aria-pressed', String(view));
+    treeButton.setAttribute('aria-pressed', String(mode === 'tree'));
 
-    if(!view){
+    if(mode === 'edit'){
         input.focus({ preventScroll: true });
     }
 }
@@ -217,7 +229,7 @@ input.addEventListener('compositionstart', () => { composing = true; });
 input.addEventListener('compositionend', () => { composing = false; });
 
 input.addEventListener('beforeinput', (event) => {
-    if(viewing || composing || applyingAssistance || event.isComposing || !event.cancelable){
+    if(mode !== 'edit' || composing || applyingAssistance || event.isComposing || !event.cancelable){
         return;
     }
 
@@ -257,8 +269,9 @@ input.addEventListener('beforeinput', (event) => {
     update();
 });
 
-editButton.addEventListener('click', () => setMode(false));
-viewButton.addEventListener('click', () => setMode(true));
+editButton.addEventListener('click', () => setMode('edit'));
+viewButton.addEventListener('click', () => setMode('view'));
+treeButton.addEventListener('click', () => setMode('tree'));
 
 function closeFilenameEditor(){
     filenameForm.hidden = true;
@@ -327,6 +340,7 @@ validateButton.addEventListener('click', () => {
 });
 
 indentSelect.addEventListener('change', () => {
+    if(mode === 'tree') return;
     const nextWidth = Number(indentSelect.value);
 
     if(viewing){
@@ -402,6 +416,7 @@ indentSelect.addEventListener('change', () => {
 });
 
 prettyButton.addEventListener('click', () => {
+    if(mode === 'tree') return;
     if(validate().state !== 'valid'){
         setAction('Fix the syntax errors before formatting. Your text has been kept.');
 
@@ -426,6 +441,7 @@ prettyButton.addEventListener('click', () => {
 });
 
 minifyButton.addEventListener('click', () => {
+    if(mode === 'tree') return;
     if(validate().state !== 'valid'){
         setAction('Fix the syntax errors before minifying. Your text has been kept.');
 
@@ -449,6 +465,7 @@ minifyButton.addEventListener('click', () => {
 });
 
 sortButton.addEventListener('click', () => {
+    if(mode === 'tree') return;
     if(validate().state !== 'valid'){
         return;
     }
@@ -477,10 +494,11 @@ sampleButton.addEventListener('click', () => {
 
     const sample = '{\n  "name": "Web-Technica",\n  "tools": ["pwdgen", "keygen", "sri-hasher"],\n  "offline": true,\n  "version": 1,\n  "description": null\n}';
     editorDocument.setSource(prettyPrintJson(sample, editorDocument.editIndent));
+    treeRenderer.reset();
     input.value = editorDocument.source;
 
     update(true);
-    setMode(true);
+    setMode('view');
 
     setAction('Sample loaded. Select Edit to change it.');
 });

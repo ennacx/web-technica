@@ -92,6 +92,7 @@ test('native asset allowlist retains shared modules and Worker imports while exc
     for(const filename of [
         'assets/js/components/copy-button.js', 'assets/js/components/notice.js',
         'assets/js/components/split-pane.js', 'assets/js/utils/text.js',
+        'json-editor/js/tree-renderer.js',
         'regex-tester/js/workers/javascript.worker.js', 'regex-tester/js/engines/javascript.js'
     ]){
         assert.ok(files.has(filename), filename);

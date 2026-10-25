@@ -19,7 +19,7 @@ Tool pages with a status other than `published` use `noindex` and are excluded f
 | [Password Generator](src/tools/pwdgen/README.md) | Passwords, hexadecimal strings, and UUID v4 | `published` | [Open](https://ennacx.github.io/web-technica/pwdgen/) | Offline ready |
 | [URL Inspector](src/tools/url-inspector/README.md) | Inspect, edit, and rebuild URLs and query parameters | `develop` | [Open](https://ennacx.github.io/web-technica/url-inspector/) | Offline ready |
 | [Regex Tester](src/tools/regex-tester/README.md) | JavaScript regex matching, captures, and highlighting with Auto / Manual execution | `develop` | [Open](https://ennacx.github.io/web-technica/regex-tester/) | Offline ready |
-| [JSON Editor](src/tools/json-editor/README.md) | Edit, format, minify, validate, and naturally sort JSON | `develop` | [Open](https://ennacx.github.io/web-technica/json-editor/) | Offline ready |
+| [JSON Editor](src/tools/json-editor/README.md) | Edit, format, minify, validate, naturally sort JSON, and explore a read-only tree | `develop` | [Open](https://ennacx.github.io/web-technica/json-editor/) | Offline ready |
 | [Keypair Generator](src/tools/keygen/README.md) | Generate key pairs and export PEM, OpenSSH, or PPK | `published` | [Open](https://ennacx.github.io/web-technica/keygen/) | Offline ready |
 | [SRI Hasher](src/tools/sri-hasher/README.md) | Generate integrity values and HTML tags for JS/CSS | `published` | [Open](https://ennacx.github.io/web-technica/sri-hasher/) | Limited offline |
 
