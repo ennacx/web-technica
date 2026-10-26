@@ -27,11 +27,12 @@ main {
 .home-watermark {
     position: absolute;
     z-index: -1;
-    top: 0;
-    right: 0;
-    width: 380px;
-    height: 380px;
-    opacity: 0.055;
+    top: 32px;
+    right: -4.0%;
+    // 最大幅のあるヒーローに合わせて拡縮し広い画面でも大きくなりすぎないように
+    width: clamp(20rem, 38%, 28rem);
+    height: auto;
+    opacity: 0.045;
     pointer-events: none;
 }
 
@@ -234,7 +235,8 @@ main {
 }
 
 @include mixin.mobile {
-    .home .tool-card, .home-contribute {
+    .home .tool-card,
+    .home-contribute {
         padding: 20px;
     }
 

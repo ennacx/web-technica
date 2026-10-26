@@ -38,6 +38,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor. Your data is process
             <div class="json-modes" role="group" aria-label="Editor mode">
                 <button type="button" id="json-edit" class="button" aria-pressed="true" aria-controls="json-input">Edit</button>
                 <button type="button" id="json-view" class="button" aria-pressed="false" aria-controls="json-display">View</button>
+                <button type="button" id="json-tree" class="button" aria-pressed="false" aria-controls="json-tree-panel">Tree</button>
             </div>
 
             <button type="button" id="json-copy" class="button button-icon" aria-label="Copy source" title="Copy source" disabled>{{ icon('copy') }}</button>
@@ -74,6 +75,7 @@ javascriptNotice: Enable JavaScript to use the JSON editor. Your data is process
             <pre id="json-code" tabindex="0" aria-label="JSON display, read only" aria-describedby="json-syntax json-error"></pre>
         </div>
 
+        <div id="json-tree-panel" class="json-tree-panel" tabindex="0" role="region" aria-label="JSON tree, read only" aria-describedby="json-mode-help json-syntax json-error" hidden></div>
     </div>
 
     <div id="json-action-notice" class="json-action-notice" hidden>

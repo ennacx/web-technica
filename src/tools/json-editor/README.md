@@ -4,7 +4,7 @@ Edit, format, minify, validate, and naturally sort JSON keys locally in your bro
 
 [Open JSON Editor](https://ennacx.github.io/web-technica/json-editor/) · [All tools and site information](../../../README.md)
 
-The current release is Phase 1: a single-document code editor. Tree editing and advanced editing features are future work, described in the [roadmap](#roadmap).
+The editor includes a read-only Tree viewer alongside the single-document code editor. Tree editing and advanced editing features are future work, described in the [roadmap](#roadmap).
 
 ## Start editing
 
@@ -14,9 +14,9 @@ The current release is Phase 1: a single-document code editor. Tree editing and 
 4. Select **View** to inspect the text with syntax colors and line numbers, or **Edit** to return to the editable source.
 5. Use the copy or save icon in the document bar to export the current mode's text.
 
-Action results, including failed copy or download attempts, appear in a compact, full-width **Last action** strip below the JSON area and above the validation footer. The strip does not cover the JSON. Use **Dismiss notification** to close it; typing or switching modes also clears it. Dismissing returns focus to the current Edit or View area without changing its contents.
+Action results, including failed copy or download attempts, appear in a compact, full-width **Last action** strip below the JSON area and above the validation footer. The strip does not cover the JSON. Use **Dismiss notification** to close it; typing or switching modes also clears it. Dismissing returns focus to the current Edit, View, or Tree area without changing its contents.
 
-The file name and rename form use the space remaining beside the action group, without a fixed maximum form width. On narrow screens, Edit / View, Copy, and Save stay together on the right and move to another line only when the content no longer fits. Formatting actions and Indent share a row when space permits and wrap when needed.
+The file name and rename form use the space remaining beside the action group, without a fixed maximum form width. On narrow screens, Edit / View / Tree, Copy, and Save stay together on the right and move to another line only when the content no longer fits. Formatting actions and Indent share a row when space permits and wrap when needed.
 
 ## Edit and View are independent
 
@@ -61,6 +61,18 @@ Only whitespace is changed by formatting or minifying. Number spellings, string 
   "escaped": "\u0061"
 }
 ```
+
+## Read-only Tree view
+
+Select **Tree** to explore the source structure. The root starts expanded; nested objects and arrays start collapsed. Use a node button with a mouse, **Enter**, or **Space** to expand or collapse it. Object summaries count direct keys, and array summaries count direct items. Empty containers and primitive roots are also supported.
+
+Tree always represents the source, independently of View formatting and sorting. Formatting, sorting, and Indent are disabled in Tree. **Copy**, **Save**, and character/line statistics use the original source while Tree is active. Switching back to View restores its saved display settings.
+
+Only expanded branches generate child DOM. Each branch shows up to 200 children at a time; **Show more** appends the next 200. Expansion is remembered by escaped JSON Pointer paths during the current session, including across source edits where paths still exist. Removed paths are discarded; array index shifts use best-effort restoration. Nothing is stored between page loads.
+
+Invalid or empty input shows an explanation instead of a stale tree. Return to Edit to fix the source. Tree uses the same cached native JSON parse as validation, so duplicate keys show their last value, integer-like keys follow JavaScript enumeration order, and numbers may be rounded to JavaScript precision. Numbers beyond its finite range are labeled **Number outside JavaScript range**. These Tree limitations never change the source or its exports; Edit/View retain exact number spellings, escapes, and duplicate keys.
+
+Tree does not support editing, node selection, search, or a separate tree-text export. Deep trees and long values can scroll within the editor.
 
 ## Natural key sorting
 
@@ -125,12 +137,10 @@ All current features work offline after the site's initial online load and succe
 
 ## Roadmap
 
-Phase 1 provides the current text-based editor. The following features are plans, not currently available functionality.
+The text editor and read-only Tree viewer are available. The following editing features remain plans.
 
 ### Phase 2 — Tree Viewer / Editor
 
-- Display objects and arrays as a tree.
-- Expand and collapse nodes.
 - Edit values with awareness of their types.
 - Add and remove keys and array elements.
 - Synchronize the tree with the code view.
