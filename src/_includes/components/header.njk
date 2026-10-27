@@ -14,6 +14,23 @@
         <nav class="site-nav" aria-label="Main navigation" data-tool-navigation>
             <ul class="site-nav-list" role="list">
                 <li><a href="{{ '/' | url }}#tools" class="site-nav-link{% if toolsActive %} is-current{% endif %}"{% if toolsActive %} aria-current="page"{% endif %}>All Tools</a></li>
+                <li class="site-nav-mobile">
+                    <details data-mobile-tool-navigation>
+                        <summary class="site-nav-link site-nav-toggle{% if tool %} is-current{% endif %}">Tools {{ icon('chevron-right') }}</summary>
+                        <div class="site-nav-dropdown site-nav-mobile-menu">
+                            {% for category in categories %}
+                                <details class="site-nav-mobile-category">
+                                    <summary class="site-nav-link site-nav-toggle{% if tool and tool.category == category.name %} is-current{% endif %}">{{ category.name }} {{ icon('chevron-right') }}</summary>
+                                    <ul role="list">
+                                        {% for tool in category.tools %}
+                                            <li><a href="{{ tool.url | url }}"{% if tool.url == page.url %} aria-current="page"{% endif %}>{{ icon(tool.icon) }}<span class="site-nav-tool-name">{{ tool.name }}</span>{{ toolStatus(tool) }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </details>
+                            {% endfor %}
+                        </div>
+                    </details>
+                </li>
                 {% for category in categories %}
                     <li class="site-nav-category">
                         <button class="site-nav-link site-nav-toggle{% if tool and tool.category == category.name %} is-current{% endif %}" type="button" aria-expanded="false" aria-controls="tool-category-{{ loop.index }}">

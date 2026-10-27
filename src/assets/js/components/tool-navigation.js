@@ -1,8 +1,55 @@
 import { querySel, querySelAll } from '../utils/dom.js';
 
-// Use disclosure buttons with ordinary links so Tab retains normal navigation.
+// 通常のリンクと併せて開閉ボタンを使用することで、Tabキーによるナビゲーションが通常通り機能するようにします。
 for(const navigation of querySelAll('[data-tool-navigation]', document)){
     const categories = [...querySelAll('.site-nav-category', navigation)];
+    const mobileMenu = querySel('[data-mobile-tool-navigation]', navigation);
+
+    function closeMobileMenu(){
+        for(const details of querySelAll('details', mobileMenu)){
+            details.open = false;
+        }
+        mobileMenu.open = false;
+    }
+
+    mobileMenu.addEventListener('keydown', (event) => {
+        if(event.key === 'Escape'){
+            const details = event.target.closest('details[open]');
+
+            if(details && mobileMenu.contains(details)){
+                if(details === mobileMenu){
+                    closeMobileMenu();
+                } else{
+                    details.open = false;
+                }
+
+                querySel('summary', details).focus();
+
+                event.preventDefault();
+            }
+        }
+    });
+
+    mobileMenu.addEventListener('focusout', (event) => {
+        if(!mobileMenu.contains(event.relatedTarget)){
+            closeMobileMenu();
+        }
+    });
+
+    mobileMenu.addEventListener('click', (event) => {
+        if(event.target.closest('a')){
+            closeMobileMenu();
+        }
+    });
+
+    /*
+     * モバイルとデスクトップのレイアウトを切り替え時に情報をリセット
+     */
+    const mobileLayout = window.matchMedia('(max-width: 767.98px)');
+    mobileLayout.addEventListener('change', () => {
+        closeMobileMenu();
+        closeAll();
+    });
 
     function setExpanded(category, expanded){
         querySel('button', category).setAttribute('aria-expanded', String(expanded));
@@ -67,6 +114,10 @@ for(const navigation of querySelAll('[data-tool-navigation]', document)){
     }
 
     document.addEventListener('pointerdown', (event) => {
+        if(!mobileMenu.contains(event.target)){
+            closeMobileMenu();
+        }
+
         if(!navigation.contains(event.target)){
             closeAll();
         }
