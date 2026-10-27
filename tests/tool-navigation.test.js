@@ -22,7 +22,8 @@ test('mobile navigation groups available tools and preserves prefixed links and 
         }
     }
     assert.match(mobile, /href="\/web-technica\/url-inspector\/" aria-current="page"/);
-    assert.match(mobile, /data-tool-status="develop"/);
+    const hasDevelopTool = groupAvailableTools(tools).some(({ tools: members }) => members.some((tool) => tool.status === 'develop'));
+    assert.equal(mobile.includes('data-tool-status="develop"'), hasDevelopTool);
 });
 
 test('mobile disclosures close on Escape, leaving navigation, link selection and layout changes', () => {
