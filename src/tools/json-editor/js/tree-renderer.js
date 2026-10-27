@@ -8,7 +8,14 @@ export function pointerChild(path, key){
 
 const isContainer = (value) => (value !== null && typeof value === 'object');
 
-// Only parsed source is read here; this module never parses or modifies JSON.
+/**
+ * JSONをツリー展開する。
+ * ここでは解析済みのソースのみが読み込まれ、このモジュールがJSONを解析・変更をしない。
+ *
+ * @param container
+ * @param document
+ * @return {{render: render, reset(): void}}
+ */
 export function createTreeRenderer(container, document){
     let renderedRevision = -1;
     let expanded = new Set(['']);
@@ -152,9 +159,9 @@ export function createTreeRenderer(container, document){
                         loadPage();
                         drain();
 
-                        // Keep focus on a visible control after the old button is hidden.
+                        // 直前のボタンを非表示にした後も、表示されているコントロールにフォーカスを維持
                         if(loaded < count){
-                            more.children[0].focus({preventScroll: true});
+                            more.children[0].focus({ preventScroll: true });
                         } else{
                             toggle.focus({preventScroll: true});
                         }
