@@ -18,7 +18,7 @@
         "offline": "ready",
         "category": "Inspect",
         "icon": "link",
-        "status": "develop",
+        "status": "published",
         "tags": ["URL", "Query", "Encode", "Decode"]
     },
     {
@@ -29,7 +29,7 @@
         "offline": "ready",
         "category": "Test",
         "icon": "regex",
-        "status": "develop",
+        "status": "published",
         "tags": ["Regex", "JavaScript", "Pattern", "Match", "Capture Groups"]
     },
     {
@@ -40,7 +40,7 @@
         "offline": "ready",
         "category": "Data & Text",
         "icon": "json",
-        "status": "develop",
+        "status": "published",
         "tags": ["JSON", "Formatter", "Validator", "Minifier", "Natural Sort"]
     },
     {
