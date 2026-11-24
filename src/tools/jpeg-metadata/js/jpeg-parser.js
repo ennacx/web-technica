@@ -1,18 +1,52 @@
-﻿export const MAX_FILE_MEGABYTE = 32;
+﻿/**
+ * JPEGセグメント解析を担当するライブラリ
+ */
+
+export const MAX_FILE_MEGABYTE = 32;
 export const MAX_FILE_BYTES = MAX_FILE_MEGABYTE * 1024 * 1024;
 
 const MAX_SEGMENTS  = 2048;
+
+/**
+ * JPEGマーカーは ITU-T T.81 Annex B.1.1 表 B.1 を参照。
+ * @see https://www.itu.int/rec/T-REC-T.81/en
+ *
+ * コード内の値は先頭の 0xFF を除いた第2バイト。
+ * 0xD8 = SOI（画像開始）
+ * 0xD9 = EOI（画像終了）
+ * 0xDA = SOS（スキャン開始）
+ * 0xFE = COM（コメント）
+ *
+ * SOF はフレーム開始。
+ * 0xC0 = ベースラインDCT
+ * 0xC2 = プログレッシブDCT
+ */
+
 const FRAME_MARKERS = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
 const MARKERS       = new Map([
     [0xc4, 'DHT'], [0xcc, 'DAC'], [0xd8, 'SOI'], [0xd9, 'EOI'], [0xda, 'SOS'],
     [0xdb, 'DQT'], [0xdc, 'DNL'], [0xdd, 'DRI'], [0xde, 'DHP'], [0xdf, 'EXP'], [0xfe, 'COM']
 ]);
+
+// このツールが書き込み時に扱う非APPマーカーの許可リスト。
 const WRITABLE_MARKERS = new Set([0xc0, 0xc2, 0xc4, 0xd9, 0xda, 0xdb, 0xdd, 0xfe]);
 
 function startsWith(data, prefix){
     return [...prefix].every((char, index) => (data[index] === char.charCodeAt(0)));
 }
 
+/**
+ * APP0〜15 は 0xe0〜0xef。
+ * APP番号とペイロード先頭の識別子を組み合わせる。
+ *
+ * @see ITU-T T.86 Annex A: https://www.itu.int/epublications/publication/itu-t-t-86-v2-2024-02-information-technology-digital-compression-and-coding-of-continuous-tone-still-images-appn-markers
+ * @see JFIF / JFXX: https://www.itu.int/rec/T-REC-T.871/en
+ * @see XMP / Extended XMP（Part 3）: https://developer.adobe.com/xmp/docs/xmp-specifications/
+ *
+ * @param marker
+ * @param data
+ * @return {string}
+ */
 function identify(marker, data){
     if(marker === 0xfe) {
         return 'Comment';

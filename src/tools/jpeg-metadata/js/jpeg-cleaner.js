@@ -1,4 +1,8 @@
-﻿import { parseJpeg } from './jpeg-parser.js';
+﻿/**
+ * EXIF削除・出力検証を担当するライブラリ
+ */
+
+import { parseJpeg } from './jpeg-parser.js';
 import { inspectJpeg } from './exif-reader.js';
 import { rebuildWithoutGps } from './gps-cleaner.js';
 

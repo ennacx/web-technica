@@ -1,11 +1,36 @@
-﻿import { isRelocatableTag, readExif } from './exif-reader.js';
+﻿/**
+ * GPSを除いたEXIF再構築を担当するライブラリ
+ */
 
-const PRIMARY      = 'IFD0';
-const SUB_IFD      = 'Exif SubIFD';
-const GPS          = 'GPS IFD';
-const EXIF_POINTER = 0x8769;
-const GPS_POINTER  = 0x8825;
-const GPS_TYPES    = [1, 2, 5, 2, 5, 1, 5, 5, 2, 2, 2, 5, 2, 5, 2, 5, 2, 5, 2, 2, 5, 2, 5, 2, 5, 2, 5, 7, 7, 2, 3, 5];
+import {IFD_TYPE, LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER, isRelocatableTag, readExif} from './exif-reader.js';
+
+const PRIMARY = 'IFD0';
+const SUB_IFD = 'Exif SubIFD';
+const GPS     = 'GPS IFD';
+
+
+/**
+ * CIPA DC-X008-2019 日本語版 §4.6.3 (Exif固有のIFD)、§4.6.6 表15 (GPSタグ)、§4.7.2 (APP1)
+ * @see https://www.cipa.jp/std/documents/j/DC-X008-2019-J.pdf
+ */
+
+// 下記HEXはIFD0のタグID。各タグの値がTIFF先頭からの相対位置を指す。
+const EXIF_POINTER = 0x8769; // ExifIFDPointer
+const GPS_POINTER  = 0x8825; // GPSInfoIFDPointer
+
+// インデックスはGPS IFDのタグID (0x0000〜0x001F)、配列の値は許容するTIFF型番号。
+const GPS_TYPES = [
+    // 0x0000〜0x000F
+    IFD_TYPE.BYTE,     IFD_TYPE.ASCII,    IFD_TYPE.RATIONAL, IFD_TYPE.ASCII,
+    IFD_TYPE.RATIONAL, IFD_TYPE.BYTE,     IFD_TYPE.RATIONAL, IFD_TYPE.RATIONAL,
+    IFD_TYPE.ASCII,    IFD_TYPE.ASCII,    IFD_TYPE.ASCII,    IFD_TYPE.RATIONAL,
+    IFD_TYPE.ASCII,    IFD_TYPE.RATIONAL, IFD_TYPE.ASCII,    IFD_TYPE.RATIONAL,
+    // 0x0010〜0x001F
+    IFD_TYPE.ASCII,     IFD_TYPE.RATIONAL, IFD_TYPE.ASCII,    IFD_TYPE.ASCII,
+    IFD_TYPE.RATIONAL,  IFD_TYPE.ASCII,    IFD_TYPE.RATIONAL, IFD_TYPE.ASCII,
+    IFD_TYPE.RATIONAL,  IFD_TYPE.ASCII,    IFD_TYPE.RATIONAL, IFD_TYPE.UNDEFINED,
+    IFD_TYPE.UNDEFINED, IFD_TYPE.ASCII,    IFD_TYPE.SHORT,    IFD_TYPE.RATIONAL
+];
 
 export function rebuildWithoutGps(exif){
     const { directories, little, issues } = exif;
@@ -51,11 +76,11 @@ export function rebuildWithoutGps(exif){
 
     const offsets = new Map();
 
-    let size = 8;
+    let size = 8; // TIFFヘッダの直後にIFD0を置く
 
     for(const [name, entries] of retained){
         offsets.set(name, size);
-        size += 6 + 12 * entries.length;
+        size += entries.length * 12 + 6; // タグ数2バイト、各エントリ12バイト、次のIFD位置4バイト。
     }
 
     let dataOffset = size;
@@ -68,6 +93,7 @@ export function rebuildWithoutGps(exif){
         }
     }
 
+    // 16ビットのJPEG長さ欄の上限から長さ欄の2バイトとExif識別子の6バイトを引く
     if(size > 65527){
         throw new Error('Rebuilt Exif exceeds the JPEG APP1 size limit.');
     }
@@ -75,7 +101,7 @@ export function rebuildWithoutGps(exif){
     const tiff = new Uint8Array(size);
     const view = new DataView(tiff.buffer);
 
-    view.setUint16(0, little ? 0x4949 : 0x4d4d);
+    view.setUint16(0, (little) ? LITTLE_ENDIAN_BYTE_ORDER : BIG_ENDIAN_BYTE_ORDER);
     view.setUint16(2, 42, little);
     view.setUint32(4, offsets.get(PRIMARY), little);
 
@@ -138,6 +164,7 @@ export function rebuildWithoutGps(exif){
 
     const segment = new Uint8Array(tiff.length + 10);
 
+    // FF E1（APP1）、長さ欄2バイト、"Exif\0\0" の6バイト、続いてTIFF本体。
     segment.set([0xff, 0xe1, 0, 0, 0x45, 0x78, 0x69, 0x66, 0, 0]);
 
     new DataView(segment.buffer).setUint16(2, segment.length - 2);
