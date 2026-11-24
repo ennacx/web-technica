@@ -1,0 +1,165 @@
+﻿@use "../../../assets/css/mixin" as mixin;
+
+.jpeg-metadata {
+    @include mixin.tool-page;
+
+    @include mixin.mobile {
+        @include mixin.tool-page-mobile;
+    }
+}
+
+.jpeg-workspace {
+    display: grid;
+    gap: 16px;
+
+    [hidden] {
+        display: none;
+    }
+
+    .ifd-tag-list {
+        li {
+            font-family: var(--font-mono);
+        }
+    }
+}
+
+.jpeg-panel {
+    @include mixin.panel-surface;
+
+    min-width: 0;
+    padding: clamp(12px, 3vw, 24px);
+    overflow-wrap: anywhere;
+
+    h2 {
+        margin: 0 0 12px;
+    }
+
+    input {
+        &[type="file"] {
+            max-width: 100%;
+            min-height: 44px;
+        }
+
+        &::file-selector-button {
+            padding: 8px 12px;
+            color: var(--color-text);
+            background: var(--color-surface-raised);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font: inherit;
+        }
+    }
+
+    fieldset {
+        min-width: 0;
+        margin-block: 8px 16px;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+    }
+
+    label {
+        &:has(input[type="radio"]) {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            min-height: 44px;
+        }
+    }
+
+    summary {
+        cursor: pointer;
+        padding-block: 10px;
+    }
+
+    .jpeg-warning {
+        color: var(--color-warning);
+    }
+}
+
+.jpeg-file-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: 12px 20px;
+
+    .jpeg-facts {
+        flex: 1 1 16rem;
+        min-width: 0;
+        margin: 0;
+    }
+}
+
+.jpeg-preview {
+    display: block;
+    width: min(100%, 12rem);
+    height: 9rem;
+    object-fit: contain;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+}
+
+.jpeg-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 4px 16px;
+
+    dt {
+        color: var(--color-text-muted);
+    }
+
+    dd {
+        margin: 0;
+        white-space: pre-wrap;
+        font-family: var(--font-mono);
+    }
+}
+
+.jpeg-facts-divided {
+    gap: 0;
+
+    dt, dd {
+        padding-block: 8px;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+    }
+
+    dt {
+        padding-inline-end: 12px;
+    }
+
+    dt:last-of-type, dd:last-of-type {
+        border-bottom: 0;
+    }
+}
+
+.jpeg-workspace .ifd-tag-list li + li {
+    padding-block-start: 4px;
+    margin-block-start: 4px;
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+}
+
+.jpeg-table {
+    overflow: auto;
+    max-height: 24rem;
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: start;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    td {
+        font-family: var(--font-mono);
+    }
+}
+
+.jpeg-actions {
+    @include mixin.toolbar-row;
+
+    justify-content: flex-start;
+}

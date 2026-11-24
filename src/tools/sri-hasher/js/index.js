@@ -11,22 +11,22 @@ export function initializeSriHasher(document){
 
     root.dataset.ready = 'true';
 
-    const get = (id) => getById(id, document);
+    const get = (id) => getById(`sri-${id}`, document);
 
-    const form = get('sri-form');
-    const settings = get('sri-settings');
-    const url = get('sri-url');
-    const file = get('sri-file');
-    const algorithm = get('sri-algorithm');
-    const generate = get('sri-generate');
-    const error = get('sri-error');
-    const progress = get('sri-progress');
-    const status = get('sri-copy-status');
-    const result = get('sri-results');
-    const panel = get('sri-result-panel');
+    const form = get('form');
+    const settings = get('settings');
+    const url = get('url');
+    const file = get('file');
+    const algorithm = get('algorithm');
+    const generate = get('generate');
+    const error = get('error');
+    const progress = get('progress');
+    const status = get('copy-status');
+    const result = get('results');
+    const panel = get('result-panel');
     const modes = [...root.querySelectorAll('[name="source-mode"]')];
-    const copy = get('sri-copy');
-    const copyTag = get('sri-tag-copy');
+    const copy = get('copy');
+    const copyTag = get('tag-copy');
 
     const cryptoReady = (typeof globalThis.crypto?.subtle?.digest === 'function');
 
@@ -42,10 +42,10 @@ export function initializeSriHasher(document){
         current = null;
 
         result.hidden = true;
-        get('sri-empty').hidden = false;
-        get('sri-value').textContent = '';
-        get('sri-tag').textContent = '';
-        get('sri-result-note').textContent = '';
+        get('empty').hidden = false;
+        get('value').textContent = '';
+        get('tag').textContent = '';
+        get('result-note').textContent = '';
 
         copy.disabled = copyTag.disabled = true;
         status.textContent = '';
@@ -68,8 +68,8 @@ export function initializeSriHasher(document){
     function updateMode(){
         const remote = (mode() === 'fetch');
 
-        get('sri-url-fields').hidden = !remote;
-        get('sri-file-fields').hidden = remote;
+        get('url-fields').hidden = !remote;
+        get('file-fields').hidden = remote;
 
         url.disabled = !remote;
         file.disabled = remote;
@@ -141,13 +141,13 @@ export function initializeSriHasher(document){
 
             current = { sri, tag: makeHtmlTag(source, sri, validation.extension) };
 
-            get('sri-value').textContent = current.sri;
-            get('sri-tag').textContent = current.tag;
-            get('sri-result-note').textContent = (remote) ?
+            get('value').textContent = current.sri;
+            get('tag').textContent = current.tag;
+            get('result-note').textContent = (remote) ?
                 'Generated from the fetched response. Regenerate if the resource changes.' :
                 'Generated from your local file. Adjust the relative path for its published location.';
 
-            get('sri-empty').hidden = true;
+            get('empty').hidden = true;
 
             result.hidden = false;
             copy.disabled = false;

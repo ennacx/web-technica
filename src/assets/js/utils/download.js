@@ -1,4 +1,4 @@
-/**
+﻿/**
  * テキストデータのダウンロード
  *
  * @param {string} text - ダウンロードするテキスト。
@@ -7,13 +7,17 @@
  * @param {string} [type='text/plain;charset=utf-8'] - ダウンロードするファイルのMIMEタイプ。
  */
 export function downloadText(text, filename, document = globalThis.document, type = 'text/plain;charset=utf-8') {
+    return downloadBlob(new document.defaultView.Blob([text], { type }), filename, document);
+}
+
+export function downloadBlob(blob, filename, document = globalThis.document){
     const window = document.defaultView;
     const anchor = document.createElement('a');
 
     let url;
 
     try{
-        url = window.URL.createObjectURL(new window.Blob([text], { type }));
+        url = window.URL.createObjectURL(blob);
         anchor.href = url;
         anchor.download = filename;
         document.body.append(anchor);

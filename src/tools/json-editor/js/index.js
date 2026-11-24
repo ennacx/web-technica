@@ -8,38 +8,38 @@ import { JsonEditorDocument } from './document.js';
 import { planJsonInput } from './input-assist.js';
 import { createTreeRenderer } from './tree-renderer.js';
 
-const get = (id) => getById(id, document);
+const get = (id) => getById(`json-${id}`, document);
 
 // The source remains text. Validation never replaces it with parsed values.
-const input = get('json-input');
-const display = get('json-display');
-const code = get('json-code');
-const lines = get('json-lines');
-const editButton = get('json-edit');
-const viewButton = get('json-view');
-const treeButton = get('json-tree');
-const treePanel = get('json-tree-panel');
+const input = get('input');
+const display = get('display');
+const code = get('code');
+const lines = get('lines');
+const editButton = get('edit');
+const viewButton = get('view');
+const treeButton = get('tree');
+const treePanel = get('tree-panel');
 const treeRenderer = createTreeRenderer(treePanel, document);
-const copyButton = get('json-copy');
-const downloadButton = get('json-download');
-const sampleButton = get('json-sample');
-const status = get('json-action-status');
-const actionNotice = get('json-action-notice');
-const validateButton = get('json-validate');
-const syntax = get('json-syntax');
-const syntaxText = get('json-syntax-text');
-const errorMessage = get('json-error');
-const formatHelp = get('json-format-help');
-const prettyButton = get('json-pretty');
-const minifyButton = get('json-minify');
-const sortButton = get('json-sort');
-const indentSelect = get('json-indent');
-const filenameDisplay = get('json-filename-display');
-const filenameLabel = get('json-filename');
-const filenameForm = get('json-filename-form');
-const filenameInput = get('json-filename-input');
-const filenameError = get('json-filename-error');
-const renameButton = get('json-rename');
+const copyButton = get('copy');
+const downloadButton = get('download');
+const sampleButton = get('sample');
+const status = get('action-status');
+const actionNotice = get('action-notice');
+const validateButton = get('validate');
+const syntax = get('syntax');
+const syntaxText = get('syntax-text');
+const errorMessage = get('error');
+const formatHelp = get('format-help');
+const prettyButton = get('pretty');
+const minifyButton = get('minify');
+const sortButton = get('sort');
+const indentSelect = get('indent');
+const filenameDisplay = get('filename-display');
+const filenameLabel = get('filename');
+const filenameForm = get('filename-form');
+const filenameInput = get('filename-input');
+const filenameError = get('filename-error');
+const renameButton = get('rename');
 
 const editorDocument = new JsonEditorDocument();
 
@@ -52,7 +52,7 @@ let applyingAssistance = false;
 
 const notice = createNotice(status, {
     container: actionNotice,
-    dismiss: get('json-action-dismiss'),
+    dismiss: get('action-dismiss'),
     focusTarget: () => mode === 'tree' ? treePanel : viewing ? code : input
 });
 
@@ -147,14 +147,14 @@ function renderSource(){
 
 function update(immediate = false){
     const nextDirection = (editorDocument.sort === 'asc') ? 'desc' : 'asc';
-    get('json-sort-label').textContent = (nextDirection === 'asc') ? 'Sort Ascending' : 'Sort Descending';
-    get('json-sort-asc-icon').hidden = (nextDirection !== 'asc');
-    get('json-sort-desc-icon').hidden = (nextDirection !== 'desc');
+    get('sort-label').textContent = (nextDirection === 'asc') ? 'Sort Ascending' : 'Sort Descending';
+    get('sort-asc-icon').hidden = (nextDirection !== 'asc');
+    get('sort-desc-icon').hidden = (nextDirection !== 'desc');
 
     const length = editorDocument.text.length;
     const count = lineCount(editorDocument.text);
 
-    get('json-stats').textContent = `${length.toLocaleString('en-US')} characters · ${count.toLocaleString('en')} line${(count === 1) ? '' : 's'}`;
+    get('stats').textContent = `${length.toLocaleString('en-US')} characters · ${count.toLocaleString('en')} line${(count === 1) ? '' : 's'}`;
 
     clearTimeout(validationTimer);
 
@@ -192,7 +192,7 @@ function setMode(nextMode){
 
     setAction('');
 
-    get('json-mode-help').textContent = mode === 'tree' ?
+    get('mode-help').textContent = mode === 'tree' ?
         'Tree: read-only source structure. Expand nodes with Enter or Space. Copy, Save, and statistics use the source; display settings are kept.' : (view) ?
         'View: saved display settings apply to valid JSON. Validation uses the source. Copy and Save use the displayed text.' :
         'Edit: operations, validation, Copy, and Save use the source.';

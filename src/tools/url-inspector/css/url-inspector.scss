@@ -1,4 +1,4 @@
-@use "../../../assets/css/mixin";
+@use "../../../assets/css/mixin" as mixin;
 
 main.url-inspector {
     @include mixin.tool-page;

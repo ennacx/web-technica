@@ -1,0 +1,155 @@
+@charset "UTF-8";
+/*
+ * 共通の mixin。
+ */
+/*
+ * 共通の寸法・フォント。テーマ色はCSSカスタムプロパティで公開する。
+ */
+.jpeg-metadata {
+  width: min(100% - 64px, 1120px);
+  padding-block: 24px 48px;
+}
+@media (max-width: 767.98px) {
+  .jpeg-metadata {
+    width: calc(100% - 40px);
+    padding-block: 16px 32px;
+  }
+}
+
+.jpeg-workspace {
+  display: grid;
+  gap: 16px;
+}
+.jpeg-workspace [hidden] {
+  display: none;
+}
+.jpeg-workspace .ifd-tag-list li {
+  font-family: var(--font-mono);
+}
+
+.jpeg-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  min-width: 0;
+  padding: clamp(12px, 3vw, 24px);
+  overflow-wrap: anywhere;
+}
+.jpeg-panel h2 {
+  margin: 0 0 12px;
+}
+.jpeg-panel input[type=file] {
+  max-width: 100%;
+  min-height: 44px;
+}
+.jpeg-panel input::file-selector-button {
+  padding: 8px 12px;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+}
+.jpeg-panel fieldset {
+  min-width: 0;
+  margin-block: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.jpeg-panel label:has(input[type=radio]) {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+}
+.jpeg-panel summary {
+  cursor: pointer;
+  padding-block: 10px;
+}
+.jpeg-panel .jpeg-warning {
+  color: var(--color-warning);
+}
+
+.jpeg-file-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 12px 20px;
+}
+.jpeg-file-details .jpeg-facts {
+  flex: 1 1 16rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.jpeg-preview {
+  display: block;
+  width: min(100%, 12rem);
+  height: 9rem;
+  object-fit: contain;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.jpeg-facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 4px 16px;
+}
+.jpeg-facts dt {
+  color: var(--color-text-muted);
+}
+.jpeg-facts dd {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+}
+
+.jpeg-facts-divided {
+  gap: 0;
+}
+.jpeg-facts-divided dt, .jpeg-facts-divided dd {
+  padding-block: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+}
+.jpeg-facts-divided dt {
+  padding-inline-end: 12px;
+}
+.jpeg-facts-divided dt:last-of-type, .jpeg-facts-divided dd:last-of-type {
+  border-bottom: 0;
+}
+
+.jpeg-workspace .ifd-tag-list li + li {
+  padding-block-start: 4px;
+  margin-block-start: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+}
+
+.jpeg-table {
+  overflow: auto;
+  max-height: 24rem;
+}
+.jpeg-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.jpeg-table th, .jpeg-table td {
+  padding: 8px;
+  text-align: start;
+  border-bottom: 1px solid var(--color-border);
+}
+.jpeg-table td {
+  font-family: var(--font-mono);
+}
+
+.jpeg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+/*# sourceMappingURL=jpeg-metadata.css.map */

@@ -1,4 +1,4 @@
-@use "../../../assets/css/mixin";
+@use "../../../assets/css/mixin" as mixin;
 
 // SRI固有の配置。フォームやパネルの基本形状は共通SCSSを使用する。
 main.sri-hasher {

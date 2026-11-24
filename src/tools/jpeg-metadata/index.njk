@@ -1,0 +1,83 @@
+﻿---
+toolSlug: jpeg-metadata
+permalink: /jpeg-metadata/index.html
+pageClass: jpeg-metadata
+pageStylesheet: /jpeg-metadata/css/jpeg-metadata.css
+pageScript: /jpeg-metadata/js/index.js
+toolIntro:
+    - Inspect Exif and JPEG segments, then download a cleaned copy without re-encoding the image.
+processingNotice:
+    icon: lock
+    title: Your JPEG stays here
+    description: No uploads or browser storage.
+javascriptNotice: Enable JavaScript to inspect and clean JPEG files.
+---
+
+{% from "components/icons.njk" import icon %}
+
+<div class="jpeg-workspace">
+    <section class="jpeg-panel" aria-labelledby="jpeg-file-title">
+        <h2 id="jpeg-file-title"><label for="jpeg-file">JPEG file</label></h2>
+        <input id="jpeg-file" type="file" accept=".jpg,.jpeg,image/jpeg" aria-describedby="jpeg-file-help jpeg-file-status" disabled>
+        <p id="jpeg-file-help" class="field-help">One JPEG up to 32 MiB.</p>
+
+        <div class="jpeg-file-details">
+            <img id="jpeg-preview" class="jpeg-preview" alt="Preview of the selected JPEG" decoding="async" hidden>
+            <dl id="jpeg-file-info" class="jpeg-facts" hidden></dl>
+        </div>
+
+        <p id="jpeg-file-status" role="status">Choose a JPEG to inspect.</p>
+    </section>
+
+    <section id="jpeg-inspect" class="jpeg-panel" aria-labelledby="jpeg-inspect-title" hidden>
+        <h2 id="jpeg-inspect-title">Inspect</h2>
+
+        <p id="jpeg-exif-summary"></p>
+
+        <dl id="jpeg-exif-fields" class="jpeg-facts jpeg-facts-divided"></dl>
+
+        <details id="jpeg-gps" hidden>
+            <summary>GPS tag values</summary>
+            <dl id="jpeg-gps-fields" class="jpeg-facts jpeg-facts-divided"></dl>
+        </details>
+
+        <details id="jpeg-other-tags" hidden>
+            <summary>Other Exif tag IDs</summary>
+            <ul id="jpeg-tag-list" class="ifd-tag-list"></ul>
+        </details>
+
+        <details id="jpeg-segments">
+            <summary>JPEG segments</summary>
+            <div class="jpeg-table" tabindex="0" role="region" aria-label="JPEG segment table">
+                <table>
+                    <thead><tr><th scope="col">Marker</th><th scope="col">Offset</th><th scope="col">Bytes</th><th scope="col">Payload</th></tr></thead>
+                    <tbody id="jpeg-segment-rows"></tbody>
+                </table>
+            </div>
+        </details>
+    </section>
+
+    <section class="jpeg-panel" aria-labelledby="jpeg-clean-title">
+        <h2 id="jpeg-clean-title">Clean</h2>
+
+        <fieldset id="jpeg-options" disabled>
+            <legend>Cleanup mode</legend>
+            <label><input type="radio" name="jpeg-mode" value="metadata" aria-describedby="jpeg-metadata-help" checked> Remove metadata</label>
+            <p id="jpeg-metadata-help" class="field-help">Removes Exif, XMP, Photoshop/IPTC and comments. Keeps ICC color profiles, JFIF (including possible thumbnails) and Adobe color information.</p>
+            <label><input type="radio" name="jpeg-mode" value="location" aria-describedby="jpeg-location-help"> Remove location only</label>
+            <p id="jpeg-location-help" class="field-help">Rebuilds supported Exif without its GPS directory. Files with XMP, IPTC, ICC, comments, embedded previews or unfamiliar Exif tags may be inspected, but location-only cleanup refuses them.</p>
+        </fieldset>
+
+        <p id="jpeg-orientation" class="jpeg-warning" hidden></p>
+        <p class="field-help">Cleanup covers supported metadata. Retained data and the image itself may still reveal personal information.</p>
+
+        <div class="jpeg-actions">
+            <button id="jpeg-clean" type="button" class="button button-primary" disabled>Prepare cleaned JPEG</button>
+            <button id="jpeg-download" type="button" class="button" hidden>{{ icon('download') }} Download</button>
+        </div>
+
+        <p id="jpeg-clean-status" role="status"></p>
+
+        <dl id="jpeg-result" class="jpeg-facts" hidden></dl>
+    </section>
+</div>
