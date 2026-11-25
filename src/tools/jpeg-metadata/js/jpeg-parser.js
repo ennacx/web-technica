@@ -60,7 +60,7 @@ const FRAME_MARKERS = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0
  * @type {Map<number, string>}
  * @see https://www.itu.int/rec/T-REC-T.81/en ITU-T T.81 Annex B.1.1 表 B.1
  */
-const MARKERS       = new Map([
+const MARKERS = new Map([
     [0xc4, 'DHT'], [0xcc, 'DAC'], [0xd8, 'SOI'], [0xd9, 'EOI'], [0xda, 'SOS'],
     [0xdb, 'DQT'], [0xdc, 'DNL'], [0xdd, 'DRI'], [0xde, 'DHP'], [0xdf, 'EXP'], [0xfe, 'COM']
 ]);

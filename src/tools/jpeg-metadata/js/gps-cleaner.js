@@ -4,16 +4,68 @@
 
 import {
     IFD, IFD_TYPE, TIFF_TAG, EXIF_TAG, TIFF_MAGIC, LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER,
-    TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES
+    TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES, TYPE_NAMES
 } from './exif-constants.js';
-import { isRelocatableTag, readExif } from './exif-reader.js';
+import { readExif } from './exif-reader.js';
 
 /**
  * CIPA DC-X008-2019 日本語版 §4.6.3 (Exif固有のIFD)、§4.6.6 表15 (GPSタグ)、§4.7.2 (APP1)
  * @see https://www.cipa.jp/std/documents/j/DC-X008-2019-J.pdf
  */
 
-// インデックスはGPS IFDのタグID (0x0000〜0x001F)、配列の値は許容するTIFF型番号。
+/**
+ * GPS削除時にASCII型のまま移設できるタグID。外側のキーはIFD名。
+ *
+ * @type {Record<string, Set<number>>}
+ */
+const ASCII_TAGS = {
+    [IFD.PRIMARY]: new Set([
+        TIFF_TAG.ImageDescription, TIFF_TAG.Make, TIFF_TAG.Model, TIFF_TAG.Software,
+        TIFF_TAG.DateTime, TIFF_TAG.Artist, TIFF_TAG.Copyright
+    ]),
+    [IFD.EXIF]: new Set([
+        EXIF_TAG.DateTimeOriginal, EXIF_TAG.DateTimeDigitized, EXIF_TAG.OffsetTime,
+        EXIF_TAG.OffsetTimeOriginal, EXIF_TAG.OffsetTimeDigitized, EXIF_TAG.SubSecTime,
+        EXIF_TAG.SubSecTimeOriginal, EXIF_TAG.SubSecTimeDigitized, EXIF_TAG.LensMake, EXIF_TAG.LensModel
+    ])
+};
+
+/**
+ * GPS削除時に単一値として移設できる型番号。外側のキーはIFD名、内側のキーはタグID。
+ *
+ * @type {Record<string, Record<number, number[]>>}
+ */
+const SCALAR_TYPES = {
+    [IFD.PRIMARY]: {
+        [TIFF_TAG.Orientation]: [IFD_TYPE.SHORT],
+        [TIFF_TAG.XResolution]: [IFD_TYPE.RATIONAL],
+        [TIFF_TAG.YResolution]: [IFD_TYPE.RATIONAL],
+        [TIFF_TAG.ResolutionUnit]: [IFD_TYPE.SHORT]
+    },
+    [IFD.EXIF]: {
+        [EXIF_TAG.ExposureTime]: [IFD_TYPE.RATIONAL],
+        [EXIF_TAG.FNumber]: [IFD_TYPE.RATIONAL],
+        [EXIF_TAG.ExposureProgram]: [IFD_TYPE.SHORT],
+        [EXIF_TAG.PhotographicSensitivity]: [IFD_TYPE.SHORT], // PhotographicSensitivity。規格では複数値も許容するが、移設は単一値に限定する。
+        [EXIF_TAG.ISOSpeed]: [IFD_TYPE.LONG],
+        [EXIF_TAG.ShutterSpeedValue]: [IFD_TYPE.SRATIONAL],
+        [EXIF_TAG.ApertureValue]: [IFD_TYPE.RATIONAL],
+        [EXIF_TAG.ExposureBiasValue]: [IFD_TYPE.SRATIONAL],
+        [EXIF_TAG.MeteringMode]: [IFD_TYPE.SHORT],
+        [EXIF_TAG.Flash]: [IFD_TYPE.SHORT],
+        [EXIF_TAG.FocalLength]: [IFD_TYPE.RATIONAL],
+        [EXIF_TAG.ColorSpace]: [IFD_TYPE.SHORT],
+        [EXIF_TAG.PixelXDimension]: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
+        [EXIF_TAG.PixelYDimension]: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
+        [EXIF_TAG.FocalLengthIn35mmFilm]: [IFD_TYPE.SHORT],
+    }
+};
+
+/**
+ * インデックスはGPS IFDのタグID (0x0000〜0x001F)、配列の値は許容するTIFF型番号。
+ *
+ * @type {(number)[]}
+ */
 const GPS_TYPES = [
     // 0x0000〜0x000F
     IFD_TYPE.BYTE,     IFD_TYPE.ASCII,    IFD_TYPE.RATIONAL, IFD_TYPE.ASCII,
@@ -26,6 +78,26 @@ const GPS_TYPES = [
     IFD_TYPE.RATIONAL,  IFD_TYPE.ASCII,    IFD_TYPE.RATIONAL, IFD_TYPE.UNDEFINED,
     IFD_TYPE.UNDEFINED, IFD_TYPE.ASCII,    IFD_TYPE.SHORT,    IFD_TYPE.RATIONAL
 ];
+
+/**
+ * GPS削除時に、このタグの値を再構築先へ移せるか判定する。
+ * ASCIIタグと4バイトのバージョンタグのほか、許可リストにある単一値を対象とする。
+ *
+ * @param {string} directory - IFD名。
+ * @param {Pick<ExifEntry, 'tag' | 'type' | 'count'>} entry - タグID、型、要素数。
+ * @returns {boolean} タグID・型・要素数が移設条件を満たす場合は `true`。実際の値の検証は再構築側で行う。
+ */
+function isRelocatableTag(directory, { tag, type, count }){
+    if(ASCII_TAGS[directory]?.has(tag)){
+        return (type === IFD_TYPE.ASCII);
+    }
+
+    if(directory === IFD.EXIF && (tag === EXIF_TAG.ExifVersion || tag === EXIF_TAG.FlashpixVersion)){
+        return (type === IFD_TYPE.UNDEFINED && count === 4);
+    }
+
+    return (count === 1 && Boolean(SCALAR_TYPES[directory]?.[tag]?.includes(type)));
+}
 
 /**
  * GPSポインタとGPS IFDの値を除き、保持するIFDと値を新しいAPP1に書き出す。

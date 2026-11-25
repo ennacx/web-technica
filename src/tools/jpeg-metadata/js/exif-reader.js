@@ -7,103 +7,14 @@
  */
 
 import {
-    IFD, IFD_TYPE, TIFF_TAG, EXIF_TAG, GPS_TAG, TYPE_BYTES, TYPE_NAMES, TIFF_MAGIC,
+    IFD, IFD_TYPE, TIFF_TAG, TYPE_BYTES, TYPE_NAMES, TIFF_MAGIC,
     TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES,
-    LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER, SHORT_VALUES, FLASH_BITS, FLASH_MODES, FLASH_RETURN
+    LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER
 } from './exif-constants.js';
+import { DISPLAY_TAGS, formatStandardValue } from './exif-formatter.js'
+import { decode as exifDecode } from './exif-decoder.js';
 
 const BINARY_PREVIEW_BYTES = 32;
-
-/**
- * 外側のキーはIFD名、内側の数値キーはそのIFD内の16ビットのタグID。
- *
- * @type {Record<string, Record<number, string>>}
- */
-const DISPLAY_TAGS = {
-    [IFD.PRIMARY]: {
-        [TIFF_TAG.Make]: 'Camera make',
-        [TIFF_TAG.Model]: 'Camera model',
-        [TIFF_TAG.Orientation]: 'Orientation',
-        [TIFF_TAG.Software]: 'Software',
-        [TIFF_TAG.DateTime]: 'DateTime',
-        [TIFF_TAG.Artist]: 'Artist',
-        [TIFF_TAG.Copyright]: 'Copyright',
-    },
-    [IFD.EXIF]: {
-        [EXIF_TAG.ExposureTime]: 'Exposure time',
-        [EXIF_TAG.FNumber]: 'F-number',
-        [EXIF_TAG.ExposureProgram]: 'Exposure program',
-        [EXIF_TAG.PhotographicSensitivity]: 'ISO',
-        [EXIF_TAG.ISOSpeed]: 'ISO speed',
-        [EXIF_TAG.DateTimeOriginal]: 'DateTimeOriginal',
-        [EXIF_TAG.DateTimeDigitized]: 'DateTimeDigitized',
-        [EXIF_TAG.ExposureBiasValue]: 'Exposure compensation',
-        [EXIF_TAG.MeteringMode]: 'Metering mode',
-        [EXIF_TAG.Flash]: 'Flash',
-        [EXIF_TAG.FocalLength]: 'Focal length',
-        [EXIF_TAG.ExposureMode]: 'Exposure mode',
-        [EXIF_TAG.WhiteBalance]: 'White balance',
-        [EXIF_TAG.FocalLengthIn35mmFilm]: '35 mm equivalent focal length',
-        [EXIF_TAG.LensSpecification]: 'Lens specification',
-        [EXIF_TAG.LensModel]: 'Lens model',
-    },
-    [IFD.GPS]: {
-        [GPS_TAG.LatitudeRef]: 'Latitude reference',
-        [GPS_TAG.Latitude]: 'Latitude',
-        [GPS_TAG.LongitudeRef]: 'Longitude reference',
-        [GPS_TAG.Longitude]: 'Longitude',
-        [GPS_TAG.AltitudeRef]: 'Altitude reference',
-        [GPS_TAG.Altitude]: 'Altitude',
-    }
-};
-
-/**
- * GPS削除時にASCII型のまま移設できるタグID。外側のキーはIFD名。
- *
- * @type {Record<string, Set<number>>}
- */
-const ASCII_TAGS = {
-    [IFD.PRIMARY]: new Set([
-        TIFF_TAG.ImageDescription, TIFF_TAG.Make, TIFF_TAG.Model, TIFF_TAG.Software,
-        TIFF_TAG.DateTime, TIFF_TAG.Artist, TIFF_TAG.Copyright
-    ]),
-    [IFD.EXIF]: new Set([
-        EXIF_TAG.DateTimeOriginal, EXIF_TAG.DateTimeDigitized, EXIF_TAG.OffsetTime,
-        EXIF_TAG.OffsetTimeOriginal, EXIF_TAG.OffsetTimeDigitized, EXIF_TAG.SubSecTime,
-        EXIF_TAG.SubSecTimeOriginal, EXIF_TAG.SubSecTimeDigitized, EXIF_TAG.LensMake, EXIF_TAG.LensModel
-    ])
-};
-
-/**
- * GPS削除時に単一値として移設できる型番号。外側のキーはIFD名、内側のキーはタグID。
- *
- * @type {Record<string, Record<number, number[]>>}
- */
-const SCALAR_TYPES = {
-    [IFD.PRIMARY]: {
-        [TIFF_TAG.Orientation]: [IFD_TYPE.SHORT],
-        [TIFF_TAG.XResolution]: [IFD_TYPE.RATIONAL],
-        [TIFF_TAG.YResolution]: [IFD_TYPE.RATIONAL],
-        [TIFF_TAG.ResolutionUnit]: [IFD_TYPE.SHORT]
-    },
-    [IFD.EXIF]: {
-        [EXIF_TAG.ExposureTime]: [IFD_TYPE.RATIONAL],
-        [EXIF_TAG.FNumber]: [IFD_TYPE.RATIONAL],
-        [EXIF_TAG.ExposureProgram]: [IFD_TYPE.SHORT],
-        [EXIF_TAG.PhotographicSensitivity]: [IFD_TYPE.SHORT], // PhotographicSensitivity。規格では複数値も許容するが、移設は単一値に限定する。
-        [EXIF_TAG.ISOSpeed]: [IFD_TYPE.LONG],
-        [EXIF_TAG.ShutterSpeedValue]: [IFD_TYPE.SRATIONAL],
-        [EXIF_TAG.ApertureValue]: [IFD_TYPE.RATIONAL],
-        [EXIF_TAG.ExposureBiasValue]: [IFD_TYPE.SRATIONAL],
-        [EXIF_TAG.MeteringMode]: [IFD_TYPE.SHORT],
-        [EXIF_TAG.Flash]: [IFD_TYPE.SHORT],
-        [EXIF_TAG.FocalLength]: [IFD_TYPE.RATIONAL],
-        [EXIF_TAG.ColorSpace]: [IFD_TYPE.SHORT],
-        [EXIF_TAG.PixelXDimension]: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
-        [EXIF_TAG.PixelYDimension]: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
-        [EXIF_TAG.FocalLengthIn35mmFilm]: [IFD_TYPE.SHORT],
-    }
-};
 
 /**
  * @typedef {object} ExifEntry
@@ -132,96 +43,6 @@ const SCALAR_TYPES = {
  */
 
 /**
- * Exif APP1ごとの読み取り結果。失敗時は元のセグメントとエラー文を保持する。
- *
- * @typedef {(
- *   {segment: import('./jpeg-parser.js').JpegSegment, exif: ExifData, error?: undefined}
- *   | {segment: import('./jpeg-parser.js').JpegSegment, exif?: undefined, error: string}
- *   )} ExifInspection
- */
-
-/**
- * GPS削除時に、このタグの値を再構築先へ移せるか判定する。
- * ASCIIタグと4バイトのバージョンタグのほか、許可リストにある単一値を対象とする。
- *
- * @param {string} directory - IFD名。
- * @param {Pick<ExifEntry, 'tag' | 'type' | 'count'>} entry - タグID、型、要素数。
- * @returns {boolean} タグID・型・要素数が移設条件を満たす場合は `true`。実際の値の検証は再構築側で行う。
- */
-export function isRelocatableTag(directory, { tag, type, count }){
-    if(ASCII_TAGS[directory]?.has(tag)){
-        return (type === IFD_TYPE.ASCII);
-    }
-
-    if(directory === IFD.EXIF && (tag === EXIF_TAG.ExifVersion || tag === EXIF_TAG.FlashpixVersion)){
-        return (type === IFD_TYPE.UNDEFINED && count === 4);
-    }
-
-    return (count === 1 && Boolean(SCALAR_TYPES[directory]?.[tag]?.includes(type)));
-}
-
-/**
- * タグの値を表示用の文字列に変換する。
- *
- * @param {ExifEntry} entry - 解析済みタグ。
- * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
- * @returns {string} ASCIIは先頭512バイト、数値は先頭12要素までの表示文字列。
- */
-function decode(entry, little){
-    const { data, type, count } = entry;
-
-    if(type === IFD_TYPE.ASCII){
-        return new TextDecoder().decode(data.subarray(0, 512)).replace(/\0+$/, '').replaceAll('\0', ' / ')
-            + ((count > 512) ? '…' : '');
-    }
-
-    const view   = new DataView(data.buffer, data.byteOffset, data.byteLength);
-    const values = [];
-
-    for(let i = 0; i < Math.min(count, 12); i++){
-        const offset = i * TYPE_BYTES[type];
-
-        switch(type){
-            case IFD_TYPE.BYTE:
-                values.push(view.getUint8(offset));
-                break;
-            case IFD_TYPE.SHORT:
-                values.push(view.getUint16(offset, little));
-                break;
-            case IFD_TYPE.LONG:
-                values.push(view.getUint32(offset, little));
-                break;
-            case IFD_TYPE.RATIONAL:
-                values.push(`${view.getUint32(offset, little)}/${view.getUint32(offset + 4, little)}`);
-                break;
-            case IFD_TYPE.SBYTE:
-                values.push(view.getInt8(offset));
-                break;
-            case IFD_TYPE.SSHORT:
-                values.push(view.getInt16(offset, little));
-                break;
-            case IFD_TYPE.SLONG:
-                values.push(view.getInt32(offset, little));
-                break;
-            case IFD_TYPE.SRATIONAL:
-                values.push(`${view.getInt32(offset, little)}/${view.getInt32(offset + 4, little)}`);
-                break;
-            case IFD_TYPE.FLOAT:
-                values.push(view.getFloat32(offset, little));
-                break;
-            case IFD_TYPE.DOUBLE:
-                values.push(view.getFloat64(offset, little));
-                break;
-
-            default:
-                return `Unsupported value type ${type} (${count} elements)`;
-        }
-    }
-
-    return values.join(', ') + ((count > 12) ? ', …' : '');
-}
-
-/**
  * 詳細一覧向けに型名と値のプレビューを生成する。
  *
  * @param {ExifEntry} entry - 解析済みタグ。
@@ -239,7 +60,7 @@ export function previewExifEntry(entry, little, source){
     }
 
     if(TYPE_NAMES.has(type) && type !== IFD_TYPE.UNDEFINED){
-        return { typeName, value: decode(entry, little) };
+        return { typeName, value: exifDecode(entry, little) };
     }
 
     const prefix = data.subarray(0, BINARY_PREVIEW_BYTES);
@@ -248,202 +69,6 @@ export function previewExifEntry(entry, little, source){
     const ascii  = Array.from(prefix, (byte) => (byte >= 0x20 && byte <= 0x7e) ? String.fromCharCode(byte) : '.').join('');
 
     return { typeName, value: `${hex} │ ${ascii}${suffix}` };
-}
-
-/**
- * 日時まわりのフォーマット (UTC)
- *
- * @type {Intl.DateTimeFormat}
- */
-const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium', timeStyle: 'medium', timeZone: 'UTC'
-});
-
-/**
- * 焦点距離まわりのフォーマット
- *
- * @type {Intl.NumberFormat}
- */
-const focalLengthFormat = new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 3
-});
-
-/**
- * 露出補正のフォーマット
- *
- * @type {Intl.NumberFormat}
- */
-const exposureCompensationFormat = new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 2,
-    signDisplay: 'exceptZero'
-});
-
-/**
- * Exifの記録時刻を維持し、ブラウザーのロケールで表示する。
- *
- * @param {string} value - 終端NULを除いたExif日時。
- * @returns {string} 表示用の日時。空欄や不正な日時は元の値を返す。
- */
-function formatDateTime(value){
-    const parts = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(value);
-    if(!parts){
-        return value;
-    }
-
-    const [year, month, day, hour, minute, second] = parts.slice(1).map(Number);
-    const date = new Date(0);
-    // Exifの時刻を維持し、端末のタイムゾーンや夏時間の影響を避ける。
-    date.setUTCFullYear(year, month - 1, day);
-    date.setUTCHours(hour, minute, second);
-
-    if(
-        !year || date.getUTCFullYear() !== year
-        || date.getUTCMonth() !== month - 1
-        || date.getUTCDate() !== day
-        || hour > 23 || minute > 59 || second > 59
-    ){
-        return value;
-    }
-
-    return dateTimeFormat.format(date);
-}
-
-/**
- * Flashのビットフィールドを撮影時の状態に展開する。
- *
- * @param {number} value - FlashタグのSHORT値。
- * @returns {string | undefined} 予約ビットを含む場合は undefined。
- */
-function formatFlash(value){
-    const returned = (value >> FLASH_BITS.RETURN_SHIFT) & FLASH_BITS.FIELD_MASK;
-
-    if((value & FLASH_BITS.RESERVED_MASK) || returned === FLASH_BITS.RESERVED_RETURN){
-        return undefined;
-    }
-
-    const mode  = (value >> FLASH_BITS.MODE_SHIFT) & FLASH_BITS.FIELD_MASK;
-    const fired = (value & FLASH_BITS.FIRED) ? 'Fired' : 'Did not fire';
-
-    return [
-        (value & FLASH_BITS.NO_FUNCTION) ? 'No flash function' : fired,
-        FLASH_MODES[mode],
-        FLASH_RETURN[returned],
-        (value & FLASH_BITS.RED_EYE) && 'Red-eye reduction'
-    ].filter(Boolean).join(' · ');
-}
-
-/**
- * 焦点距離と、その両端での開放F値を表示する。
- *
- * @param {Uint8Array} data - 4要素のRATIONAL値。
- * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
- * @returns {string | undefined} 未知の開放F値（0/0）は省略し、不正な値は undefined を返す。
- */
-function formatLensSpecification(data, little){
-    const view   = new DataView(data.buffer, data.byteOffset, data.byteLength);
-    const values = [];
-
-    for(let index = 0; index < 4; index++){
-        const offset      = index * TYPE_BYTES[IFD_TYPE.RATIONAL];
-        const numerator   = view.getUint32(offset, little);
-        const denominator = view.getUint32(offset + 4, little);
-
-        if(numerator && denominator){
-            values.push(numerator / denominator);
-        } else if(index >= 2 && numerator === 0 && denominator === 0){
-            values.push(null);
-        } else{
-            return undefined;
-        }
-    }
-
-    const [min, max, wide, tele] = values;
-
-    if(min > max){
-        return undefined;
-    }
-
-    const focalLength = (min === max) ?
-        focalLengthFormat.format(min) :
-        `${focalLengthFormat.format(min)}–${focalLengthFormat.format(max)}`;
-
-    if(wide === null && tele === null){
-        return `${focalLength} mm`;
-    }
-
-    const aperture = ((wide === tele) ? [wide] : [wide, tele])
-        .map((value) => (value === null) ? '?' : `f/${focalLengthFormat.format(value)}`)
-        .join('–');
-
-    return `${focalLength} mm, ${aperture}`;
-}
-
-/**
- * Exifフィールドの出力フォーマット。
- *
- * @param {string | undefined} source - エントリを取得したIFD名。
- * @param {ExifEntry} entry - 解析済みタグ。
- * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
- * @returns {string | undefined} 規格に沿った表示値。変換できない場合は undefined。
- */
-function formatStandardValue(source, entry, little){
-    const { tag, type, count, data } = entry;
-
-    const isExif     = (source === IFD.EXIF);
-    const isDateTime = (
-        // Exif IFD0 DateTime
-        (source === IFD.PRIMARY && tag === TIFF_TAG.DateTime)
-        // Exif SubIFD DateTimeOriginal/DateTimeDigitized
-        || (isExif && (tag === EXIF_TAG.DateTimeOriginal || tag === EXIF_TAG.DateTimeDigitized))
-    );
-
-    if(isDateTime && type === IFD_TYPE.ASCII && count === 20 && data[19] === 0){
-        return formatDateTime(decode(entry, little));
-    }
-
-    if(type === IFD_TYPE.SHORT && count === 1){
-        const values = SHORT_VALUES[source]?.[tag];
-
-        if(values || (isExif && tag === EXIF_TAG.Flash)){
-            const value = new DataView(data.buffer, data.byteOffset, data.byteLength).getUint16(0, little);
-
-            return (values) ? values[value] : formatFlash(value);
-        }
-    }
-
-    if(isExif && tag === EXIF_TAG.LensSpecification && type === IFD_TYPE.RATIONAL && count === 4){
-        return formatLensSpecification(data, little);
-    }
-
-    if(isExif && count === 1){
-        if(tag === EXIF_TAG.ExposureBiasValue && type === IFD_TYPE.SRATIONAL){
-            const view        = new DataView(data.buffer, data.byteOffset, data.byteLength);
-            const denominator = view.getInt32(4, little);
-
-            if(denominator){
-                return `${exposureCompensationFormat.format(view.getInt32(0, little) / denominator)} EV`;
-            }
-        }
-
-        // Focal length
-        if(tag === EXIF_TAG.FocalLength && type === IFD_TYPE.RATIONAL){
-            const view        = new DataView(data.buffer, data.byteOffset, data.byteLength);
-            const denominator = view.getUint32(4, little);
-
-            if(denominator){
-                return `${focalLengthFormat.format(view.getUint32(0, little) / denominator)} mm`;
-            }
-        }
-        // 35 mm equivalent focal length
-        if(tag === EXIF_TAG.FocalLengthIn35mmFilm && type === IFD_TYPE.SHORT){
-            const view        = new DataView(data.buffer, data.byteOffset, data.byteLength);
-            const focalLength = view.getUint16(0, little);
-
-            return (focalLength) ? `${focalLengthFormat.format(focalLength)} mm` : 'Unknown';
-        }
-    }
-
-    return undefined;
 }
 
 /**
@@ -663,7 +288,7 @@ export function readExif(tiff){
                 fields.push({
                     source,
                     label,
-                    value: formatStandardValue(source, entry, little) ?? decode(entry, little)
+                    value: formatStandardValue(source, entry, little) ?? exifDecode(entry, little)
                 });
             } else{
                 otherTags.push({source, tag: entry.tag});
@@ -676,31 +301,4 @@ export function readExif(tiff){
         issues: [...issues],
         thumbnail: thumbnailJpeg
     };
-}
-
-/**
- * JPEG内の 'Exif APP1' をファイル順に解析し、個別の失敗を結果に記録する。
- *
- * @param {Uint8Array} bytes - JPEGの元バイト列。
- * @param {import('./jpeg-parser.js').JpegInspection} jpeg - 同じバイト列を解析した結果。
- * @returns {ExifInspection[]} Exif APP1 ごとの結果。Exifセグメントがなければ空配列。
- */
-export function inspectJpeg(bytes, jpeg){
-    return jpeg.segments.filter(({ kind }) => kind === 'Exif').map((segment) => {
-        try{
-            return { segment, exif: readExif(bytes.subarray(segment.payload + 6, segment.end)) };
-        } catch(error){
-            return { segment, error: error.message };
-        }
-    });
-}
-
-/**
- * 解析済みのExif APP1から最初の埋め込みJPEG候補を取得する。
- *
- * @param {ExifInspection[]} inspections - ファイル順のExif解析結果。
- * @returns {Uint8Array | null} サムネイルのビュー。候補がなければ null。
- */
-export function getExifThumbnail(inspections){
-    return inspections.find(({ exif }) => exif?.thumbnail)?.exif.thumbnail ?? null;
 }

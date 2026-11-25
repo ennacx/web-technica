@@ -1,8 +1,9 @@
 ﻿import { getById } from '#utils/dom.js';
 import { downloadBlob } from '#utils/download.js';
 import { IFD, TIFF_TAG, EXIF_TAG, TAG_NAMES } from './exif-constants.js';
-import {MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg} from './jpeg-parser.js';
-import { getExifThumbnail, inspectJpeg, previewExifEntry } from './exif-reader.js';
+import { MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg } from './jpeg-parser.js';
+import { previewExifEntry } from './exif-reader.js';
+import { inspectJpeg, getExifThumbnail } from './exif-inspector.js';
 import { cleanedFilename, cleanJpeg, orientationWarning } from './jpeg-cleaner.js';
 
 // 表示上限数

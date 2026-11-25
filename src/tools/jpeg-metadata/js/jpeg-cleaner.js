@@ -4,7 +4,7 @@
 
 import { IFD } from './exif-constants.js';
 import { parseJpeg } from './jpeg-parser.js';
-import { inspectJpeg } from './exif-reader.js';
+import { inspectJpeg } from './exif-inspector.js';
 import { rebuildWithoutGps } from './gps-cleaner.js';
 
 /**
