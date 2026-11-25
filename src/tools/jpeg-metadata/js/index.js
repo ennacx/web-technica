@@ -4,6 +4,9 @@ import {MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg} from './jpeg-parser.js';
 import { inspectJpeg } from './exif-reader.js';
 import { cleanedFilename, cleanJpeg, orientationWarning } from './jpeg-cleaner.js';
 
+// 表示上限数
+const LIST_VIEW_LIMIT = 100;
+
 const get = (id) => getById(`jpeg-${id}`, document);
 
 const fileInput = get('file');
@@ -131,13 +134,13 @@ function renderInspection(jpeg, inspections){
         for(const { source, label, value } of exif.fields){
             const target = (source === 'GPS IFD') ? coordinates : fields;
 
-            if(target.length < 100){
+            if(target.length < LIST_VIEW_LIMIT){
                 target.push([`${label} · ${source} @ ${segment.offset}`, value]);
             }
         }
 
         for(const { source, tag } of exif.otherTags){
-            if(rawTags.length >= 100){
+            if(rawTags.length >= LIST_VIEW_LIMIT){
                 break;
             }
 
@@ -147,8 +150,8 @@ function renderInspection(jpeg, inspections){
 
     const summary = [
         (inspections.length) ? `${inspections.length} Exif segment(s).` : 'No Exif segments.',
-        (gpsCount) ? `GPS directory found in ${gpsCount} segment(s).` : incomplete ? 'GPS presence could not be determined.' : 'No Exif GPS directory detected.',
-        ([fields, coordinates, rawTags].some((list) => list.length === 100)) ? 'Tag display is limited to 100 entries per list.' : '',
+        (gpsCount) ? `GPS directory found in ${gpsCount} segment(s).` : ((incomplete) ? 'GPS presence could not be determined.' : 'No Exif GPS directory detected.'),
+        ([fields, coordinates, rawTags].some((list) => (list.length >= LIST_VIEW_LIMIT))) ? `Tag display is limited to ${LIST_VIEW_LIMIT} entries per list.` : '',
         (opaque.size) ? `Detected without decoding: ${[...opaque].join(', ')}.` : '',
         ...notes
     ];

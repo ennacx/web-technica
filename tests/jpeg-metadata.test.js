@@ -23,8 +23,8 @@ function jpeg(segments = [], progressive = false){
         ...(progressive ? [scan] : []), Buffer.from([255, 217])]);
 }
 
-function exifFixture(little, { gps = true, extraTag = 0, orientation = 6 } = {}){
-    const tiff = Buffer.alloc(200);
+function exifFixture(little, { gps = true, extraTag = 0, orientation = 6, displayValues } = {}){
+    const tiff = Buffer.alloc(displayValues ? 280 : 200);
     const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.length);
     const u16 = (i, n) => view.setUint16(i, n, little);
     const u32 = (i, n) => view.setUint32(i, n, little);
@@ -56,12 +56,49 @@ function exifFixture(little, { gps = true, extraTag = 0, orientation = 6 } = {})
         entry(110, 2, 5, 3, 168);
         [37, 1, 14, 1, 72345, 1000].forEach((value, i) => u32(168 + i * 4, value));
     }
+    if(displayValues){
+        const { date, denominator = 10, equivalent = 50 } = displayValues;
+        entry(34, 0x8769, 4, 1, 200);
+        tiff.fill(0, 64, 96);
+        u16(200, 4);
+        entry(202, 0x829a, 5, 1, 156);
+        entry(214, 0x9003, 2, 20, 254);
+        entry(226, 0x920a, 5, 1, 192);
+        entry(238, 0xa405, 3, 1, equivalent);
+        tiff.write(date, 254);
+        u32(192, 350);
+        u32(196, denominator);
+    }
     return tiff;
 }
 
 const app1 = (tiff) => marker(0xe1, Buffer.concat([ascii('Exif\0\0'), tiff]));
 const inspect = (bytes) => inspectJpeg(bytes, parseJpeg(bytes));
 const scanBytes = (bytes) => parseJpeg(bytes).scans.map(({ offset, end }) => Buffer.from(bytes.subarray(offset, end)));
+
+test('formats Exif date and focal lengths and preserves the equivalent focal length during GPS cleanup', () => {
+    const date = '2025:03:09 02:30:06';
+    const expectedDate = new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium', timeStyle: 'medium', timeZone: 'UTC'
+    }).format(new Date('2025-03-09T02:30:06Z'));
+    const fields = ({ fields }) => Object.fromEntries(fields.map(({ label, value }) => [label, value]));
+    for(const little of [true, false]){
+        const tiff = exifFixture(little, { displayValues: { date } });
+        const values = fields(readExif(tiff));
+        assert.equal(values.DateTimeOriginal, expectedDate);
+        assert.equal(values['Focal length'], `${new Intl.NumberFormat().format(35)} mm`);
+        assert.equal(values['35 mm equivalent focal length'], `${new Intl.NumberFormat().format(50)} mm`);
+
+        const { bytes } = cleanJpeg(jpeg([app1(tiff)]), 'location');
+        assert.equal(fields(inspect(bytes)[0].exif)['35 mm equivalent focal length'], values['35 mm equivalent focal length']);
+    }
+
+    const invalid = '2025:02:30 14:05:06';
+    const values = fields(readExif(exifFixture(true, { displayValues: { date: invalid, denominator: 0, equivalent: 0 } })));
+    assert.equal(values.DateTimeOriginal, invalid);
+    assert.equal(values['Focal length'], '350/0');
+    assert.equal(values['35 mm equivalent focal length'], 'Unknown');
+});
 
 for(const little of [true, false]){
     test(`reads and physically removes GPS bytes in ${little ? 'II' : 'MM'} Exif`, () => {

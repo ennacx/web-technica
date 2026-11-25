@@ -22,17 +22,9 @@ export const IFD_TYPE = {
     DOUBLE:    12,
 };
 
-/**
- * リトルエンディアンのバイトオーダー
- *
- * @type {number}
- */
+/** リトルエンディアンのバイトオーダー */
 export const LITTLE_ENDIAN_BYTE_ORDER = 0x4949;
-/**
- * ビッグエンディアンのバイトオーダー
- *
- * @type {number}
- */
+/** ビッグエンディアンのバイトオーダー */
 export const BIG_ENDIAN_BYTE_ORDER    = 0x4d4d;
 
 /**
@@ -68,6 +60,7 @@ const DISPLAY_TAGS = {
         0x9003: 'DateTimeOriginal',
         0x9004: 'DateTimeDigitized',
         0x920a: 'Focal length',
+        0xa405: '35 mm equivalent focal length',
         0xa434: 'Lens model',
     },
     'GPS IFD': {
@@ -89,6 +82,7 @@ const ASCII_TAGS = {
     IFD0: new Set([0x010e, 0x010f, 0x0110, 0x0131, 0x0132, 0x013b, 0x8298]),
     'Exif SubIFD': new Set([0x9003, 0x9004, 0x9010, 0x9011, 0x9012, 0x9290, 0x9291, 0x9292, 0xa433, 0xa434])
 };
+
 /**
  * GPS削除時に単一値として移設できる型番号。外側のキーはIFD名、内側のキーはタグID。
  *
@@ -115,9 +109,15 @@ const SCALAR_TYPES = {
         0x920a: [IFD_TYPE.RATIONAL],
         0xa001: [IFD_TYPE.SHORT],
         0xa002: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
-        0xa003: [IFD_TYPE.SHORT, IFD_TYPE.LONG]
+        0xa003: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
+        0xa405: [IFD_TYPE.SHORT],
     }
 };
+
+/** Exif IFD Pointer */
+export const EXIF_POINTER = 0x8769;
+/** GPS Info IFD Pointer */
+export const GPS_POINTER  = 0x8825;
 
 /**
  * @typedef {object} ExifEntry
@@ -234,6 +234,99 @@ function decode(entry, little){
 }
 
 /**
+ * 日時まわりのフォーマット (UTC)
+ *
+ * @type {Intl.DateTimeFormat}
+ */
+const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium', timeStyle: 'medium', timeZone: 'UTC'
+});
+
+/**
+ * 焦点距離まわりのフォーマット
+ *
+ * @type {Intl.NumberFormat}
+ */
+const focalLengthFormat = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 3
+});
+
+/**
+ * Exifの記録時刻を維持し、ブラウザーのロケールで表示する。
+ *
+ * @param {string} value - 終端NULを除いたExif日時。
+ * @returns {string} 表示用の日時。空欄や不正な日時は元の値を返す。
+ */
+function formatDateTime(value){
+    const parts = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(value);
+    if(!parts){
+        return value;
+    }
+
+    const [year, month, day, hour, minute, second] = parts.slice(1).map(Number);
+    const date = new Date(0);
+    // Exifの時刻を維持し、端末のタイムゾーンや夏時間の影響を避ける。
+    date.setUTCFullYear(year, month - 1, day);
+    date.setUTCHours(hour, minute, second);
+
+    if(
+        !year || date.getUTCFullYear() !== year
+        || date.getUTCMonth() !== month - 1
+        || date.getUTCDate() !== day
+        || hour > 23 || minute > 59 || second > 59
+    ){
+        return value;
+    }
+
+    return dateTimeFormat.format(date);
+}
+
+/**
+ * Exifフィールドの出力フォーマット
+ *
+ * @param {string} source - エントリを取得したIFD名。
+ * @param {ExifEntry} entry - 解析済みタグ。
+ * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
+ * @returns {string} タグ固有の表示値、または汎用デコードの結果。
+ */
+function formatField(source, entry, little){
+    const { tag, type, count, data } = entry;
+
+    const isExif     = (source === 'Exif SubIFD');
+    const isDateTime = (
+        // Exif IFD0 DateTime
+        (source === 'IFD0' && tag === 0x0132)
+        // Exif SubIFD DateTimeOriginal/DateTimeDigitized
+        || (isExif && (tag === 0x9003 || tag === 0x9004))
+    );
+
+    if(isDateTime && type === IFD_TYPE.ASCII && count === 20 && data[19] === 0){
+        return formatDateTime(decode(entry, little));
+    }
+
+    if(isExif && count === 1){
+        // Focal length
+        if(tag === 0x920a && type === IFD_TYPE.RATIONAL){
+            const view        = new DataView(data.buffer, data.byteOffset, data.byteLength);
+            const denominator = view.getUint32(4, little);
+
+            if(denominator){
+                return `${focalLengthFormat.format(view.getUint32(0, little) / denominator)} mm`;
+            }
+        }
+        // 35 mm equivalent focal length
+        if(tag === 0xa405 && type === IFD_TYPE.SHORT){
+            const view        = new DataView(data.buffer, data.byteOffset, data.byteLength);
+            const focalLength = view.getUint16(0, little);
+
+            return (focalLength) ? `${focalLengthFormat.format(focalLength)} mm` : 'Unknown';
+        }
+    }
+
+    return decode(entry, little);
+}
+
+/**
  * TIFFヘッダと、参照されているIFD0・Exif IFD・GPS IFD・IFD1を解析する。
  * 領域の重複、値のパディングや未参照領域にある非ゼロバイトは `issues` に記録する。
  *
@@ -243,7 +336,7 @@ function decode(entry, little){
  */
 export function readExif(tiff){
     const view        = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
-    const order       = tiff[0] * 256 + tiff[1];
+    const order       = tiff[0] << 8 | tiff[1];
     // TIFFの先頭2バイトで "II" (リトルエンディアン) "MM" (ビッグエンディアン) を判定
     const little      = (order === LITTLE_ENDIAN_BYTE_ORDER);
     const ranges      = [{ start: 0, end: 8 }];
@@ -373,9 +466,9 @@ export function readExif(tiff){
         return new DataView(entry.data.buffer, entry.data.byteOffset, 4).getUint32(0, little);
     }
 
-    // 8バイトのTIFFヘッダ。位置2に固定値42（0x002a）、位置4に最初のIFDへのオフセット。
+    // 8バイトのTIFFヘッダ。位置2に固定値42(0x002a)、位置4に最初のIFDへのオフセット。
     // IFDや外部値へのオフセットはTIFFヘッダ先頭からの相対バイト位置。
-    if(tiff.length < 8 || (!little && order !== 0x4d4d) || view.getUint16(2, little) !== 42){
+    if(tiff.length < 8 || (!little && order !== BIG_ENDIAN_BYTE_ORDER) || view.getUint16(2, little) !== 0x002a){
         throw new Error('Invalid Exif TIFF header.');
     }
 
@@ -429,7 +522,7 @@ export function readExif(tiff){
             const label = DISPLAY_TAGS[source]?.[entry.tag];
 
             if(label){
-                fields.push({source, label, value: decode(entry, little)});
+                fields.push({source, label, value: formatField(source, entry, little)});
             } else{
                 otherTags.push({source, tag: entry.tag});
             }

@@ -2,7 +2,10 @@
  * GPSを除いたEXIF再構築を担当するライブラリ
  */
 
-import {IFD_TYPE, LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER, isRelocatableTag, readExif} from './exif-reader.js';
+import {
+    IFD_TYPE, LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER, EXIF_POINTER, GPS_POINTER,
+    isRelocatableTag, readExif
+} from './exif-reader.js';
 
 const PRIMARY = 'IFD0';
 const SUB_IFD = 'Exif SubIFD';
@@ -13,10 +16,6 @@ const GPS     = 'GPS IFD';
  * CIPA DC-X008-2019 日本語版 §4.6.3 (Exif固有のIFD)、§4.6.6 表15 (GPSタグ)、§4.7.2 (APP1)
  * @see https://www.cipa.jp/std/documents/j/DC-X008-2019-J.pdf
  */
-
-// 下記HEXはIFD0のタグID。各タグの値がTIFF先頭からの相対位置を指す。
-const EXIF_POINTER = 0x8769; // ExifIFDPointer
-const GPS_POINTER  = 0x8825; // GPSInfoIFDPointer
 
 // インデックスはGPS IFDのタグID (0x0000〜0x001F)、配列の値は許容するTIFF型番号。
 const GPS_TYPES = [
