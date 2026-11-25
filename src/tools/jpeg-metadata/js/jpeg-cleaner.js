@@ -1,13 +1,39 @@
 ﻿/**
- * EXIF削除・出力検証を担当するライブラリ
+ * JPEGのメタデータ削除、Exif GPS削除、出力検証を担当するライブラリ。
  */
 
 import { parseJpeg } from './jpeg-parser.js';
 import { inspectJpeg } from './exif-reader.js';
 import { rebuildWithoutGps } from './gps-cleaner.js';
 
+/**
+ * `metadata` モードでセグメントごと削除するペイロードの分類名。
+ *
+ * @type {Set<string>}
+ */
 const REMOVE_KINDS = new Set(['Exif', 'XMP', 'Extended XMP', 'Photoshop / IPTC', 'Comment']);
 
+/**
+ * `metadata` は対象メタデータのセグメントを削除する。
+ * `location` は対応するExifをGPS IFDとその値を除いて再構築する。
+ *
+ * @typedef {'metadata' | 'location'} JpegCleanupMode
+ */
+
+/**
+ * @typedef {object} CleanedJpeg
+ * @property {Uint8Array} bytes - 検証済みの出力JPEG全体。
+ * @property {Map<string, number>} removed - 削除した分類ごとのセグメント数。GPS削除時は `Exif GPS IFD` を1件として記録する。
+ * @property {string[]} retained - 出力に残ったメタデータの分類名と、検出したサムネイルの情報。
+ * @property {string} warning - `metadata` モードでの表示の向きに関する注意文。注意がなければ空文字列。
+ */
+
+/**
+ * Exif削除に伴う表示の向きへの影響を案内する。
+ *
+ * @param {import('./exif-reader.js').ExifInspection[]} inspections - JPEG内のExif APP1ごとの読み取り結果。
+ * @returns {string} Orientationの削除やExifの解析結果に基づく注意文。注意がなければ空文字列。
+ */
 export function orientationWarning(inspections){
     if(inspections.some(({ exif }) => exif?.fields.some(({ label, value }) => (label === 'Orientation' && value !== '1')))){
         return 'Removing Exif Orientation may rotate or mirror the displayed image.';
@@ -19,6 +45,14 @@ export function orientationWarning(inspections){
     return '';
 }
 
+/**
+ * GPS削除の対象JPEGで扱えるセグメントか判定する。
+ * 分類のない構造マーカーと後段で検証するExifを許可し、JFIFはサムネイルなしの固定長、Adobeは固定長に限る。
+ *
+ * @param {Uint8Array} bytes - セグメントのオフセットに対応する元JPEG全体。
+ * @param {import('./jpeg-parser.js').JpegSegment} segment - 判定する解析済みセグメント。
+ * @returns {boolean} セグメントの分類とペイロードがGPS削除モードの条件を満たす場合は `true`。
+ */
 function safeLocationContainer(bytes, segment){
     const { kind, payload, end } = segment;
 
@@ -26,19 +60,37 @@ function safeLocationContainer(bytes, segment){
         return true;
     } else if(kind === 'JFIF'){
         return (
-            end - payload === 14
+            (end - payload) === 14
             && bytes[payload + 12] === 0
             && bytes[payload + 13] === 0
         );
     } else if(kind === 'Adobe'){
-        return (end - payload === 12);
+        return ((end - payload) === 12);
     }
 
     return false;
 }
 
+/**
+ * 2つのバイト列を長さと各位置の値で比較する。
+ *
+ * @param {Uint8Array} left - 比較する一方のバイト列。
+ * @param {Uint8Array} right - 比較するもう一方のバイト列。
+ * @returns {boolean} 長さと全バイトが一致する場合は `true`。
+ */
 const equalBytes = (left, right) => (left.length === right.length && left.every((byte, index) => (byte === right[index])));
 
+/**
+ * 元のバイト列を変更せず、指定モードで対象範囲を削除・置換して新しいJPEGを作る。
+ * GPS削除では、位置情報や埋め込み画像を評価できないセグメント、複数のExif、無効なExifがあれば処理を中止する。
+ * 出力を再解析し、保持対象のセグメントと圧縮スキャンが元のバイト列と一致することを確認する。
+ * `metadata` では削除対象のセグメントの不在、`location` ではExifが1つ残り、GPS IFDがないことも確認する。
+ *
+ * @param {Uint8Array} bytes - JPEGの元バイト列。
+ * @param {JpegCleanupMode} mode - 適用する削除モード。
+ * @returns {CleanedJpeg | {bytes: null}} 検証済みの出力と削除結果。変更対象がなければ `{bytes: null}`。
+ * @throws {Error} モードや入力が不正、入力構造が処理対象外、または出力の検証に失敗した場合。
+ */
 export function cleanJpeg(bytes, mode){
     if(mode !== 'metadata' && mode !== 'location'){
         throw new Error('Choose a cleanup mode.');
@@ -94,7 +146,8 @@ export function cleanJpeg(bytes, mode){
     }
 
     const size = bytes.length + changes.reduce((delta, { segment, replacement }) =>
-        delta + replacement.length - (segment.end - segment.offset), 0);
+        delta + replacement.length - (segment.end - segment.offset), 0
+    );
 
     if(!changes.length){
         return {bytes: null};
@@ -119,8 +172,8 @@ export function cleanJpeg(bytes, mode){
 
     const after  = parseJpeg(result);
     const edited = new Set(changes.map(({ segment }) => segment));
-    const originalSegments = before.segments.filter((segment) => !edited.has(segment));
-    const outputSegments   = after.segments.filter(({ kind }) => !REMOVE_KINDS.has(kind));
+    const originalSegments = before.segments.filter((segment) => (!edited.has(segment)));
+    const outputSegments   = after.segments.filter(({ kind }) => (!REMOVE_KINDS.has(kind)));
 
     if(
         after.restrictions.length
@@ -160,7 +213,7 @@ export function cleanJpeg(bytes, mode){
             || (
                 kind === 'JFIF'
                 && (
-                    end - payload !== 14
+                    (end - payload) !== 14
                     || result[payload + 12]
                     || result[payload + 13]
                 )
@@ -173,6 +226,12 @@ export function cleanJpeg(bytes, mode){
     return { bytes: result, removed, retained, warning };
 }
 
+/**
+ * クリーン後のファイル名を生成。
+ *
+ * @param {string} name - 入力ファイル名。
+ * @returns {string} 入力ファイル名から末尾の .jpg／.jpeg を除き、`-cleaned.jpg` を付けたファイル名。名前部分が空なら `image` を使う。
+ */
 export function cleanedFilename(name){
     return (name.replace(/\.jpe?g$/i, '') || 'image') + '-cleaned.jpg';
 }

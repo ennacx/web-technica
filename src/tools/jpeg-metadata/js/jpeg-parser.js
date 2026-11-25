@@ -2,35 +2,84 @@
  * JPEGセグメント解析を担当するライブラリ
  */
 
+/**
+ * 入力の先頭を0とする半開区間。
+ * 長さは `end - offset`。
+ *
+ * @typedef {object} JpegByteRange
+ * @property {number} offset - 範囲の開始位置（バイト）。
+ * @property {number} end - 範囲の直後の位置（バイト）。
+ */
+
+/**
+ * JPEGマーカーまたはEOI後の付加データの識別情報。
+ *
+ * @typedef {object} JpegSegmentInfo
+ * @property {string} name - マーカーの表示名。EOI後のデータは `Trailing bytes`。
+ * @property {number} [marker] - マーカーの第2バイト。SOIとEOI後のデータでは省略する。
+ * @property {number} [payload] - 長さフィールド直後の位置。長さ付きセグメントにだけ設定する。
+ * @property {string} kind - ペイロードの分類名。分類のないマーカーでは空文字列、EOI後のデータでは `Data after EOI`。
+ */
+
+/**
+ * JPEGマーカーの範囲、またはEOI後の付加データの範囲。
+ *
+ * @typedef {JpegByteRange & JpegSegmentInfo} JpegSegment
+ */
+
+/**
+ * JPEG解析結果
+ *
+ * @typedef {object} JpegInspection
+ * @property {JpegSegment[]} segments - ファイル順のマーカーと、存在する場合はEOI後の範囲。
+ * @property {JpegByteRange[]} scans - スキャン順の圧縮データ範囲。SOSヘッダを除き、バイトスタッフィングとリスタートマーカーを含む。
+ * @property {number} width - 最後に解析したフレームの幅（ピクセル）。
+ * @property {number} height - 最後に解析したフレームの高さ（ピクセル）。DNLを解析した場合はその値。
+ * @property {string[]} restrictions - 共通の削除処理を妨げる構造上の理由。削除モードごとの可否は後段で判定する。
+ */
+
+/** エラーメッセージなどに表示する入力サイズの上限（MiB）。 */
 export const MAX_FILE_MEGABYTE = 32;
+/** `parseJpeg()` が受け付ける入力サイズの上限（バイト）。 */
 export const MAX_FILE_BYTES = MAX_FILE_MEGABYTE * 1024 * 1024;
 
+/** SOIとEOIを含むマーカーの処理件数の上限。EOI後の付加データは件数に含めない。 */
 const MAX_SEGMENTS  = 2048;
 
 /**
- * JPEGマーカーは ITU-T T.81 Annex B.1.1 表 B.1 を参照。
- * @see https://www.itu.int/rec/T-REC-T.81/en
+ * フレーム開始（SOF）マーカーの第2バイト。`0xC0` はベースラインDCT、`0xC2` はプログレッシブDCT。
  *
- * コード内の値は先頭の 0xFF を除いた第2バイト。
- * 0xD8 = SOI（画像開始）
- * 0xD9 = EOI（画像終了）
- * 0xDA = SOS（スキャン開始）
- * 0xFE = COM（コメント）
- *
- * SOF はフレーム開始。
- * 0xC0 = ベースラインDCT
- * 0xC2 = プログレッシブDCT
+ * @type {Set<number>}
+ * @see https://www.itu.int/rec/T-REC-T.81/en ITU-T T.81 Annex B.1.1 表 B.1
  */
-
 const FRAME_MARKERS = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
+
+/**
+ * APP番号・SOF番号から名前を組み立てるもの以外の既知マーカー。キーはマーカーの第2バイト。
+ *
+ * @type {Map<number, string>}
+ * @see https://www.itu.int/rec/T-REC-T.81/en ITU-T T.81 Annex B.1.1 表 B.1
+ */
 const MARKERS       = new Map([
     [0xc4, 'DHT'], [0xcc, 'DAC'], [0xd8, 'SOI'], [0xd9, 'EOI'], [0xda, 'SOS'],
     [0xdb, 'DQT'], [0xdc, 'DNL'], [0xdd, 'DRI'], [0xde, 'DHP'], [0xdf, 'EXP'], [0xfe, 'COM']
 ]);
 
-// このツールが書き込み時に扱う非APPマーカーの許可リスト。
+/**
+ * `parseJpeg()` が書き込み制限の判定に使う非APPマーカーの許可リスト。
+ * SOIとスキャン内のリスタートマーカーは別の解析経路で扱う。
+ *
+ * @type {Set<number>}
+ */
 const WRITABLE_MARKERS = new Set([0xc0, 0xc2, 0xc4, 0xd9, 0xda, 0xdb, 0xdd, 0xfe]);
 
+/**
+ * バイト列の先頭をASCII識別子と照合する。
+ *
+ * @param {Uint8Array} data - 照合するバイト列。
+ * @param {string} prefix - NULを含められるASCII識別子。
+ * @returns {boolean} 先頭のバイト列が識別子と一致する場合は `true`。
+ */
 function startsWith(data, prefix){
     return [...prefix].every((char, index) => (data[index] === char.charCodeAt(0)));
 }
@@ -43,9 +92,9 @@ function startsWith(data, prefix){
  * @see JFIF / JFXX: https://www.itu.int/rec/T-REC-T.871/en
  * @see XMP / Extended XMP（Part 3）: https://developer.adobe.com/xmp/docs/xmp-specifications/
  *
- * @param marker
- * @param data
- * @return {string}
+ * @param {number} marker - マーカーの第2バイト。
+ * @param {Uint8Array} data - マーカーと長さフィールドを除いたペイロード。
+ * @returns {string} ペイロードの分類名。識別できないAPPは `Unknown APP payload`、分類対象外の非APPは空文字列。
  */
 function identify(marker, data){
     if(marker === 0xfe) {
@@ -91,6 +140,12 @@ function identify(marker, data){
     return '';
 }
 
+/**
+ * APPとSOFは番号付きの名前を組み立て、その他の既知マーカーは `MARKERS` から表示名を取得する。
+ *
+ * @param {number} marker - マーカーの第2バイト。
+ * @returns {string} 定義済みのマーカー名。未登録の場合は `FF` に続けて第2バイトを16進表記する。
+ */
 function markerName(marker){
     if(marker >= 0xe0 && marker <= 0xef){
         return `APP${marker - 0xe0}`;
@@ -102,7 +157,14 @@ function markerName(marker){
     return MARKERS.get(marker) ?? `FF${marker.toString(16).toUpperCase().padStart(2, '0')}`;
 }
 
-// Skip entropy bytes, stuffed FF bytes and in-scan restart markers.
+/**
+ * バイトスタッフィング (FF 00) と、リスタートマーカー (RST0〜7) を含む圧縮データを読み進める。
+ *
+ * @param {Uint8Array} bytes - JPEG全体のバイト列。
+ * @param {number} start - SOSヘッダ直後の位置。
+ * @returns {number} 次のマーカーに先行する最初のFFの位置。走査中にマーカー境界がなければ入力の長さ。
+ * @throws {Error} FFの連続に続けて00が現れた場合。
+ */
 function scanEnd(bytes, start){
     let position = start;
 
@@ -133,6 +195,15 @@ function scanEnd(bytes, start){
     return bytes.length;
 }
 
+/**
+ * 入力を変更せずにJPEGのマーカーと圧縮スキャンの境界を解析する。
+ * EOI後のデータや未対応のAPPペイロードなど、閲覧できても削除を制限する構造は `restrictions` に記録する。
+ * ここでは画素の復号や圧縮データの完全性検査は行わない。
+ *
+ * @param {Uint8Array} bytes - SOIから始まるJPEG。オフセットの基準はこのビューの先頭。
+ * @returns {JpegInspection} 解析結果と、メタデータ削除の判定に使う構造上の制限。
+ * @throws {Error} 入力サイズやマーカー数が上限を超えた場合、SOI・フレーム・スキャン・EOIなどの必須構造が欠けている場合、またはマーカーやスキャンの構造を解析できない場合。
+ */
 export function parseJpeg(bytes){
     if(bytes.length > MAX_FILE_BYTES){
         throw new Error(`Choose a JPEG of ${MAX_FILE_MEGABYTE} MiB or less.`);
@@ -147,6 +218,12 @@ export function parseJpeg(bytes){
     const scans        = [];
     const view         = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 
+    /**
+     * 直近のSOFから取得した幅・高さ（ピクセル）と、SOSの検証に使う成分ID。
+     * SOFで高さが0の場合はDNLから高さを補う。最初のSOFまでは `undefined`。
+     *
+     * @type {{ width: number, height: number, ids: Set<number> } | undefined}
+     */
     let frame;
     let position = 2;
 

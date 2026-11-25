@@ -31,6 +31,7 @@ let previewUrl;
 function clearPreview(){
     preview.hidden = true;
     preview.removeAttribute('src');
+
     if(previewUrl){
         document.defaultView.URL.revokeObjectURL(previewUrl);
         previewUrl = undefined;
@@ -40,9 +41,12 @@ function clearPreview(){
 async function showPreview(file, current){
     try{
         const jpeg = file.slice(0, file.size, 'image/jpeg');
+
         previewUrl = document.defaultView.URL.createObjectURL(jpeg);
         preview.src = previewUrl;
+
         await preview.decode();
+
         if(revision === current){
             preview.hidden = false;
         }
@@ -254,6 +258,7 @@ fileInput.addEventListener('change', async () => {
             'JPEG marker structure inspected.';
 
         options.disabled = cleanButton.disabled = Boolean(jpeg.restrictions.length);
+
         void showPreview(file, current);
     } catch(e){
         fileStatus.textContent = `JPEG inspection failed. ${e.message}`;
@@ -278,7 +283,7 @@ cleanButton.addEventListener('click', async () => {
     options.disabled = cleanButton.disabled = true;
     cleanStatus.textContent = 'Preparing and verifying JPEG…';
 
-    // Allow the processing state to paint before synchronous binary work.
+    // 同期的なバイナリ処理の前に処理状態の描画を許可
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     if(revision !== current){

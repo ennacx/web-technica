@@ -6,7 +6,7 @@
  * @see https://printtechnologies.org/standards/files/tiff-v6.pdf
  */
 
-// TIFF型番号一覧
+/** TIFFのIFDエントリで使う型名と型番号の対応。 */
 export const IFD_TYPE = {
     BYTE:       1,
     ASCII:      2,
@@ -22,7 +22,17 @@ export const IFD_TYPE = {
     DOUBLE:    12,
 };
 
+/**
+ * リトルエンディアンのバイトオーダー
+ *
+ * @type {number}
+ */
 export const LITTLE_ENDIAN_BYTE_ORDER = 0x4949;
+/**
+ * ビッグエンディアンのバイトオーダー
+ *
+ * @type {number}
+ */
 export const BIG_ENDIAN_BYTE_ORDER    = 0x4d4d;
 
 /**
@@ -70,11 +80,20 @@ const DISPLAY_TAGS = {
     }
 };
 
-// ASCII_TAGS と SCALAR_TYPES は、GPS削除の再構築で移設を許すタグと型の一覧
+/**
+ * GPS削除時にASCII型のまま移設できるタグID。外側のキーはIFD名。
+ *
+ * @type {Record<string, Set<number>>}
+ */
 const ASCII_TAGS = {
     IFD0: new Set([0x010e, 0x010f, 0x0110, 0x0131, 0x0132, 0x013b, 0x8298]),
     'Exif SubIFD': new Set([0x9003, 0x9004, 0x9010, 0x9011, 0x9012, 0x9290, 0x9291, 0x9292, 0xa433, 0xa434])
 };
+/**
+ * GPS削除時に単一値として移設できる型番号。外側のキーはIFD名、内側のキーはタグID。
+ *
+ * @type {Record<string, Record<number, number[]>>}
+ */
 const SCALAR_TYPES = {
     IFD0: {
         0x0112: [IFD_TYPE.SHORT],
@@ -100,6 +119,47 @@ const SCALAR_TYPES = {
     }
 };
 
+/**
+ * @typedef {object} ExifEntry
+ * @property {number} tag - IFD内のタグID。
+ * @property {number} type - TIFFの型番号。
+ * @property {number} count - 値の要素数。ASCIIでは終端NULを含む。
+ * @property {Uint8Array} data - パディングを除いた値のバイト列。入力TIFFとメモリを共有するビュー。
+ */
+
+/**
+ * @typedef {object} ExifField
+ * @property {string} source - 値を読み取ったIFD名。
+ * @property {string} label - 項目の表示名。
+ * @property {string} value - 表示用に変換した値。
+ */
+
+/**
+ * @typedef {object} ExifData
+ * @property {boolean} little - TIFFがリトルエンディアンなら `true`。
+ * @property {Map<string, Map<number, ExifEntry>>} directories - IFD名ごとのエントリ。内側のキーはタグID。
+ * @property {ExifField[]} fields - 表示名が定義されている項目。
+ * @property {{source: string, tag: number}[]} otherTags - 表示名が定義されていないタグのIFD名とID。
+ * @property {string[]} issues - 範囲の重複など、読み取れたがGPS削除時の再構築を妨げる問題。
+ */
+
+/**
+ * Exif APP1ごとの読み取り結果。失敗時は元のセグメントとエラー文を保持する。
+ *
+ * @typedef {(
+ *   {segment: import('./jpeg-parser.js').JpegSegment, exif: ExifData, error?: undefined}
+ *   | {segment: import('./jpeg-parser.js').JpegSegment, exif?: undefined, error: string}
+ *   )} ExifInspection
+ */
+
+/**
+ * GPS削除時に、このタグの値を再構築先へ移せるか判定する。
+ * ASCIIタグと4バイトのバージョンタグのほか、許可リストにある単一値を対象とする。
+ *
+ * @param {string} directory - IFD名。
+ * @param {Pick<ExifEntry, 'tag' | 'type' | 'count'>} entry - タグID、型、要素数。
+ * @returns {boolean} タグID・型・要素数が移設条件を満たす場合は `true`。実際の値の検証は再構築側で行う。
+ */
 export function isRelocatableTag(directory, { tag, type, count }){
     if(ASCII_TAGS[directory]?.has(tag)){
         return (type === IFD_TYPE.ASCII);
@@ -112,6 +172,13 @@ export function isRelocatableTag(directory, { tag, type, count }){
     return (count === 1 && Boolean(SCALAR_TYPES[directory]?.[tag]?.includes(type)));
 }
 
+/**
+ * タグの値を表示用の文字列に変換する。
+ *
+ * @param {ExifEntry} entry - 解析済みタグ。
+ * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
+ * @returns {string} ASCIIは先頭512バイト、数値は先頭12要素までの表示文字列。
+ */
 function decode(entry, little){
     const { data, type, count } = entry;
 
@@ -166,6 +233,14 @@ function decode(entry, little){
     return values.join(', ') + ((count > 12) ? ', …' : '');
 }
 
+/**
+ * TIFFヘッダと、参照されているIFD0・Exif IFD・GPS IFD・IFD1を解析する。
+ * 領域の重複、値のパディングや未参照領域にある非ゼロバイトは `issues` に記録する。
+ *
+ * @param {Uint8Array} tiff - Exif識別子の直後から始まるTIFFデータ。オフセットの基準はこのビューの先頭。
+ * @returns {ExifData} エントリ、表示用の値、再構築時に問題となる箇所。
+ * @throws {Error} ヘッダや参照範囲が不正、IFD参照が重複・循環、制限超過、または未対応の型や構造がある場合。
+ */
 export function readExif(tiff){
     const view        = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
     const order       = tiff[0] * 256 + tiff[1];
@@ -178,13 +253,28 @@ export function readExif(tiff){
 
     let tagCount = 0;
 
+    /**
+     * 指定範囲が8バイトのTIFFヘッダより後ろにあり、ペイロード内に収まることを確認する。
+     *
+     * @param {number} start - TIFF先頭からの開始位置（バイト）。
+     * @param {number} size - 範囲の長さ（バイト）。
+     * @throws {Error} 範囲がTIFFヘッダにかかるか、ペイロードの終端を超える場合。
+     */
     function check(start, size){
-        if(start < 8 || start + size > tiff.length){
+        if(start < 8 || (start + size) > tiff.length){
             throw new Error('Exif offset or value is outside the TIFF payload.');
         }
     }
 
+    /**
+     * IFD、外部値、サムネイルの参照範囲を登録する。既存の範囲と重なれば `issues` に記録する。
+     *
+     * @param {number} start - TIFF先頭からの開始位置（バイト）。
+     * @param {number} size - 範囲の長さ（バイト）。
+     * @throws {Error} 範囲がTIFFヘッダにかかるか、ペイロードの終端を超える場合。
+     */
     function claim(start, size){
+        // ペイロード範囲内か確認
         check(start, size);
 
         const end = start + size;
@@ -196,6 +286,15 @@ export function readExif(tiff){
         ranges.push({ start, end });
     }
 
+    /**
+     * 1つのIFDを読み取り、タグごとの値のビューを `directories` に登録する。
+     * 4バイト以下の値はエントリ内、それより長い値は記録されたオフセットから読む。
+     *
+     * @param {string} name - 登録先のIFD名。
+     * @param {number} offset - TIFF先頭からIFDのエントリ数フィールドまでの位置（バイト）。
+     * @returns {number} 次のIFDへのTIFF基準のオフセット。次のIFDがなければ `0`。
+     * @throws {Error} IFD参照が重複・循環している場合、解析全体で512タグを超える場合、または範囲やエントリが不正な場合。
+     */
     function readDirectory(name, offset){
         if(offsets.has(offset)){
             throw new Error('Repeated or circular Exif directory offset.');
@@ -253,6 +352,14 @@ export function readExif(tiff){
         return next;
     }
 
+    /**
+     * 参照先の位置やサムネイルの長さに使う単一の符号なしLONG値を読み取る。
+     *
+     * @param {Map<number, ExifEntry>} entries - タグIDをキーとする解析済みIFDエントリ。
+     * @param {number} tag - 読み取るタグID。
+     * @returns {number | null} タグに格納された値。タグがなければ `null`。
+     * @throws {Error} タグが存在し、型がLONG以外または要素数が1以外の場合。
+     */
     function pointer(entries, tag){
         const entry = entries.get(tag);
 
@@ -286,6 +393,7 @@ export function readExif(tiff){
     }
 
     const thumbnail = directories.get('IFD1');
+
     if(thumbnail){
         const start = pointer(thumbnail, 0x0201); // JPEGInterchangeFormat (TIFF先頭からの位置)
         const size  = pointer(thumbnail, 0x0202); // JPEGInterchangeFormatLength (バイト数)
@@ -331,6 +439,13 @@ export function readExif(tiff){
     return { little, directories, fields, otherTags, issues: [...issues] };
 }
 
+/**
+ * JPEG内の 'Exif APP1' をファイル順に解析し、個別の失敗を結果に記録する。
+ *
+ * @param {Uint8Array} bytes - JPEGの元バイト列。
+ * @param {import('./jpeg-parser.js').JpegInspection} jpeg - 同じバイト列を解析した結果。
+ * @returns {ExifInspection[]} Exif APP1 ごとの結果。Exifセグメントがなければ空配列。
+ */
 export function inspectJpeg(bytes, jpeg){
     return jpeg.segments.filter(({ kind }) => kind === 'Exif').map((segment) => {
         try{
