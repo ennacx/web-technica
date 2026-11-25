@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { MAX_FILE_BYTES, parseJpeg } from '../src/tools/jpeg-metadata/js/jpeg-parser.js';
 import { EXIF_TAG, IFD, IFD_TYPE } from '../src/tools/jpeg-metadata/js/exif-constants.js';
-import { inspectJpeg, previewExifEntry, readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
+import { getExifThumbnail, inspectJpeg, previewExifEntry, readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
 import { cleanedFilename, cleanJpeg } from '../src/tools/jpeg-metadata/js/jpeg-cleaner.js';
 
 const ascii = (value) => Buffer.from(value, 'ascii');
@@ -76,6 +76,35 @@ function exifFixture(little, { gps = true, extraTag = 0, orientation = 6, displa
 const app1 = (tiff) => marker(0xe1, Buffer.concat([ascii('Exif\0\0'), tiff]));
 const inspect = (bytes) => inspectJpeg(bytes, parseJpeg(bytes));
 const scanBytes = (bytes) => parseJpeg(bytes).scans.map(({ offset, end }) => Buffer.from(bytes.subarray(offset, end)));
+
+function exifWithThumbnail(thumbnail){
+    const tiff = Buffer.concat([exifFixture(true), Buffer.alloc(30), thumbnail]);
+    tiff.writeUInt32LE(200, 58);
+    tiff.writeUInt16LE(2, 200);
+    tiff.writeUInt16LE(0x0201, 202);
+    tiff.writeUInt16LE(4, 204);
+    tiff.writeUInt32LE(1, 206);
+    tiff.writeUInt32LE(230, 210);
+    tiff.writeUInt16LE(0x0202, 214);
+    tiff.writeUInt16LE(4, 216);
+    tiff.writeUInt32LE(1, 218);
+    tiff.writeUInt32LE(thumbnail.length, 222);
+    return tiff;
+}
+
+test('selects a bounded Exif JPEG thumbnail and ignores invalid or missing candidates', () => {
+    const thumbnail = jpeg();
+    const malformed = exifWithThumbnail(Buffer.alloc(thumbnail.length));
+    const outside = exifWithThumbnail(thumbnail);
+    outside.writeUInt32LE(9999, 210);
+    const invalidOnly = jpeg([app1(malformed), app1(outside)]);
+    assert.equal(getExifThumbnail(inspect(invalidOnly)), null);
+
+    const input = jpeg([app1(malformed), app1(exifWithThumbnail(thumbnail))]);
+    const candidate = getExifThumbnail(inspect(input));
+    assert.deepEqual(candidate, thumbnail);
+    assert.equal(candidate.buffer, input.buffer);
+});
 
 test('maps standard shooting tags by directory and type and preserves unknown numeric values', () => {
     const tiff = Buffer.concat([exifFixture(false), Buffer.alloc(160)]);
@@ -364,6 +393,44 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         assert.match(get('exif-summary').textContent, /No Exif segments/);
         await get('clean').fire('click');
         assert.match(get('clean-status').textContent, /No matching metadata/);
+
+        const embedded = jpeg();
+        const withThumbnail = jpeg([app1(exifWithThumbnail(embedded))]);
+        file.files = [new File([withThumbnail], 'embedded.jpg')];
+        await file.fire('change');
+        assert.equal(preview.hidden, false);
+        assert.equal(preview.alt, 'Embedded Exif thumbnail');
+        assert.deepEqual(Buffer.from(await blob.arrayBuffer()), embedded);
+
+        const attempts = [];
+        preview.decode = async () => {
+            attempts.push(preview.src);
+            if(attempts.length === 1){
+                throw new Error('invalid embedded JPEG');
+            }
+        };
+        await file.fire('change');
+        await Promise.resolve();
+        assert.equal(attempts.length, 2);
+        assert.ok(revoked.includes(attempts[0]));
+        assert.equal(preview.alt, 'Preview of the selected JPEG');
+        assert.deepEqual(Buffer.from(await blob.arrayBuffer()), withThumbnail);
+
+        const staleThumbnail = Promise.withResolvers();
+        preview.decode = () => staleThumbnail.promise;
+        await file.fire('change');
+        const staleUrl = preview.src;
+        preview.decode = async () => {};
+        file.files = [new File([jpeg()], 'current.jpg')];
+        await file.fire('change');
+        const currentUrl = preview.src;
+        const currentCount = urlCount;
+        staleThumbnail.reject(new Error('stale thumbnail failed'));
+        await staleThumbnail.promise.catch(() => {});
+        assert.ok(revoked.includes(staleUrl));
+        assert.equal(urlCount, currentCount);
+        assert.equal(preview.src, currentUrl);
+        assert.equal(preview.hidden, false);
 
         const slowDecode = Promise.withResolvers();
         preview.decode = () => slowDecode.promise;

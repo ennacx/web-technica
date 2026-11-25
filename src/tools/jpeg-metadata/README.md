@@ -8,7 +8,7 @@ The tool path is [`/web-technica/jpeg-metadata/`](https://ennacx.github.io/web-t
 
 ## Inspect and clean
 
-1. Choose a JPEG up to 32 MiB. The tool checks JPEG bytes and shows a local preview beside the file details when the browser can display it. **Inspect** shows Exif fields and their sources and the presence of a GPS directory. Expand **GPS tag values** to see the stored references and fractions, or **JPEG segments** for marker names, byte offsets, lengths, and recognized payloads.
+1. Choose a JPEG up to 32 MiB. The preview uses the embedded Exif JPEG thumbnail when available and decodable, and otherwise shows the full image scaled to fit. An embedded preview may differ from the main image. **Inspect** shows Exif fields and their sources and the presence of a GPS directory. Expand **GPS tag values** to see the stored references and fractions, or **JPEG segments** for marker names, byte offsets, lengths, and recognized payloads.
 2. Select a cleanup mode and choose **Prepare cleaned JPEG**.
 3. Review the size, removed segment counts, retained metadata, and any orientation warning. Choose **Download** for a new `-cleaned.jpg` file. If no matching data is found, the tool reports no changes and offers no download.
 

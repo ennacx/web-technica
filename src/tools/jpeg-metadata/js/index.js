@@ -2,7 +2,7 @@
 import { downloadBlob } from '#utils/download.js';
 import { IFD, TIFF_TAG, EXIF_TAG, TAG_NAMES } from './exif-constants.js';
 import {MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg} from './jpeg-parser.js';
-import { inspectJpeg, previewExifEntry } from './exif-reader.js';
+import { getExifThumbnail, inspectJpeg, previewExifEntry } from './exif-reader.js';
 import { cleanedFilename, cleanJpeg, orientationWarning } from './jpeg-cleaner.js';
 
 // 表示上限数
@@ -32,6 +32,9 @@ let input;
 let output;
 let previewUrl;
 
+/**
+ * サムネイル表示をクリアする。
+ */
 function clearPreview(){
     preview.hidden = true;
     preview.removeAttribute('src');
@@ -42,20 +45,39 @@ function clearPreview(){
     }
 }
 
-async function showPreview(file, current){
-    try{
-        const jpeg = file.slice(0, file.size, 'image/jpeg');
+/**
+ * Exifサムネイルを優先し、復号できなければ元JPEGを表示する。
+ *
+ * @param {File} file - 選択したJPEG。
+ * @param {import('./exif-reader.js').ExifInspection[]} inspections - 解析済みのExif APP1。
+ * @param {number} current - 選択時のリビジョン。
+ * @returns {Promise<void>}
+ */
+async function showPreview(file, inspections, current){
+    const thumbnail = getExifThumbnail(inspections);
 
-        previewUrl = document.defaultView.URL.createObjectURL(jpeg);
-        preview.src = previewUrl;
+    for(const embedded of ((thumbnail) ? [true, false] : [false])){
+        try{
+            const jpeg = (embedded) ?
+                new Blob([thumbnail], { type: 'image/jpeg' }) :
+                file.slice(0, file.size, 'image/jpeg');
 
-        await preview.decode();
+            previewUrl = document.defaultView.URL.createObjectURL(jpeg);
+            preview.src = previewUrl;
 
-        if(revision === current){
-            preview.hidden = false;
-        }
-    } catch{
-        if(revision === current){
+            await preview.decode();
+
+            if(revision === current){
+                preview.alt    = (embedded) ? 'Embedded Exif thumbnail' : 'Preview of the selected JPEG';
+                preview.hidden = false;
+            }
+
+            return;
+        } catch(e){
+            if(revision !== current){
+                return;
+            }
+
             clearPreview();
         }
     }
@@ -282,7 +304,7 @@ fileInput.addEventListener('change', async () => {
 
         options.disabled = cleanButton.disabled = Boolean(jpeg.restrictions.length);
 
-        void showPreview(file, current);
+        void showPreview(file, inspections, current);
     } catch(e){
         fileStatus.textContent = `JPEG inspection failed. ${e.message}`;
     }

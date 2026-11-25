@@ -128,6 +128,7 @@ const SCALAR_TYPES = {
  * @property {ExifField[]} fields - 表示名が定義されている項目。
  * @property {{source: string, tag: number}[]} otherTags - 詳細一覧に表示するタグのIFD名とID。
  * @property {string[]} issues - 範囲の重複など、読み取れたがGPS削除時の再構築を妨げる問題。
+ * @property {Uint8Array | null} thumbnail - IFD1が参照する埋め込みJPEGのビュー。候補がなければ null。
  */
 
 /**
@@ -613,6 +614,8 @@ export function readExif(tiff){
 
     const thumbnail = directories.get(IFD.THUMBNAIL);
 
+    let thumbnailJpeg = null;
+
     if(thumbnail){
         const start = pointer(thumbnail, TIFF_TAG.JPEGInterchangeFormat);       // JPEGInterchangeFormat (TIFF先頭からの位置)
         const size  = pointer(thumbnail, TIFF_TAG.JPEGInterchangeFormatLength); // JPEGInterchangeFormatLength (バイト数)
@@ -623,6 +626,15 @@ export function readExif(tiff){
             }
 
             claim(start, size);
+
+            const end = start + size;
+            if(
+                !issues.has('overlapping TIFF ranges') && size >= 4
+                && tiff[start] === 0xff && tiff[start + 1] === 0xd8
+                && tiff[end - 2] === 0xff && tiff[end - 1] === 0xd9
+            ){
+                thumbnailJpeg = tiff.subarray(start, end);
+            }
         }
     }
 
@@ -659,7 +671,11 @@ export function readExif(tiff){
         }
     }
 
-    return { little, directories, fields, otherTags, issues: [...issues] };
+    return {
+        little, directories, fields, otherTags,
+        issues: [...issues],
+        thumbnail: thumbnailJpeg
+    };
 }
 
 /**
@@ -677,4 +693,14 @@ export function inspectJpeg(bytes, jpeg){
             return { segment, error: error.message };
         }
     });
+}
+
+/**
+ * 解析済みのExif APP1から最初の埋め込みJPEG候補を取得する。
+ *
+ * @param {ExifInspection[]} inspections - ファイル順のExif解析結果。
+ * @returns {Uint8Array | null} サムネイルのビュー。候補がなければ null。
+ */
+export function getExifThumbnail(inspections){
+    return inspections.find(({ exif }) => exif?.thumbnail)?.exif.thumbnail ?? null;
 }
