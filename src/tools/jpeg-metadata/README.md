@@ -12,7 +12,11 @@ The tool path is [`/web-technica/jpeg-metadata/`](https://ennacx.github.io/web-t
 2. Select a cleanup mode and choose **Prepare cleaned JPEG**.
 3. Review the size, removed segment counts, retained metadata, and any orientation warning. Choose **Download** for a new `-cleaned.jpg` file. If no matching data is found, the tool reports no changes and offers no download.
 
-Exif dates use the browser's locale while preserving the recorded date and time. Focal length and 35 mm equivalent focal length are shown as separate fields in millimeters when their tags are present.
+Exif dates use the browser's locale while preserving the recorded date and time. Exposure compensation is shown in EV. Focal length and 35 mm equivalent focal length are shown as separate fields in millimeters when their tags are present.
+
+Inspect shows exposure program and mode, metering, flash, white balance, and lens specifications when those tags are present. It translates recognized numeric codes and flash flags into labels. Unknown codes remain visible as numbers.
+
+Expand **Other Exif tags** for additional fields, including standard tag names where available, offsets, and subsecond timestamps. Each entry shows the tag ID, directory, TIFF type, element count, byte length, JPEG APP1 offset, and TIFF-relative value offset. Text and numeric values use a bounded preview. Opaque binary values such as MakerNote show up to 32 bytes in hexadecimal and printable ASCII.
 
 **Remove metadata** deletes detected Exif APP1 segments (including embedded Exif thumbnails), standard and extended XMP APP1, recognized Photoshop/IPTC APP13, and COM comments. It retains ICC color profiles, Adobe APP14, and JFIF/JFXX, which may contain thumbnails. Removing an Orientation value other than 1 can change how the image appears. The reported dimensions come from the JPEG frame.
 

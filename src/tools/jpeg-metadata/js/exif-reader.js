@@ -6,70 +6,54 @@
  * @see https://printtechnologies.org/standards/files/tiff-v6.pdf
  */
 
-/** TIFFのIFDエントリで使う型名と型番号の対応。 */
-export const IFD_TYPE = {
-    BYTE:       1,
-    ASCII:      2,
-    SHORT:      3,
-    LONG:       4,
-    RATIONAL:   5, // 最初のlongが分子、次のlongが分母。
-    SBYTE:      6, // Signed byte
-    UNDEFINED:  7, // 8bit byte
-    SSHORT:     8, // Signed short
-    SLONG:      9, // Signed long
-    SRATIONAL: 10, // Signed rational
-    FLOAT:     11,
-    DOUBLE:    12,
-};
+import {
+    IFD, IFD_TYPE, TIFF_TAG, EXIF_TAG, GPS_TAG, TYPE_BYTES, TYPE_NAMES, TIFF_MAGIC,
+    TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES,
+    LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER, SHORT_VALUES, FLASH_BITS, FLASH_MODES, FLASH_RETURN
+} from './exif-constants.js';
 
-/** リトルエンディアンのバイトオーダー */
-export const LITTLE_ENDIAN_BYTE_ORDER = 0x4949;
-/** ビッグエンディアンのバイトオーダー */
-export const BIG_ENDIAN_BYTE_ORDER    = 0x4d4d;
-
-/**
- * TYPE_BYTES のインデックスはTIFF型番号、値はその型に当てはまるバイト数
- * インデックス0の値は、不正な型番号を弾くための番兵値。
- *
- * ex. Idx.2 = ASCII(1 byte)、Idx.3 = SHORT(2 bytes)、Idx.4 = LONG(4 bytes)、Idx.5 = RATIONAL(8 bytes)
- *
- * @type {number[]}
- */
-const TYPE_BYTES = [0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 4];
+const BINARY_PREVIEW_BYTES = 32;
 
 /**
  * 外側のキーはIFD名、内側の数値キーはそのIFD内の16ビットのタグID。
  *
- * @type {{IFD0: Record<number, string>, "Exif SubIFD": Record<number, string>, "GPS IFD": Record<number, string>}}
+ * @type {Record<string, Record<number, string>>}
  */
 const DISPLAY_TAGS = {
-    IFD0: {
-        0x010f: 'Camera make',
-        0x0110: 'Camera model',
-        0x0112: 'Orientation',
-        0x0131: 'Software',
-        0x0132: 'DateTime',
-        0x013b: 'Artist',
-        0x8298: 'Copyright',
+    [IFD.PRIMARY]: {
+        [TIFF_TAG.Make]: 'Camera make',
+        [TIFF_TAG.Model]: 'Camera model',
+        [TIFF_TAG.Orientation]: 'Orientation',
+        [TIFF_TAG.Software]: 'Software',
+        [TIFF_TAG.DateTime]: 'DateTime',
+        [TIFF_TAG.Artist]: 'Artist',
+        [TIFF_TAG.Copyright]: 'Copyright',
     },
-    'Exif SubIFD': {
-        0x829a: 'Exposure time',
-        0x829d: 'F-number',
-        0x8827: 'ISO',
-        0x8833: 'ISO speed',
-        0x9003: 'DateTimeOriginal',
-        0x9004: 'DateTimeDigitized',
-        0x920a: 'Focal length',
-        0xa405: '35 mm equivalent focal length',
-        0xa434: 'Lens model',
+    [IFD.EXIF]: {
+        [EXIF_TAG.ExposureTime]: 'Exposure time',
+        [EXIF_TAG.FNumber]: 'F-number',
+        [EXIF_TAG.ExposureProgram]: 'Exposure program',
+        [EXIF_TAG.PhotographicSensitivity]: 'ISO',
+        [EXIF_TAG.ISOSpeed]: 'ISO speed',
+        [EXIF_TAG.DateTimeOriginal]: 'DateTimeOriginal',
+        [EXIF_TAG.DateTimeDigitized]: 'DateTimeDigitized',
+        [EXIF_TAG.ExposureBiasValue]: 'Exposure compensation',
+        [EXIF_TAG.MeteringMode]: 'Metering mode',
+        [EXIF_TAG.Flash]: 'Flash',
+        [EXIF_TAG.FocalLength]: 'Focal length',
+        [EXIF_TAG.ExposureMode]: 'Exposure mode',
+        [EXIF_TAG.WhiteBalance]: 'White balance',
+        [EXIF_TAG.FocalLengthIn35mmFilm]: '35 mm equivalent focal length',
+        [EXIF_TAG.LensSpecification]: 'Lens specification',
+        [EXIF_TAG.LensModel]: 'Lens model',
     },
-    'GPS IFD': {
-        1: 'Latitude reference',
-        2: 'Latitude',
-        3: 'Longitude reference',
-        4: 'Longitude',
-        5: 'Altitude reference',
-        6: 'Altitude',
+    [IFD.GPS]: {
+        [GPS_TAG.LatitudeRef]: 'Latitude reference',
+        [GPS_TAG.Latitude]: 'Latitude',
+        [GPS_TAG.LongitudeRef]: 'Longitude reference',
+        [GPS_TAG.Longitude]: 'Longitude',
+        [GPS_TAG.AltitudeRef]: 'Altitude reference',
+        [GPS_TAG.Altitude]: 'Altitude',
     }
 };
 
@@ -79,8 +63,15 @@ const DISPLAY_TAGS = {
  * @type {Record<string, Set<number>>}
  */
 const ASCII_TAGS = {
-    IFD0: new Set([0x010e, 0x010f, 0x0110, 0x0131, 0x0132, 0x013b, 0x8298]),
-    'Exif SubIFD': new Set([0x9003, 0x9004, 0x9010, 0x9011, 0x9012, 0x9290, 0x9291, 0x9292, 0xa433, 0xa434])
+    [IFD.PRIMARY]: new Set([
+        TIFF_TAG.ImageDescription, TIFF_TAG.Make, TIFF_TAG.Model, TIFF_TAG.Software,
+        TIFF_TAG.DateTime, TIFF_TAG.Artist, TIFF_TAG.Copyright
+    ]),
+    [IFD.EXIF]: new Set([
+        EXIF_TAG.DateTimeOriginal, EXIF_TAG.DateTimeDigitized, EXIF_TAG.OffsetTime,
+        EXIF_TAG.OffsetTimeOriginal, EXIF_TAG.OffsetTimeDigitized, EXIF_TAG.SubSecTime,
+        EXIF_TAG.SubSecTimeOriginal, EXIF_TAG.SubSecTimeDigitized, EXIF_TAG.LensMake, EXIF_TAG.LensModel
+    ])
 };
 
 /**
@@ -89,41 +80,37 @@ const ASCII_TAGS = {
  * @type {Record<string, Record<number, number[]>>}
  */
 const SCALAR_TYPES = {
-    IFD0: {
-        0x0112: [IFD_TYPE.SHORT],
-        0x011a: [IFD_TYPE.RATIONAL],
-        0x011b: [IFD_TYPE.RATIONAL],
-        0x0128: [IFD_TYPE.SHORT]
+    [IFD.PRIMARY]: {
+        [TIFF_TAG.Orientation]: [IFD_TYPE.SHORT],
+        [TIFF_TAG.XResolution]: [IFD_TYPE.RATIONAL],
+        [TIFF_TAG.YResolution]: [IFD_TYPE.RATIONAL],
+        [TIFF_TAG.ResolutionUnit]: [IFD_TYPE.SHORT]
     },
-    'Exif SubIFD': {
-        0x829a: [IFD_TYPE.RATIONAL],
-        0x829d: [IFD_TYPE.RATIONAL],
-        0x8822: [IFD_TYPE.SHORT],
-        0x8827: [IFD_TYPE.SHORT], // PhotographicSensitivity。規格では複数値も許容するが、移設は単一値に限定する。
-        0x8833: [IFD_TYPE.LONG],
-        0x9201: [IFD_TYPE.SRATIONAL],
-        0x9202: [IFD_TYPE.RATIONAL],
-        0x9204: [IFD_TYPE.SRATIONAL],
-        0x9207: [IFD_TYPE.SHORT],
-        0x9209: [IFD_TYPE.SHORT],
-        0x920a: [IFD_TYPE.RATIONAL],
-        0xa001: [IFD_TYPE.SHORT],
-        0xa002: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
-        0xa003: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
-        0xa405: [IFD_TYPE.SHORT],
+    [IFD.EXIF]: {
+        [EXIF_TAG.ExposureTime]: [IFD_TYPE.RATIONAL],
+        [EXIF_TAG.FNumber]: [IFD_TYPE.RATIONAL],
+        [EXIF_TAG.ExposureProgram]: [IFD_TYPE.SHORT],
+        [EXIF_TAG.PhotographicSensitivity]: [IFD_TYPE.SHORT], // PhotographicSensitivity。規格では複数値も許容するが、移設は単一値に限定する。
+        [EXIF_TAG.ISOSpeed]: [IFD_TYPE.LONG],
+        [EXIF_TAG.ShutterSpeedValue]: [IFD_TYPE.SRATIONAL],
+        [EXIF_TAG.ApertureValue]: [IFD_TYPE.RATIONAL],
+        [EXIF_TAG.ExposureBiasValue]: [IFD_TYPE.SRATIONAL],
+        [EXIF_TAG.MeteringMode]: [IFD_TYPE.SHORT],
+        [EXIF_TAG.Flash]: [IFD_TYPE.SHORT],
+        [EXIF_TAG.FocalLength]: [IFD_TYPE.RATIONAL],
+        [EXIF_TAG.ColorSpace]: [IFD_TYPE.SHORT],
+        [EXIF_TAG.PixelXDimension]: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
+        [EXIF_TAG.PixelYDimension]: [IFD_TYPE.SHORT, IFD_TYPE.LONG],
+        [EXIF_TAG.FocalLengthIn35mmFilm]: [IFD_TYPE.SHORT],
     }
 };
-
-/** Exif IFD Pointer */
-export const EXIF_POINTER = 0x8769;
-/** GPS Info IFD Pointer */
-export const GPS_POINTER  = 0x8825;
 
 /**
  * @typedef {object} ExifEntry
  * @property {number} tag - IFD内のタグID。
  * @property {number} type - TIFFの型番号。
  * @property {number} count - 値の要素数。ASCIIでは終端NULを含む。
+ * @property {number} dataOffset - TIFFヘッダ先頭から値の先頭までの位置（バイト）。
  * @property {Uint8Array} data - パディングを除いた値のバイト列。入力TIFFとメモリを共有するビュー。
  */
 
@@ -139,7 +126,7 @@ export const GPS_POINTER  = 0x8825;
  * @property {boolean} little - TIFFがリトルエンディアンなら `true`。
  * @property {Map<string, Map<number, ExifEntry>>} directories - IFD名ごとのエントリ。内側のキーはタグID。
  * @property {ExifField[]} fields - 表示名が定義されている項目。
- * @property {{source: string, tag: number}[]} otherTags - 表示名が定義されていないタグのIFD名とID。
+ * @property {{source: string, tag: number}[]} otherTags - 詳細一覧に表示するタグのIFD名とID。
  * @property {string[]} issues - 範囲の重複など、読み取れたがGPS削除時の再構築を妨げる問題。
  */
 
@@ -165,7 +152,7 @@ export function isRelocatableTag(directory, { tag, type, count }){
         return (type === IFD_TYPE.ASCII);
     }
 
-    if(directory === 'Exif SubIFD' && (tag === 0x9000 || tag === 0xa000)){
+    if(directory === IFD.EXIF && (tag === EXIF_TAG.ExifVersion || tag === EXIF_TAG.FlashpixVersion)){
         return (type === IFD_TYPE.UNDEFINED && count === 4);
     }
 
@@ -234,6 +221,35 @@ function decode(entry, little){
 }
 
 /**
+ * 詳細一覧向けに型名と値のプレビューを生成する。
+ *
+ * @param {ExifEntry} entry - 解析済みタグ。
+ * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
+ * @param {string} [source] - エントリを取得したIFD名。
+ * @returns {{typeName: string, value: string}} 数値や文字列の表示、または先頭32バイトの16進数とASCII。
+ */
+export function previewExifEntry(entry, little, source){
+    const { type, data } = entry;
+    const typeName  = TYPE_NAMES.get(type) ?? `Type ${type}`;
+    const formatted = formatStandardValue(source, entry, little);
+
+    if(formatted !== undefined){
+        return { typeName, value: formatted };
+    }
+
+    if(TYPE_NAMES.has(type) && type !== IFD_TYPE.UNDEFINED){
+        return { typeName, value: decode(entry, little) };
+    }
+
+    const prefix = data.subarray(0, BINARY_PREVIEW_BYTES);
+    const suffix = (data.length > prefix.length) ? ' …' : '';
+    const hex    = Array.from(prefix, (byte) => byte.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+    const ascii  = Array.from(prefix, (byte) => (byte >= 0x20 && byte <= 0x7e) ? String.fromCharCode(byte) : '.').join('');
+
+    return { typeName, value: `${hex} │ ${ascii}${suffix}` };
+}
+
+/**
  * 日時まわりのフォーマット (UTC)
  *
  * @type {Intl.DateTimeFormat}
@@ -249,6 +265,16 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
  */
 const focalLengthFormat = new Intl.NumberFormat(undefined, {
     maximumFractionDigits: 3
+});
+
+/**
+ * 露出補正のフォーマット
+ *
+ * @type {Intl.NumberFormat}
+ */
+const exposureCompensationFormat = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 2,
+    signDisplay: 'exceptZero'
 });
 
 /**
@@ -282,31 +308,124 @@ function formatDateTime(value){
 }
 
 /**
- * Exifフィールドの出力フォーマット
+ * Flashのビットフィールドを撮影時の状態に展開する。
  *
- * @param {string} source - エントリを取得したIFD名。
+ * @param {number} value - FlashタグのSHORT値。
+ * @returns {string | undefined} 予約ビットを含む場合は undefined。
+ */
+function formatFlash(value){
+    const returned = (value >> FLASH_BITS.RETURN_SHIFT) & FLASH_BITS.FIELD_MASK;
+
+    if((value & FLASH_BITS.RESERVED_MASK) || returned === FLASH_BITS.RESERVED_RETURN){
+        return undefined;
+    }
+
+    const mode  = (value >> FLASH_BITS.MODE_SHIFT) & FLASH_BITS.FIELD_MASK;
+    const fired = (value & FLASH_BITS.FIRED) ? 'Fired' : 'Did not fire';
+
+    return [
+        (value & FLASH_BITS.NO_FUNCTION) ? 'No flash function' : fired,
+        FLASH_MODES[mode],
+        FLASH_RETURN[returned],
+        (value & FLASH_BITS.RED_EYE) && 'Red-eye reduction'
+    ].filter(Boolean).join(' · ');
+}
+
+/**
+ * 焦点距離と、その両端での開放F値を表示する。
+ *
+ * @param {Uint8Array} data - 4要素のRATIONAL値。
+ * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
+ * @returns {string | undefined} 未知の開放F値（0/0）は省略し、不正な値は undefined を返す。
+ */
+function formatLensSpecification(data, little){
+    const view   = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    const values = [];
+
+    for(let index = 0; index < 4; index++){
+        const offset      = index * TYPE_BYTES[IFD_TYPE.RATIONAL];
+        const numerator   = view.getUint32(offset, little);
+        const denominator = view.getUint32(offset + 4, little);
+
+        if(numerator && denominator){
+            values.push(numerator / denominator);
+        } else if(index >= 2 && numerator === 0 && denominator === 0){
+            values.push(null);
+        } else{
+            return undefined;
+        }
+    }
+
+    const [min, max, wide, tele] = values;
+
+    if(min > max){
+        return undefined;
+    }
+
+    const focalLength = (min === max) ?
+        focalLengthFormat.format(min) :
+        `${focalLengthFormat.format(min)}–${focalLengthFormat.format(max)}`;
+
+    if(wide === null && tele === null){
+        return `${focalLength} mm`;
+    }
+
+    const aperture = ((wide === tele) ? [wide] : [wide, tele])
+        .map((value) => (value === null) ? '?' : `f/${focalLengthFormat.format(value)}`)
+        .join('–');
+
+    return `${focalLength} mm, ${aperture}`;
+}
+
+/**
+ * Exifフィールドの出力フォーマット。
+ *
+ * @param {string | undefined} source - エントリを取得したIFD名。
  * @param {ExifEntry} entry - 解析済みタグ。
  * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
- * @returns {string} タグ固有の表示値、または汎用デコードの結果。
+ * @returns {string | undefined} 規格に沿った表示値。変換できない場合は undefined。
  */
-function formatField(source, entry, little){
+function formatStandardValue(source, entry, little){
     const { tag, type, count, data } = entry;
 
-    const isExif     = (source === 'Exif SubIFD');
+    const isExif     = (source === IFD.EXIF);
     const isDateTime = (
         // Exif IFD0 DateTime
-        (source === 'IFD0' && tag === 0x0132)
+        (source === IFD.PRIMARY && tag === TIFF_TAG.DateTime)
         // Exif SubIFD DateTimeOriginal/DateTimeDigitized
-        || (isExif && (tag === 0x9003 || tag === 0x9004))
+        || (isExif && (tag === EXIF_TAG.DateTimeOriginal || tag === EXIF_TAG.DateTimeDigitized))
     );
 
     if(isDateTime && type === IFD_TYPE.ASCII && count === 20 && data[19] === 0){
         return formatDateTime(decode(entry, little));
     }
 
+    if(type === IFD_TYPE.SHORT && count === 1){
+        const values = SHORT_VALUES[source]?.[tag];
+
+        if(values || (isExif && tag === EXIF_TAG.Flash)){
+            const value = new DataView(data.buffer, data.byteOffset, data.byteLength).getUint16(0, little);
+
+            return (values) ? values[value] : formatFlash(value);
+        }
+    }
+
+    if(isExif && tag === EXIF_TAG.LensSpecification && type === IFD_TYPE.RATIONAL && count === 4){
+        return formatLensSpecification(data, little);
+    }
+
     if(isExif && count === 1){
+        if(tag === EXIF_TAG.ExposureBiasValue && type === IFD_TYPE.SRATIONAL){
+            const view        = new DataView(data.buffer, data.byteOffset, data.byteLength);
+            const denominator = view.getInt32(4, little);
+
+            if(denominator){
+                return `${exposureCompensationFormat.format(view.getInt32(0, little) / denominator)} EV`;
+            }
+        }
+
         // Focal length
-        if(tag === 0x920a && type === IFD_TYPE.RATIONAL){
+        if(tag === EXIF_TAG.FocalLength && type === IFD_TYPE.RATIONAL){
             const view        = new DataView(data.buffer, data.byteOffset, data.byteLength);
             const denominator = view.getUint32(4, little);
 
@@ -315,7 +434,7 @@ function formatField(source, entry, little){
             }
         }
         // 35 mm equivalent focal length
-        if(tag === 0xa405 && type === IFD_TYPE.SHORT){
+        if(tag === EXIF_TAG.FocalLengthIn35mmFilm && type === IFD_TYPE.SHORT){
             const view        = new DataView(data.buffer, data.byteOffset, data.byteLength);
             const focalLength = view.getUint16(0, little);
 
@@ -323,7 +442,7 @@ function formatField(source, entry, little){
         }
     }
 
-    return decode(entry, little);
+    return undefined;
 }
 
 /**
@@ -339,7 +458,7 @@ export function readExif(tiff){
     const order       = tiff[0] << 8 | tiff[1];
     // TIFFの先頭2バイトで "II" (リトルエンディアン) "MM" (ビッグエンディアン) を判定
     const little      = (order === LITTLE_ENDIAN_BYTE_ORDER);
-    const ranges      = [{ start: 0, end: 8 }];
+    const ranges      = [{ start: 0, end: TIFF_HEADER_BYTES }];
     const directories = new Map();
     const offsets     = new Set();
     const issues      = new Set();
@@ -354,7 +473,7 @@ export function readExif(tiff){
      * @throws {Error} 範囲がTIFFヘッダにかかるか、ペイロードの終端を超える場合。
      */
     function check(start, size){
-        if(start < 8 || (start + size) > tiff.length){
+        if(start < TIFF_HEADER_BYTES || (start + size) > tiff.length){
             throw new Error('Exif offset or value is outside the TIFF payload.');
         }
     }
@@ -404,12 +523,12 @@ export function readExif(tiff){
             throw new Error('Too many Exif tags.');
         }
 
-        claim(offset, 6 + count * 12);
+        claim(offset, IFD_ENTRY_BYTES * count + IFD_DIRECTORY_OVERHEAD);
 
         const entries = new Map();
 
         for(let i = 0; i < count; i++){
-            const start    = offset + 2 + i * 12;
+            const start    = i * IFD_ENTRY_BYTES + offset + 2;
             const tag      = view.getUint16(start, little);
             const type     = view.getUint16(start + 2, little);
             const elements = view.getUint32(start + 4, little);
@@ -423,18 +542,24 @@ export function readExif(tiff){
 
             const size       = TYPE_BYTES[type] * elements;
             const valueField = start + 8;
-            const dataStart  = (size <= 4) ? valueField : view.getUint32(valueField, little);
+            const dataStart  = (size <= IFD_INLINE_VALUE_BYTES) ? valueField : view.getUint32(valueField, little);
 
-            if(size > 4){
+            if(size > IFD_INLINE_VALUE_BYTES){
                 claim(dataStart, size);
-            } else if(tiff.subarray(valueField + size, valueField + 4).some(Boolean)){
+            } else if(tiff.subarray(valueField + size, valueField + IFD_INLINE_VALUE_BYTES).some(Boolean)){
                 issues.add('nonzero TIFF value padding');
             }
 
-            entries.set(tag, { tag, type, count: elements, data: tiff.subarray(dataStart, dataStart + size) });
+            entries.set(tag, {
+                tag,
+                type,
+                count: elements,
+                dataOffset: dataStart,
+                data: tiff.subarray(dataStart, dataStart + size)
+            });
         }
 
-        const next = view.getUint32(offset + 2 + count * 12, little);
+        const next = view.getUint32(IFD_ENTRY_BYTES * count + offset + 2, little);
 
         if(next && offsets.has(next)){
             throw new Error('Repeated or circular Exif directory offset.');
@@ -459,6 +584,7 @@ export function readExif(tiff){
         if(!entry){
             return null;
         }
+
         if(entry.type !== IFD_TYPE.LONG || entry.count !== 1){
             throw new Error('Invalid Exif directory pointer.');
         }
@@ -468,28 +594,28 @@ export function readExif(tiff){
 
     // 8バイトのTIFFヘッダ。位置2に固定値42(0x002a)、位置4に最初のIFDへのオフセット。
     // IFDや外部値へのオフセットはTIFFヘッダ先頭からの相対バイト位置。
-    if(tiff.length < 8 || (!little && order !== BIG_ENDIAN_BYTE_ORDER) || view.getUint16(2, little) !== 0x002a){
+    if(tiff.length < TIFF_HEADER_BYTES || (!little && order !== BIG_ENDIAN_BYTE_ORDER) || view.getUint16(2, little) !== TIFF_MAGIC){
         throw new Error('Invalid Exif TIFF header.');
     }
 
-    const ifd1    = readDirectory('IFD0', view.getUint32(4, little));
-    const primary = directories.get('IFD0');
+    const ifd1    = readDirectory(IFD.PRIMARY, view.getUint32(4, little));
+    const primary = directories.get(IFD.PRIMARY);
 
     for(const [name, offset] of [
-        ['Exif SubIFD', pointer(primary, 0x8769)], // ExifIFDPointer
-        ['GPS IFD', pointer(primary, 0x8825)],     // GPSInfoIFDPointer
-        ['IFD1', ifd1 || null]
+        [IFD.EXIF, pointer(primary, TIFF_TAG.ExifIFDPointer)],   // ExifIFDPointer
+        [IFD.GPS, pointer(primary, TIFF_TAG.GPSInfoIFDPointer)], // GPSInfoIFDPointer
+        [IFD.THUMBNAIL, ifd1 || null]
     ]){
         if(offset !== null && readDirectory(name, offset)){
             throw new Error('Additional Exif directory chains are unsupported.');
         }
     }
 
-    const thumbnail = directories.get('IFD1');
+    const thumbnail = directories.get(IFD.THUMBNAIL);
 
     if(thumbnail){
-        const start = pointer(thumbnail, 0x0201); // JPEGInterchangeFormat (TIFF先頭からの位置)
-        const size  = pointer(thumbnail, 0x0202); // JPEGInterchangeFormatLength (バイト数)
+        const start = pointer(thumbnail, TIFF_TAG.JPEGInterchangeFormat);       // JPEGInterchangeFormat (TIFF先頭からの位置)
+        const size  = pointer(thumbnail, TIFF_TAG.JPEGInterchangeFormatLength); // JPEGInterchangeFormatLength (バイト数)
 
         if(start !== null || size !== null){
             if(!size || start === null){
@@ -522,7 +648,11 @@ export function readExif(tiff){
             const label = DISPLAY_TAGS[source]?.[entry.tag];
 
             if(label){
-                fields.push({source, label, value: formatField(source, entry, little)});
+                fields.push({
+                    source,
+                    label,
+                    value: formatStandardValue(source, entry, little) ?? decode(entry, little)
+                });
             } else{
                 otherTags.push({source, tag: entry.tag});
             }

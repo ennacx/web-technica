@@ -1,7 +1,8 @@
 ﻿import { getById } from '#utils/dom.js';
 import { downloadBlob } from '#utils/download.js';
+import { IFD, TIFF_TAG, EXIF_TAG, TAG_NAMES } from './exif-constants.js';
 import {MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg} from './jpeg-parser.js';
-import { inspectJpeg } from './exif-reader.js';
+import { inspectJpeg, previewExifEntry } from './exif-reader.js';
 import { cleanedFilename, cleanJpeg, orientationWarning } from './jpeg-cleaner.js';
 
 // 表示上限数
@@ -112,19 +113,19 @@ function renderInspection(jpeg, inspections){
             continue;
         }
 
-        if(exif.directories.has('GPS IFD')) {
+        if(exif.directories.has(IFD.GPS)){
             gpsCount++;
         }
-        if(exif.directories.has('IFD1')){
+        if(exif.directories.has(IFD.THUMBNAIL)){
             opaque.add('IFD1 / possible thumbnail');
         }
-        if(exif.directories.get('Exif SubIFD')?.has(0x927c)){
+        if(exif.directories.get(IFD.EXIF)?.has(EXIF_TAG.MakerNote)){
             opaque.add('MakerNote');
         }
-        if(exif.directories.get('Exif SubIFD')?.has(0xa005)){
+        if(exif.directories.get(IFD.EXIF)?.has(EXIF_TAG.InteroperabilityIFDPointer)){
             opaque.add('Interoperability IFD');
         }
-        if(exif.directories.get('IFD0')?.has(0x014a)){
+        if(exif.directories.get(IFD.PRIMARY)?.has(TIFF_TAG.SubIFDs)){
             opaque.add('additional SubIFDs');
         }
         if(exif.issues.length && notes.length < 8){
@@ -132,7 +133,7 @@ function renderInspection(jpeg, inspections){
         }
 
         for(const { source, label, value } of exif.fields){
-            const target = (source === 'GPS IFD') ? coordinates : fields;
+            const target = (source === IFD.GPS) ? coordinates : fields;
 
             if(target.length < LIST_VIEW_LIMIT){
                 target.push([`${label} · ${source} @ ${segment.offset}`, value]);
@@ -144,7 +145,26 @@ function renderInspection(jpeg, inspections){
                 break;
             }
 
-            rawTags.push(`0x${tag.toString(16).padStart(4, '0')} · ${source} @ ${segment.offset}`);
+            const entry = exif.directories.get(source).get(tag);
+            const { typeName, value } = previewExifEntry(entry, exif.little, source);
+
+            const id      = `0x${tag.toString(16).padStart(4, '0')}`;
+            const item    = document.createElement('li');
+            const details = document.createElement('dl');
+
+            details.className = 'jpeg-facts';
+
+            facts(details, [
+                ['Type and size', `${typeName} × ${entry.count} · ${entry.data.length} B`],
+                ['JPEG APP1 offset', String(segment.offset)],
+                ['TIFF value offset', String(entry.dataOffset)],
+                ['Value', value || '(empty)']
+            ]);
+
+            const name = TAG_NAMES[source]?.get(tag);
+
+            item.append(node('strong', (name) ? `${id} · ${source} · ${name}` : `${id} · ${source}`), details);
+            rawTags.push(item);
         }
     }
 
@@ -163,7 +183,7 @@ function renderInspection(jpeg, inspections){
 
     gps.hidden = (!coordinates.length);
 
-    get('tag-list').replaceChildren(...rawTags.map((tag) => node('li', tag)));
+    get('tag-list').replaceChildren(...rawTags);
 
     otherTags.hidden = (!rawTags.length);
 

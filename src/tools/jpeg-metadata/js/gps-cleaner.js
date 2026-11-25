@@ -3,14 +3,10 @@
  */
 
 import {
-    IFD_TYPE, LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER, EXIF_POINTER, GPS_POINTER,
-    isRelocatableTag, readExif
-} from './exif-reader.js';
-
-const PRIMARY = 'IFD0';
-const SUB_IFD = 'Exif SubIFD';
-const GPS     = 'GPS IFD';
-
+    IFD, IFD_TYPE, TIFF_TAG, EXIF_TAG, TIFF_MAGIC, LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER,
+    TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES
+} from './exif-constants.js';
+import { isRelocatableTag, readExif } from './exif-reader.js';
 
 /**
  * CIPA DC-X008-2019 日本語版 §4.6.3 (Exif固有のIFD)、§4.6.6 表15 (GPSタグ)、§4.7.2 (APP1)
@@ -40,37 +36,36 @@ const GPS_TYPES = [
  */
 export function rebuildWithoutGps(exif){
     const { directories, little, issues } = exif;
-    const primary = directories.get(PRIMARY);
-    const sub     = directories.get(SUB_IFD);
+    const primary = directories.get(IFD.PRIMARY);
+    const sub     = directories.get(IFD.EXIF);
 
     if(issues.length){
         throw new Error(`Location-only cleanup cannot rewrite Exif with ${issues.join(', ')}.`);
     }
-
-    if(directories.has('IFD1')){
+    if(directories.has(IFD.THUMBNAIL)){
         throw new Error('Location-only cleanup cannot preserve the Exif thumbnail directory.');
     }
 
     const retained = [
-        [PRIMARY, [...primary.values()].filter(({ tag }) => (tag !== GPS_POINTER))],
-        ...((sub) ? [[SUB_IFD, [...sub.values()]]] : [])
+        [IFD.PRIMARY, [...primary.values()].filter(({ tag }) => (tag !== TIFF_TAG.GPSInfoIFDPointer))],
+        ...((sub) ? [[IFD.EXIF, [...sub.values()]]] : [])
     ];
 
     for(const [name, entries] of retained){
         for(const entry of entries){
-            if(name === PRIMARY && entry.tag === EXIF_POINTER){
+            if(name === IFD.PRIMARY && entry.tag === TIFF_TAG.ExifIFDPointer){
                 continue;
             }
 
             if(!isRelocatableTag(name, entry)){
                 const tag = entry.tag.toString(16).padStart(4, '0');
 
-                throw new Error(`Location-only cleanup cannot preserve ${name} tag 0x${tag}${(entry.tag === 0x927c) ? ' (MakerNote)' : ''}.`);
+                throw new Error(`Location-only cleanup cannot preserve ${name} tag 0x${tag}${(name === IFD.EXIF && entry.tag === EXIF_TAG.MakerNote) ? ' (MakerNote)' : ''}.`);
             }
         }
     }
 
-    const gps = directories.get(GPS);
+    const gps = directories.get(IFD.GPS);
 
     if(!gps){
         return null;
@@ -82,24 +77,24 @@ export function rebuildWithoutGps(exif){
 
     const offsets = new Map();
 
-    let size = 8; // TIFFヘッダの直後にIFD0を置く
+    let size = TIFF_HEADER_BYTES;
 
     for(const [name, entries] of retained){
         offsets.set(name, size);
-        size += entries.length * 12 + 6; // タグ数2バイト、各エントリ12バイト、次のIFD位置4バイト。
+        size += entries.length * IFD_ENTRY_BYTES + IFD_DIRECTORY_OVERHEAD;
     }
 
     let dataOffset = size;
 
     for(const [, entries] of retained){
         for(const { data } of entries){
-            if(data.length > 4){
+            if(data.length > IFD_INLINE_VALUE_BYTES){
                 size += data.length + data.length % 2;
             }
         }
     }
 
-    // 16ビットのJPEG長さ欄の上限から長さ欄の2バイトとExif識別子の6バイトを引く
+    // 16ビットのJPEG長さ欄の上限から、"長さ"の2バイトと、"Exif識別子"の6バイトを引いた値
     if(size > 65527){
         throw new Error('Rebuilt Exif exceeds the JPEG APP1 size limit.');
     }
@@ -108,8 +103,8 @@ export function rebuildWithoutGps(exif){
     const view = new DataView(tiff.buffer);
 
     view.setUint16(0, (little) ? LITTLE_ENDIAN_BYTE_ORDER : BIG_ENDIAN_BYTE_ORDER);
-    view.setUint16(2, 42, little);
-    view.setUint32(4, offsets.get(PRIMARY), little);
+    view.setUint16(2, TIFF_MAGIC, little);
+    view.setUint32(4, offsets.get(IFD.PRIMARY), little);
 
     for(const [name, entries] of retained){
         let offset = offsets.get(name);
@@ -124,9 +119,9 @@ export function rebuildWithoutGps(exif){
 
             const field = offset + 8;
 
-            if(name === PRIMARY && tag === EXIF_POINTER){
-                view.setUint32(field, offsets.get(SUB_IFD), little);
-            } else if(data.length <= 4){
+            if(name === IFD.PRIMARY && tag === TIFF_TAG.ExifIFDPointer){
+                view.setUint32(field, offsets.get(IFD.EXIF), little);
+            } else if(data.length <= IFD_INLINE_VALUE_BYTES){
                 tiff.set(data, field);
             } else{
                 view.setUint32(field, dataOffset, little);
@@ -134,13 +129,13 @@ export function rebuildWithoutGps(exif){
                 dataOffset += data.length + data.length % 2;
             }
 
-            offset += 12;
+            offset += IFD_ENTRY_BYTES;
         }
     }
 
     const rebuilt = readExif(tiff);
 
-    if(rebuilt.directories.has(GPS) || rebuilt.issues.length) {
+    if(rebuilt.directories.has(IFD.GPS) || rebuilt.issues.length) {
         throw new Error('Rebuilt Exif failed GPS removal verification.');
     }
 
@@ -152,7 +147,7 @@ export function rebuildWithoutGps(exif){
         }
 
         for(const entry of entries){
-            if(name === PRIMARY && entry.tag === EXIF_POINTER) {
+            if(name === IFD.PRIMARY && entry.tag === TIFF_TAG.ExifIFDPointer) {
                 continue;
             }
 
@@ -170,11 +165,12 @@ export function rebuildWithoutGps(exif){
 
     const segment = new Uint8Array(tiff.length + 10);
 
-    // FF E1（APP1）、長さ欄2バイト、"Exif\0\0" の6バイト、続いてTIFF本体。
+    // FF E1 (APP1)、長さ2バイト、"Exif\0\0"の6バイト
     segment.set([0xff, 0xe1, 0, 0, 0x45, 0x78, 0x69, 0x66, 0, 0]);
 
     new DataView(segment.buffer).setUint16(2, segment.length - 2);
 
+    // 続いてTIFF本体
     segment.set(tiff, 10);
 
     return segment;

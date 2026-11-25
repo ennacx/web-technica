@@ -23,9 +23,6 @@
 .jpeg-workspace [hidden] {
   display: none;
 }
-.jpeg-workspace .ifd-tag-list li {
-  font-family: var(--font-mono);
-}
 
 .jpeg-panel {
   border: 1px solid var(--color-border);
@@ -121,10 +118,22 @@
   border-bottom: 0;
 }
 
-.jpeg-workspace .ifd-tag-list li + li {
-  padding-block-start: 4px;
-  margin-block-start: 4px;
+.ifd-tag-list {
+  padding-inline-start: 0;
+  list-style: none;
+}
+.ifd-tag-list li + li {
+  padding-block-start: 12px;
+  margin-block-start: 12px;
   border-top: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+}
+.ifd-tag-list .jpeg-facts {
+  grid-template-columns: min(45%, 10rem) minmax(0, 1fr);
+  margin-block: 4px 0;
+}
+.ifd-tag-list dt:last-of-type,
+.ifd-tag-list dd:last-of-type {
+  grid-column: 1/-1;
 }
 
 .jpeg-table {

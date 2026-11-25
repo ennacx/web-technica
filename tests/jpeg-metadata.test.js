@@ -1,7 +1,8 @@
 ﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MAX_FILE_BYTES, parseJpeg } from '../src/tools/jpeg-metadata/js/jpeg-parser.js';
-import { inspectJpeg, readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
+import { EXIF_TAG, IFD, IFD_TYPE } from '../src/tools/jpeg-metadata/js/exif-constants.js';
+import { inspectJpeg, previewExifEntry, readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
 import { cleanedFilename, cleanJpeg } from '../src/tools/jpeg-metadata/js/jpeg-cleaner.js';
 
 const ascii = (value) => Buffer.from(value, 'ascii');
@@ -75,6 +76,83 @@ function exifFixture(little, { gps = true, extraTag = 0, orientation = 6, displa
 const app1 = (tiff) => marker(0xe1, Buffer.concat([ascii('Exif\0\0'), tiff]));
 const inspect = (bytes) => inspectJpeg(bytes, parseJpeg(bytes));
 const scanBytes = (bytes) => parseJpeg(bytes).scans.map(({ offset, end }) => Buffer.from(bytes.subarray(offset, end)));
+
+test('maps standard shooting tags by directory and type and preserves unknown numeric values', () => {
+    const tiff = Buffer.concat([exifFixture(false), Buffer.alloc(160)]);
+    tiff.fill(0, 64, 96);
+    tiff.writeUInt32BE(200, 42);
+    const shorts = [
+        [0x8822, 3], [0x9207, 255], [0x9209, 0x5f], [0xa402, 2], [0xa403, 99], [0xa001, 1]
+    ];
+    tiff.writeUInt16BE(shorts.length + 1, 200);
+    shorts.forEach(([tag, value], index) => {
+        const offset = 202 + 12 * index;
+        tiff.writeUInt16BE(tag, offset);
+        tiff.writeUInt16BE(3, offset + 2);
+        tiff.writeUInt32BE(1, offset + 4);
+        tiff.writeUInt16BE(value, offset + 8);
+    });
+    tiff.writeUInt16BE(0xa432, 274);
+    tiff.writeUInt16BE(5, 276);
+    tiff.writeUInt32BE(4, 278);
+    tiff.writeUInt32BE(302, 282);
+    [16, 1, 55, 1, 28, 10, 28, 10].forEach((value, i) => tiff.writeUInt32BE(value, 302 + 4 * i));
+
+    const exif = readExif(tiff);
+    const number = new Intl.NumberFormat();
+    assert.deepEqual(exif.fields.filter(({ source }) => source === IFD.EXIF).map(({ value }) => value), [
+        'Aperture priority', 'Other', 'Fired · Auto · Return light detected · Red-eye reduction',
+        'Auto bracket', '99', `${number.format(16)}–${number.format(55)} mm, f/${number.format(2.8)}`
+    ]);
+    const colorSpace = exif.directories.get(IFD.EXIF).get(EXIF_TAG.ColorSpace);
+    assert.equal(previewExifEntry(colorSpace, false, IFD.EXIF).value, 'sRGB');
+    assert.equal(previewExifEntry(colorSpace, false, IFD.PRIMARY).value, '1');
+    assert.equal(previewExifEntry({ ...colorSpace, type: IFD_TYPE.BYTE, data: Uint8Array.of(1) }, false, IFD.EXIF).value, '1');
+
+    tiff.writeUInt16BE(0x80, 234);
+    assert.equal(readExif(tiff).fields.find(({ label }) => label === 'Flash').value, '128');
+});
+
+test('displays standard Exif exposure compensation as signed EV', () => {
+    const formatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, signDisplay: 'exceptZero' });
+
+    for(const little of [true, false]){
+        const tiff = exifFixture(little);
+        const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
+        view.setUint16(66, 0x9204, little);
+        view.setUint16(68, 10, little);
+
+        for(const [numerator, denominator] of [[-2, 3], [1, 1], [0, 1], [1, 0]]){
+            view.setInt32(156, numerator, little);
+            view.setInt32(160, denominator, little);
+            const { fields, otherTags } = readExif(tiff);
+            assert.equal(fields.find(({ label }) => label === 'Exposure compensation').value,
+                denominator ? `${formatter.format(numerator / denominator)} EV` : '1/0');
+            assert.equal(otherTags.some(({ tag }) => tag === 0x9204), false);
+        }
+    }
+});
+
+test('previews unlabelled Exif values with TIFF-relative offsets and bounded binary output', () => {
+    const tiff = Buffer.concat([exifFixture(false, { extraTag: 0x927c }), Buffer.alloc(33)]);
+    tiff.writeUInt16BE(7, 80);
+    tiff.writeUInt32BE(33, 82);
+    tiff.writeUInt32BE(200, 86);
+    tiff.set([0x41, 0x42, 0x00, 0xff], 200);
+    tiff[232] = 0x5a;
+
+    const { directories, little } = readExif(tiff);
+    const makerNote = directories.get('Exif SubIFD').get(0x927c);
+    assert.equal(makerNote.dataOffset, 200);
+    assert.equal(makerNote.data.length, 33);
+    assert.deepEqual(previewExifEntry(makerNote, little), {
+        typeName: 'UNDEFINED',
+        value: `41 42 00 FF${' 00'.repeat(28)} │ AB${'.'.repeat(30)} …`
+    });
+    const inline = directories.get('IFD0').get(0x0112);
+    assert.equal(inline.dataOffset, 30);
+    assert.deepEqual(previewExifEntry(inline, little), { typeName: 'SHORT', value: '6' });
+});
 
 test('formats Exif date and focal lengths and preserves the equivalent focal length during GPS cleanup', () => {
     const date = '2025:03:09 02:30:06';
@@ -251,6 +329,13 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         const originalPreview = preview.src;
         assert.equal(get('inspect').hidden, false);
         assert.ok(get('exif-fields').children.some((entry) => entry.textContent === '<img src=x>Cam'));
+        const pointer = get('tag-list').children.find((entry) => entry.children[0].textContent === '0x8769 · IFD0 · ExifIFDPointer');
+        assert.deepEqual(pointer.children[1].children.map((entry) => entry.textContent), [
+            'Type and size', 'LONG × 1 · 4 B',
+            'JPEG APP1 offset', String(parseJpeg(input).segments.find(({ kind }) => kind === 'Exif').offset),
+            'TIFF value offset', '42',
+            'Value', '64'
+        ]);
         assert.match(get('orientation').textContent, /rotate or mirror/);
         await get('clean').fire('click');
         assert.equal(get('download').hidden, false);

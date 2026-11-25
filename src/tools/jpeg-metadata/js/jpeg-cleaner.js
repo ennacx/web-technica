@@ -2,6 +2,7 @@
  * JPEGのメタデータ削除、Exif GPS削除、出力検証を担当するライブラリ。
  */
 
+import { IFD } from './exif-constants.js';
 import { parseJpeg } from './jpeg-parser.js';
 import { inspectJpeg } from './exif-reader.js';
 import { rebuildWithoutGps } from './gps-cleaner.js';
@@ -200,7 +201,7 @@ export function cleanJpeg(bytes, mode){
     if(mode === 'location'){
         const [inspection] = inspectJpeg(result, after);
 
-        if(outputMetadata.length !== 1 || !inspection?.exif || inspection.exif.directories.has('GPS IFD')){
+        if(outputMetadata.length !== 1 || !inspection?.exif || inspection.exif.directories.has(IFD.GPS)){
             throw new Error('Cleaned JPEG failed Exif GPS verification.');
         }
     }
