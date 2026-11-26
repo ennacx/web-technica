@@ -3,7 +3,7 @@ import { downloadBlob } from '#utils/download.js';
 import { IFD, TIFF_TAG, EXIF_TAG, TAG_NAMES } from './exif-constants.js';
 import { MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg } from './jpeg-parser.js';
 import { previewExifEntry } from './exif-formatter.js';
-import { inspectJpeg, getExifThumbnail } from './exif-inspector.js';
+import { createExifDisplayModel, inspectJpeg, getExifThumbnail } from './exif-inspector.js';
 import { cleanedFilename, cleanJpeg, orientationWarning } from './jpeg-cleaner.js';
 
 // 表示上限数
@@ -155,7 +155,10 @@ function renderInspection(jpeg, inspections){
             notes.push(`Exif at byte ${segment.offset}: ${exif.issues.join(', ')}.`);
         }
 
-        for(const { source, label, value } of exif.fields){
+        const display = createExifDisplayModel(exif);
+
+        // 定義済みタグ
+        for(const { source, label, value } of display.fields){
             const target = (source === IFD.GPS) ? coordinates : fields;
 
             if(target.length < LIST_VIEW_LIMIT){
@@ -163,7 +166,8 @@ function renderInspection(jpeg, inspections){
             }
         }
 
-        for(const { source, tag } of exif.otherTags){
+        // 未定義タグ
+        for(const { source, tag } of display.otherTags){
             if(rawTags.length >= LIST_VIEW_LIMIT){
                 break;
             }
@@ -191,6 +195,7 @@ function renderInspection(jpeg, inspections){
         }
     }
 
+    // サマリー
     const summary = [
         (inspections.length) ? `${inspections.length} Exif segment(s).` : 'No Exif segments.',
         (gpsCount) ? `GPS directory found in ${gpsCount} segment(s).` : ((incomplete) ? 'GPS presence could not be determined.' : 'No Exif GPS directory detected.'),
@@ -212,10 +217,11 @@ function renderInspection(jpeg, inspections){
 
     const rows = document.createDocumentFragment();
 
+    // セグメント
     for(const { name, offset, end, kind } of jpeg.segments){
         const row = document.createElement('tr');
 
-        for(const value of [name, String(offset), String(end - offset), kind || '—']){
+        for(const value of [name, String(offset), String(end - offset), kind || "—"]){
             row.append(node('td', value));
         }
 

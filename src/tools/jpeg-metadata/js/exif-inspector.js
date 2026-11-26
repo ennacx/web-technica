@@ -1,8 +1,41 @@
 /**
- * JPEGのExif APP1を読み取り、セグメントごとの結果をまとめる。
+ * JPEGのExif APP1を読み取り、Inspectの表示モデルを組み立てる。
  */
 
 import { readExif } from './exif-reader.js';
+import { EXIF_DEFINITIONS } from './exif-definitions.js';
+import { formatExifEntry } from './exif-formatter.js';
+
+/**
+ * @typedef {object} ExifDisplayModel
+ * @property {{source: string, label: string, value: string}[]} fields - 主要項目とGPS欄に表示する値。
+ * @property {{source: string, tag: number}[]} otherTags - 詳細一覧に表示するタグのIFD名とID。
+ */
+
+/**
+ * 読み取り済みのIFDを、表示名のある項目と詳細一覧に振り分ける。
+ *
+ * @param {import('./exif-reader.js').ExifData} exif - Exif APP1の解析結果。
+ * @returns {ExifDisplayModel} 書き換えや削除とは独立した表示用データ。
+ */
+export function createExifDisplayModel(exif){
+    const fields    = [];
+    const otherTags = [];
+
+    for(const [source, entries] of exif.directories){
+        for(const entry of entries.values()){
+            const label = EXIF_DEFINITIONS[source]?.[entry.tag]?.label;
+
+            if(label){
+                fields.push({ source, label, value: formatExifEntry(source, entry, exif.little) });
+            } else{
+                otherTags.push({ source, tag: entry.tag });
+            }
+        }
+    }
+
+    return { fields, otherTags };
+}
 
 /**
  * Exif APP1ごとの読み取り結果。失敗時は元のセグメントとエラー文を保持する。

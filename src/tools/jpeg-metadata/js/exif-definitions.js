@@ -2,7 +2,7 @@
 import {
     IFD, IFD_TYPE,
     EXIF_TAG, GPS_TAG, TIFF_TAG,
-    FLASH_BITS, FLASH_MODES, FLASH_RETURN
+    FLASH_BITS
 } from './exif-constants.js';
 
 /** 解像度の範囲 */
@@ -12,9 +12,15 @@ const resolutionUnits = Object.freeze({
 });
 
 /** SHORT型を1要素持つタグの列挙値。 */
-export const SHORT_VALUES = Object.freeze({
+const SHORT_VALUES = Object.freeze({
     [IFD.PRIMARY]: {
-        [TIFF_TAG.ResolutionUnit]: resolutionUnits
+        [TIFF_TAG.ResolutionUnit]: resolutionUnits,
+        [TIFF_TAG.Orientation]: {
+            1: 'Normal',
+            3: 'Rotate 180°',
+            6: 'Rotate 90° CW',
+            8: 'Rotate 270° CW',
+        },
     },
     [IFD.THUMBNAIL]: {
         [TIFF_TAG.Compression]: {
@@ -87,6 +93,19 @@ export const SHORT_VALUES = Object.freeze({
         [EXIF_TAG.Sharpness]: ['Normal', 'Soft', 'Hard']
     }
 });
+
+const FLASH_MODES = [
+    null,
+    'Forced on',
+    'Forced off',
+    'Auto'
+];
+const FLASH_RETURN = [
+    null,
+    null,
+    'Return light not detected',
+    'Return light detected'
+];
 
 /**
  * Exifに記録された日付と時刻を維持し、ブラウザーのロケールで整形する。
@@ -272,7 +291,8 @@ function shortDefinitions(source){
  */
 function formatQuotient(format){
     return (value) => {
-        const fraction = value.kind === 'numeric' ? value.values[0] : undefined;
+        const fraction = (value.kind === 'numeric') ? value.values[0] : undefined;
+
         return (fraction && typeof fraction === 'object' && fraction.denominator) ?
             format(fraction.numerator / fraction.denominator) :
             undefined;
@@ -294,9 +314,7 @@ export const EXIF_DEFINITIONS = Object.freeze({
         [TIFF_TAG.Model]: {
             label: 'Camera model',
         },
-        [TIFF_TAG.Orientation]: {
-            label: 'Orientation',
-        },
+        [TIFF_TAG.Orientation]: shortChoice(IFD.PRIMARY, TIFF_TAG.Orientation, 'Orientation'),
         [TIFF_TAG.Software]: {
             label: 'Software',
         },

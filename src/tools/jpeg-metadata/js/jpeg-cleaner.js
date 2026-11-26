@@ -2,7 +2,8 @@
  * JPEGのメタデータ削除、Exif GPS削除、出力検証を担当するライブラリ。
  */
 
-import { IFD } from './exif-constants.js';
+import { IFD, IFD_TYPE, TIFF_TAG } from './exif-constants.js';
+import { decode as exifDecode } from './exif-decoder.js';
 import { parseJpeg } from './jpeg-parser.js';
 import { inspectJpeg } from './exif-inspector.js';
 import { rebuildWithoutGps } from './gps-cleaner.js';
@@ -36,10 +37,33 @@ const REMOVE_KINDS = new Set(['Exif', 'XMP', 'Extended XMP', 'Photoshop / IPTC',
  * @returns {string} Orientationの削除やExifの解析結果に基づく注意文。注意がなければ空文字列。
  */
 export function orientationWarning(inspections){
-    if(inspections.some(({ exif }) => exif?.fields.some(({ label, value }) => (label === 'Orientation' && value !== '1')))){
-        return 'Removing Exif Orientation may rotate or mirror the displayed image.';
+    let ambiguous = false;
+
+    for(const { exif, error } of inspections){
+        ambiguous ||= (error !== undefined || Boolean(exif?.issues.length));
+
+        const entry = exif?.directories.get(IFD.PRIMARY)?.get(TIFF_TAG.Orientation);
+
+        if(!entry){
+            continue;
+        }
+
+        if(entry.type !== IFD_TYPE.SHORT || entry.count !== 1){
+            ambiguous = true;
+            continue;
+        }
+
+        const decoded = exifDecode(entry, exif.little);
+        const value   = (decoded.kind === 'numeric') ? decoded.values[0] : undefined;
+
+        if(typeof value !== 'number' || value < 1 || value > 8){
+            ambiguous = true;
+        } else if(value !== 1){
+            return 'Removing Exif Orientation may rotate or mirror the displayed image.';
+        }
     }
-    if(inspections.some(({ error, exif }) => (error || exif.issues.length))){
+
+    if(ambiguous){
         return 'Some Exif data is malformed or ambiguous. Check the displayed image orientation after removing metadata.';
     }
 
@@ -73,7 +97,7 @@ function safeLocationContainer(bytes, segment){
 }
 
 /**
- * 2つのバイト列を長さと各位置の値で比較する。
+ * 2つのバイト列を長さと各位置のバイト値で比較する。
  *
  * @param {Uint8Array} left - 比較する一方のバイト列。
  * @param {Uint8Array} right - 比較するもう一方のバイト列。

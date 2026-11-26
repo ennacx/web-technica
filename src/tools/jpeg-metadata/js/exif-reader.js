@@ -11,8 +11,6 @@ import {
     TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES,
     LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER
 } from './exif-constants.js';
-import { EXIF_DEFINITIONS } from './exif-definitions.js';
-import { formatExifEntry } from './exif-formatter.js';
 
 /**
  * @typedef {object} ExifEntry
@@ -24,18 +22,9 @@ import { formatExifEntry } from './exif-formatter.js';
  */
 
 /**
- * @typedef {object} ExifField
- * @property {string} source - 値を読み取ったIFD名。
- * @property {string} label - 項目の表示名。
- * @property {string} value - 表示用に変換した値。
- */
-
-/**
  * @typedef {object} ExifData
  * @property {boolean} little - TIFFがリトルエンディアンなら `true`。
  * @property {Map<string, Map<number, ExifEntry>>} directories - IFD名ごとのエントリ。内側のキーはタグID。
- * @property {ExifField[]} fields - 表示名が定義されている項目。
- * @property {{source: string, tag: number}[]} otherTags - 詳細一覧に表示するタグのIFD名とID。
  * @property {string[]} issues - 範囲の重複など、読み取れたがGPS削除時の再構築を妨げる問題。
  * @property {Uint8Array | null} thumbnail - IFD1の参照範囲とJPEGの開始・終了マーカーを確認した候補。入力とメモリを共有し、復号は行わない。候補がなければ `null`。
  */
@@ -45,7 +34,7 @@ import { formatExifEntry } from './exif-formatter.js';
  * 領域の重複、値のパディングや未参照領域にある非ゼロバイトは `issues` に記録する。
  *
  * @param {Uint8Array} tiff - Exif識別子の直後から始まるTIFFデータ。オフセットの基準はこのビューの先頭。
- * @returns {ExifData} エントリ、表示用の値、再構築時に問題となる箇所、埋め込みJPEGの候補。
+ * @returns {ExifData} IFDごとの生エントリ、再構築時の問題、埋め込みJPEGの候補。
  * @throws {Error} ヘッダや参照範囲が不正、IFD参照が重複・循環、制限超過、または未対応の型や構造がある場合。
  */
 export function readExif(tiff){
@@ -248,27 +237,9 @@ export function readExif(tiff){
         issues.add('unreferenced TIFF data');
     }
 
-    const fields    = [];
-    const otherTags = [];
-
-    for(const [source, entries] of directories){
-        for(const entry of entries.values()){
-            const label = EXIF_DEFINITIONS[source]?.[entry.tag]?.label;
-
-            if(label){
-                fields.push({
-                    source,
-                    label,
-                    value: formatExifEntry(source, entry, little)
-                });
-            } else{
-                otherTags.push({source, tag: entry.tag});
-            }
-        }
-    }
-
     return {
-        little, directories, fields, otherTags,
+        little,
+        directories,
         issues: [...issues],
         thumbnail: thumbnailJpeg
     };

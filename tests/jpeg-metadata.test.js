@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { MAX_FILE_BYTES, parseJpeg } from '../src/tools/jpeg-metadata/js/jpeg-parser.js';
 import { EXIF_TAG, IFD, IFD_TYPE } from '../src/tools/jpeg-metadata/js/exif-constants.js';
-import { getExifThumbnail, inspectJpeg } from '../src/tools/jpeg-metadata/js/exif-inspector.js';
+import { createExifDisplayModel, getExifThumbnail, inspectJpeg } from '../src/tools/jpeg-metadata/js/exif-inspector.js';
 import { decode } from '../src/tools/jpeg-metadata/js/exif-decoder.js';
 import { previewExifEntry } from '../src/tools/jpeg-metadata/js/exif-formatter.js';
 import { readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
@@ -80,6 +80,21 @@ const app1 = (tiff) => marker(0xe1, Buffer.concat([ascii('Exif\0\0'), tiff]));
 const inspect = (bytes) => inspectJpeg(bytes, parseJpeg(bytes));
 const scanBytes = (bytes) => parseJpeg(bytes).scans.map(({ offset, end }) => Buffer.from(bytes.subarray(offset, end)));
 
+test('distinguishes rotation and reflection from invalid Exif Orientation', () => {
+    const warning = (tiff) => cleanJpeg(jpeg([app1(tiff)]), 'metadata').warning;
+    for(const [orientation, expected] of [[1, 'Normal'], [3, 'Rotate 180°'], [6, 'Rotate 90° CW'], [8, 'Rotate 270° CW'], [9, '9']]){
+        const exif = readExif(exifFixture(true, { orientation }));
+        const { fields } = createExifDisplayModel(exif);
+        assert.equal(fields.find(({ label }) => label === 'Orientation').value, expected);
+    }
+    assert.equal(warning(exifFixture(false, { orientation: 1 })), '');
+    assert.match(warning(exifFixture(false, { orientation: 8 })), /rotate or mirror/);
+    assert.match(warning(exifFixture(true, { orientation: 9 })), /malformed or ambiguous/);
+    const wrongType = exifFixture(true, { orientation: 1 });
+    wrongType.writeUInt16LE(4, 24);
+    assert.match(warning(wrongType), /malformed or ambiguous/);
+});
+
 function exifWithThumbnail(thumbnail){
     const tiff = Buffer.concat([exifFixture(true), Buffer.alloc(30), thumbnail]);
     tiff.writeUInt32LE(200, 58);
@@ -131,8 +146,10 @@ test('maps standard shooting tags by directory and type and preserves unknown nu
     [16, 1, 55, 1, 28, 10, 28, 10].forEach((value, i) => tiff.writeUInt32BE(value, 302 + 4 * i));
 
     const exif = readExif(tiff);
+    assert.equal(Object.hasOwn(exif, 'fields'), false);
+    assert.equal(Object.hasOwn(exif, 'otherTags'), false);
     const number = new Intl.NumberFormat();
-    assert.deepEqual(exif.fields.filter(({ source }) => source === IFD.EXIF).map(({ value }) => value), [
+    assert.deepEqual(createExifDisplayModel(exif).fields.filter(({ source }) => source === IFD.EXIF).map(({ value }) => value), [
         'Aperture priority', 'Other', 'Fired · Auto · Return light detected · Red-eye reduction',
         'Auto bracket', '99', `${number.format(16)}–${number.format(55)} mm, f/${number.format(2.8)}`
     ]);
@@ -142,7 +159,7 @@ test('maps standard shooting tags by directory and type and preserves unknown nu
     assert.equal(previewExifEntry({ ...colorSpace, type: IFD_TYPE.BYTE, data: Uint8Array.of(1) }, false, IFD.EXIF).value, '1');
 
     tiff.writeUInt16BE(0x80, 234);
-    assert.equal(readExif(tiff).fields.find(({ label }) => label === 'Flash').value, '128');
+    assert.equal(createExifDisplayModel(readExif(tiff)).fields.find(({ label }) => label === 'Flash').value, '128');
 });
 
 test('displays standard Exif exposure compensation as signed EV', () => {
@@ -157,8 +174,9 @@ test('displays standard Exif exposure compensation as signed EV', () => {
         for(const [numerator, denominator] of [[-2, 3], [1, 1], [0, 1], [1, 0]]){
             view.setInt32(156, numerator, little);
             view.setInt32(160, denominator, little);
-            const { directories, fields, otherTags } = readExif(tiff);
-            const entry = directories.get(IFD.EXIF).get(EXIF_TAG.ExposureBiasValue);
+            const exif = readExif(tiff);
+            const { fields, otherTags } = createExifDisplayModel(exif);
+            const entry = exif.directories.get(IFD.EXIF).get(EXIF_TAG.ExposureBiasValue);
             assert.deepEqual(decode(entry, little), {
                 kind: 'numeric', values: [{ numerator, denominator }], truncated: false
             });
@@ -172,7 +190,7 @@ test('displays standard Exif exposure compensation as signed EV', () => {
         view.setUint32(156, 28, little);
         view.setUint32(160, 10, little);
         const aperture = new Intl.NumberFormat().format(2.8);
-        assert.equal(readExif(tiff).fields.find(({ label }) => label === 'F-number').value, `f/${aperture}`);
+        assert.equal(createExifDisplayModel(readExif(tiff)).fields.find(({ label }) => label === 'F-number').value, `f/${aperture}`);
     }
 });
 
@@ -202,7 +220,7 @@ test('formats Exif date and focal lengths and preserves the equivalent focal len
     const expectedDate = new Intl.DateTimeFormat(undefined, {
         dateStyle: 'medium', timeStyle: 'medium', timeZone: 'UTC'
     }).format(new Date('2025-03-09T02:30:06Z'));
-    const fields = ({ fields }) => Object.fromEntries(fields.map(({ label, value }) => [label, value]));
+    const fields = (exif) => Object.fromEntries(createExifDisplayModel(exif).fields.map(({ label, value }) => [label, value]));
     for(const little of [true, false]){
         const tiff = exifFixture(little, { displayValues: { date } });
         const values = fields(readExif(tiff));
@@ -227,12 +245,13 @@ for(const little of [true, false]){
         const input = jpeg([app1(tiff), adobe], true);
         const source = Buffer.from(input);
         const [{ exif }] = inspect(input);
-        assert.deepEqual(exif.fields.map(({ value }) => value), ['<img src=x>Cam', '6', '1/125', 'N', '37/1, 14/1, 72345/1000']);
+        const { fields } = createExifDisplayModel(exif);
+        assert.deepEqual(fields.map(({ value }) => value), ['<img src=x>Cam', 'Rotate 90° CW', '1/125', 'N', '37/1, 14/1, 72345/1000']);
         const { bytes, removed, retained, warning } = cleanJpeg(input, 'location');
         const [after] = inspect(bytes);
         assert.equal(after.exif.little, little);
         assert.equal(after.exif.directories.has('GPS IFD'), false);
-        assert.deepEqual(after.exif.fields, exif.fields.filter(({ source }) => source !== 'GPS IFD'));
+        assert.deepEqual(createExifDisplayModel(after.exif).fields, fields.filter(({ source }) => source !== IFD.GPS));
         assert.equal(Buffer.from(bytes).includes(tiff.subarray(168, 192)), false);
         assert.deepEqual(scanBytes(bytes), scanBytes(input));
         assert.deepEqual(input, source);

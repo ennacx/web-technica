@@ -1,7 +1,7 @@
 /** デコード済みのExif値をタグ定義または汎用形式で表示する。 */
 
 import { TYPE_NAMES } from './exif-constants.js';
-import { decode } from './exif-decoder.js';
+import { decode as exifDecode } from './exif-decoder.js';
 import { EXIF_DEFINITIONS } from './exif-definitions.js';
 
 const BINARY_PREVIEW_BYTES = 32;
@@ -16,7 +16,7 @@ const DISPLAY_LIMITS = { maxTextBytes: 512, maxElements: 12 };
  * @returns {string} 項目固有の表示値。変換できない値は型に応じて汎用表示する。
  */
 export function formatExifEntry(source, entry, little){
-    const decoded    = decode(entry, little, DISPLAY_LIMITS);
+    const decoded    = exifDecode(entry, little, DISPLAY_LIMITS);
     const definition = EXIF_DEFINITIONS[source]?.[entry.tag];
 
     if(

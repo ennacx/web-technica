@@ -38,7 +38,7 @@ export const BIG_ENDIAN_BYTE_ORDER    = 0x4d4d;
  *
  * @type {number[]}
  */
-export const TYPE_BYTES = [0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 4];
+export const TYPE_BYTES = [0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8];
 export const TYPE_NAMES = new Map(Object.entries(IFD_TYPE).map(([name, type]) => [type, name]));
 export const TIFF_MAGIC = 42;
 export const TIFF_HEADER_BYTES = 8;
@@ -145,5 +145,3 @@ export const FLASH_BITS = Object.freeze({
     RED_EYE: 0x40,
     RESERVED_MASK: 0xff80
 });
-export const FLASH_MODES = [null, 'Forced on', 'Forced off', 'Auto'];
-export const FLASH_RETURN = [null, null, 'Return light not detected', 'Return light detected'];
