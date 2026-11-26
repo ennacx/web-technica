@@ -113,18 +113,17 @@ export function readExif(tiff){
         // ペイロード範囲内か確認
         check(start, size);
 
+        // 終了位置
         const end = start + size;
 
-        let overlap = false;
+        // データが他とオーバーラップしているか調査し、あればissueに登録する
         for(const range of ranges){
+            // 重複しないのが正常なので次のループへ
             if(range.start >= end || start >= range.end){
-                overlap = true;
-                break;
+                continue;
             }
-        }
 
-        if(overlap){
-            recordIssue('overlapping TIFF ranges', Math.max(start, overlap.start), Math.min(end, overlap.end));
+            recordIssue('overlapping TIFF ranges', Math.max(start, range.start), Math.min(end, range.end));
         }
 
         ranges.push({ start, end });

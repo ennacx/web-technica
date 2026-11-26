@@ -81,6 +81,9 @@ export function decode(entry, little, { maxTextBytes = Infinity, maxElements = I
             case IFD_TYPE.DOUBLE:
                 values.push(view.getFloat64(offset, little));
                 break;
+            case IFD_TYPE.IFD:
+                values.push(view.getUint32(offset, little));
+                break;
 
             default:
                 return {
