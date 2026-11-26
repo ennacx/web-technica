@@ -1,33 +1,48 @@
 /**
- * TIFF / IFDのバイトデータをデコードする。
+ * 解析済みのTIFFタグ値を型に応じてデコードする。
  *
  * CIPA DC-X008-2019 日本語版 §4.6.2〜4.6.6 (IFD構造・タグ・型), §4.7.2 (APP1)
  * @see https://www.cipa.jp/std/documents/j/DC-X008-2019-J.pdf
  * @see https://printtechnologies.org/standards/files/tiff-v6.pdf
  */
 
-import { IFD_TYPE, TYPE_BYTES } from "./exif-constants.js";
-
+import { IFD_TYPE, TYPE_BYTES } from './exif-constants.js';
 
 /**
- * タグの値を表示用の文字列に変換する。
- *
- * @param {ExifEntry} entry - 解析済みタグ。
- * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
- * @returns {string} ASCIIは先頭512バイト、数値は先頭12要素までの表示文字列。
+ * @typedef {{numerator: number, denominator: number}} ExifRational
  */
-export function decode(entry, little){
+
+/**
+ * @typedef {(
+ *   {kind: 'text', text: string, truncated: boolean}
+ *   | {kind: 'numeric', values: (number | ExifRational)[], truncated: boolean}
+ *   | {kind: 'binary', bytes: Uint8Array}
+ * )} DecodedExifValue
+ */
+
+/**
+ * TIFF値を文字列・数値・分数・バイト列として読み出す。
+ *
+ * ASCII型はUTF-8で読み、NULを保持する。分数は分母が0でも分子と分母をそのまま保持する。
+ *
+ * @param {import('./exif-reader.js').ExifEntry} entry - 解析済みタグ。
+ * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
+ * @param {{maxTextBytes?: number, maxElements?: number}} [limits] - 文字列の最大バイト数と数値・分数の最大要素数。省略すると全体を読む。
+ * @returns {DecodedExifValue} 型に応じてデコードした値。バイナリ型は元のビューを返す。
+ */
+export function decode(entry, little, { maxTextBytes = Infinity, maxElements = Infinity } = {}){
     const { data, type, count } = entry;
 
     if(type === IFD_TYPE.ASCII){
-        return new TextDecoder().decode(data.subarray(0, 512)).replace(/\0+$/, '').replaceAll('\0', ' / ')
-            + ((count > 512) ? '…' : '');
+        const bytes = data.subarray(0, Math.min(data.length, maxTextBytes));
+        return { kind: 'text', text: new TextDecoder().decode(bytes), truncated: bytes.length < data.length };
     }
 
     const view   = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    /** @type {(number | ExifRational)[]} */
     const values = [];
 
-    for(let i = 0; i < Math.min(count, 12); i++){
+    for(let i = 0; i < Math.min(count, maxElements); i++){
         const offset = i * TYPE_BYTES[type];
 
         switch(type){
@@ -41,7 +56,7 @@ export function decode(entry, little){
                 values.push(view.getUint32(offset, little));
                 break;
             case IFD_TYPE.RATIONAL:
-                values.push(`${view.getUint32(offset, little)}/${view.getUint32(offset + 4, little)}`);
+                values.push({ numerator: view.getUint32(offset, little), denominator: view.getUint32(offset + 4, little) });
                 break;
             case IFD_TYPE.SBYTE:
                 values.push(view.getInt8(offset));
@@ -53,7 +68,7 @@ export function decode(entry, little){
                 values.push(view.getInt32(offset, little));
                 break;
             case IFD_TYPE.SRATIONAL:
-                values.push(`${view.getInt32(offset, little)}/${view.getInt32(offset + 4, little)}`);
+                values.push({ numerator: view.getInt32(offset, little), denominator: view.getInt32(offset + 4, little) });
                 break;
             case IFD_TYPE.FLOAT:
                 values.push(view.getFloat32(offset, little));
@@ -63,9 +78,9 @@ export function decode(entry, little){
                 break;
 
             default:
-                return `Unsupported value type ${type} (${count} elements)`;
+                return { kind: 'binary', bytes: data };
         }
     }
 
-    return values.join(', ') + ((count > 12) ? ', …' : '');
+    return { kind: 'numeric', values, truncated: values.length < count };
 }

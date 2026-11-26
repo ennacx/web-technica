@@ -97,7 +97,7 @@ function startsWith(data, prefix){
  * @returns {string} ペイロードの分類名。識別できないAPPは `Unknown APP payload`、分類対象外の非APPは空文字列。
  */
 function identify(marker, data){
-    if(marker === 0xfe) {
+    if(marker === 0xfe){
         return 'Comment';
     }
     if(marker === 0xe0 && startsWith(data, 'JFIF\0')){
@@ -185,7 +185,7 @@ function scanEnd(bytes, start){
 
         const marker = bytes[position++];
 
-        if(marker === 0x00 || (marker >= 0xd0 && marker <= 0xd7)) {
+        if(marker === 0x00 || (marker >= 0xd0 && marker <= 0xd7)){
             continue;
         }
 

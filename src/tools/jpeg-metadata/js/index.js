@@ -2,7 +2,7 @@
 import { downloadBlob } from '#utils/download.js';
 import { IFD, TIFF_TAG, EXIF_TAG, TAG_NAMES } from './exif-constants.js';
 import { MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg } from './jpeg-parser.js';
-import { previewExifEntry } from './exif-reader.js';
+import { previewExifEntry } from './exif-formatter.js';
 import { inspectJpeg, getExifThumbnail } from './exif-inspector.js';
 import { cleanedFilename, cleanJpeg, orientationWarning } from './jpeg-cleaner.js';
 
@@ -50,7 +50,7 @@ function clearPreview(){
  * Exifサムネイルを優先し、復号できなければ元JPEGを表示する。
  *
  * @param {File} file - 選択したJPEG。
- * @param {import('./exif-reader.js').ExifInspection[]} inspections - 解析済みのExif APP1。
+ * @param {import('./exif-inspector.js').ExifInspection[]} inspections - Exif APP1ごとの解析結果。
  * @param {number} current - 選択時のリビジョン。
  * @returns {Promise<void>}
  */

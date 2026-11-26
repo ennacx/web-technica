@@ -32,7 +32,7 @@ const REMOVE_KINDS = new Set(['Exif', 'XMP', 'Extended XMP', 'Photoshop / IPTC',
 /**
  * Exif削除に伴う表示の向きへの影響を案内する。
  *
- * @param {import('./exif-reader.js').ExifInspection[]} inspections - JPEG内のExif APP1ごとの読み取り結果。
+ * @param {import('./exif-inspector.js').ExifInspection[]} inspections - JPEG内のExif APP1ごとの読み取り結果。
  * @returns {string} Orientationの削除やExifの解析結果に基づく注意文。注意がなければ空文字列。
  */
 export function orientationWarning(inspections){

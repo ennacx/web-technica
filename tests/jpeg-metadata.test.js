@@ -2,7 +2,10 @@
 import assert from 'node:assert/strict';
 import { MAX_FILE_BYTES, parseJpeg } from '../src/tools/jpeg-metadata/js/jpeg-parser.js';
 import { EXIF_TAG, IFD, IFD_TYPE } from '../src/tools/jpeg-metadata/js/exif-constants.js';
-import { getExifThumbnail, inspectJpeg, previewExifEntry, readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
+import { getExifThumbnail, inspectJpeg } from '../src/tools/jpeg-metadata/js/exif-inspector.js';
+import { decode } from '../src/tools/jpeg-metadata/js/exif-decoder.js';
+import { previewExifEntry } from '../src/tools/jpeg-metadata/js/exif-formatter.js';
+import { readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
 import { cleanedFilename, cleanJpeg } from '../src/tools/jpeg-metadata/js/jpeg-cleaner.js';
 
 const ascii = (value) => Buffer.from(value, 'ascii');
@@ -154,11 +157,22 @@ test('displays standard Exif exposure compensation as signed EV', () => {
         for(const [numerator, denominator] of [[-2, 3], [1, 1], [0, 1], [1, 0]]){
             view.setInt32(156, numerator, little);
             view.setInt32(160, denominator, little);
-            const { fields, otherTags } = readExif(tiff);
+            const { directories, fields, otherTags } = readExif(tiff);
+            const entry = directories.get(IFD.EXIF).get(EXIF_TAG.ExposureBiasValue);
+            assert.deepEqual(decode(entry, little), {
+                kind: 'numeric', values: [{ numerator, denominator }], truncated: false
+            });
             assert.equal(fields.find(({ label }) => label === 'Exposure compensation').value,
                 denominator ? `${formatter.format(numerator / denominator)} EV` : '1/0');
             assert.equal(otherTags.some(({ tag }) => tag === 0x9204), false);
         }
+
+        view.setUint16(66, 0x829d, little);
+        view.setUint16(68, 5, little);
+        view.setUint32(156, 28, little);
+        view.setUint32(160, 10, little);
+        const aperture = new Intl.NumberFormat().format(2.8);
+        assert.equal(readExif(tiff).fields.find(({ label }) => label === 'F-number').value, `f/${aperture}`);
     }
 });
 

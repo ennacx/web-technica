@@ -84,7 +84,7 @@ const GPS_TYPES = [
  * ASCIIタグと4バイトのバージョンタグのほか、許可リストにある単一値を対象とする。
  *
  * @param {string} directory - IFD名。
- * @param {Pick<ExifEntry, 'tag' | 'type' | 'count'>} entry - タグID、型、要素数。
+ * @param {Pick<import('./exif-reader.js').ExifEntry, 'tag' | 'type' | 'count'>} entry - タグID、型、要素数。
  * @returns {boolean} タグID・型・要素数が移設条件を満たす場合は `true`。実際の値の検証は再構築側で行う。
  */
 function isRelocatableTag(directory, { tag, type, count }){

@@ -7,20 +7,18 @@
  */
 
 import {
-    IFD, IFD_TYPE, TIFF_TAG, TYPE_BYTES, TYPE_NAMES, TIFF_MAGIC,
+    IFD, IFD_TYPE, TIFF_TAG, TYPE_BYTES, TIFF_MAGIC,
     TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES,
     LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER
 } from './exif-constants.js';
-import { DISPLAY_TAGS, formatStandardValue } from './exif-formatter.js'
-import { decode as exifDecode } from './exif-decoder.js';
-
-const BINARY_PREVIEW_BYTES = 32;
+import { EXIF_DEFINITIONS } from './exif-definitions.js';
+import { formatExifEntry } from './exif-formatter.js';
 
 /**
  * @typedef {object} ExifEntry
  * @property {number} tag - IFD内のタグID。
  * @property {number} type - TIFFの型番号。
- * @property {number} count - 値の要素数。ASCIIでは終端NULを含む。
+ * @property {number} count - エントリに記録された要素数。規格上、ASCIIでは終端NULも数える。
  * @property {number} dataOffset - TIFFヘッダ先頭から値の先頭までの位置（バイト）。
  * @property {Uint8Array} data - パディングを除いた値のバイト列。入力TIFFとメモリを共有するビュー。
  */
@@ -39,44 +37,15 @@ const BINARY_PREVIEW_BYTES = 32;
  * @property {ExifField[]} fields - 表示名が定義されている項目。
  * @property {{source: string, tag: number}[]} otherTags - 詳細一覧に表示するタグのIFD名とID。
  * @property {string[]} issues - 範囲の重複など、読み取れたがGPS削除時の再構築を妨げる問題。
- * @property {Uint8Array | null} thumbnail - IFD1が参照する埋め込みJPEGのビュー。候補がなければ null。
+ * @property {Uint8Array | null} thumbnail - IFD1の参照範囲とJPEGの開始・終了マーカーを確認した候補。入力とメモリを共有し、復号は行わない。候補がなければ `null`。
  */
 
 /**
- * 詳細一覧向けに型名と値のプレビューを生成する。
- *
- * @param {ExifEntry} entry - 解析済みタグ。
- * @param {boolean} little - TIFFがリトルエンディアンなら `true`。
- * @param {string} [source] - エントリを取得したIFD名。
- * @returns {{typeName: string, value: string}} 数値や文字列の表示、または先頭32バイトの16進数とASCII。
- */
-export function previewExifEntry(entry, little, source){
-    const { type, data } = entry;
-    const typeName  = TYPE_NAMES.get(type) ?? `Type ${type}`;
-    const formatted = formatStandardValue(source, entry, little);
-
-    if(formatted !== undefined){
-        return { typeName, value: formatted };
-    }
-
-    if(TYPE_NAMES.has(type) && type !== IFD_TYPE.UNDEFINED){
-        return { typeName, value: exifDecode(entry, little) };
-    }
-
-    const prefix = data.subarray(0, BINARY_PREVIEW_BYTES);
-    const suffix = (data.length > prefix.length) ? ' …' : '';
-    const hex    = Array.from(prefix, (byte) => byte.toString(16).padStart(2, '0').toUpperCase()).join(' ');
-    const ascii  = Array.from(prefix, (byte) => (byte >= 0x20 && byte <= 0x7e) ? String.fromCharCode(byte) : '.').join('');
-
-    return { typeName, value: `${hex} │ ${ascii}${suffix}` };
-}
-
-/**
- * TIFFヘッダと、参照されているIFD0・Exif IFD・GPS IFD・IFD1を解析する。
+ * TIFFヘッダとIFD0を同期解析し、参照があればExif IFD・GPS IFD・IFD1も読む。
  * 領域の重複、値のパディングや未参照領域にある非ゼロバイトは `issues` に記録する。
  *
  * @param {Uint8Array} tiff - Exif識別子の直後から始まるTIFFデータ。オフセットの基準はこのビューの先頭。
- * @returns {ExifData} エントリ、表示用の値、再構築時に問題となる箇所。
+ * @returns {ExifData} エントリ、表示用の値、再構築時に問題となる箇所、埋め込みJPEGの候補。
  * @throws {Error} ヘッダや参照範囲が不正、IFD参照が重複・循環、制限超過、または未対応の型や構造がある場合。
  */
 export function readExif(tiff){
@@ -117,7 +86,7 @@ export function readExif(tiff){
 
         const end = start + size;
 
-        if(ranges.some((range) => range.start < end && start < range.end)){
+        if(ranges.some((range) => (range.start < end && start < range.end))){
             issues.add('overlapping TIFF ranges');
         }
 
@@ -159,9 +128,11 @@ export function readExif(tiff){
             const type     = view.getUint16(start + 2, little);
             const elements = view.getUint32(start + 4, little);
 
+            // タグ重複
             if(entries.has(tag)){
                 throw new Error('Duplicate Exif tag.');
             }
+            // Exifタイプのバイト定義または要素が無い
             if(!TYPE_BYTES[type] || !elements){
                 throw new Error('Invalid or unsupported Exif value type or count.');
             }
@@ -282,13 +253,13 @@ export function readExif(tiff){
 
     for(const [source, entries] of directories){
         for(const entry of entries.values()){
-            const label = DISPLAY_TAGS[source]?.[entry.tag];
+            const label = EXIF_DEFINITIONS[source]?.[entry.tag]?.label;
 
             if(label){
                 fields.push({
                     source,
                     label,
-                    value: formatStandardValue(source, entry, little) ?? exifDecode(entry, little)
+                    value: formatExifEntry(source, entry, little)
                 });
             } else{
                 otherTags.push({source, tag: entry.tag});

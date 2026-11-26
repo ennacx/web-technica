@@ -12,7 +12,7 @@ The tool path is [`/web-technica/jpeg-metadata/`](https://ennacx.github.io/web-t
 2. Select a cleanup mode and choose **Prepare cleaned JPEG**.
 3. Review the size, removed segment counts, retained metadata, and any orientation warning. Choose **Download** for a new `-cleaned.jpg` file. If no matching data is found, the tool reports no changes and offers no download.
 
-Exif dates use the browser's locale while preserving the recorded date and time. Exposure compensation is shown in EV. Focal length and 35 mm equivalent focal length are shown as separate fields in millimeters when their tags are present.
+Exif dates use the browser's locale while preserving the recorded date and time. Exposure compensation is shown in EV, and aperture is shown as an f-number such as `f/2.8`. Focal length and 35 mm equivalent focal length are shown as separate fields in millimeters when their tags are present.
 
 Inspect shows exposure program and mode, metering, flash, white balance, and lens specifications when those tags are present. It translates recognized numeric codes and flash flags into labels. Unknown codes remain visible as numbers.
 
