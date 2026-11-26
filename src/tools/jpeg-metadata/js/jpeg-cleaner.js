@@ -42,18 +42,19 @@ export function orientationWarning(inspections){
     for(const { exif, error } of inspections){
         ambiguous ||= (error !== undefined || Boolean(exif?.issues.length));
 
-        const entry = exif?.directories.get(IFD.PRIMARY)?.get(TIFF_TAG.Orientation);
+        const orientationEntry = exif?.directories.get(IFD.PRIMARY)?.get(TIFF_TAG.Orientation);
 
-        if(!entry){
+        if(!orientationEntry){
             continue;
         }
 
-        if(entry.type !== IFD_TYPE.SHORT || entry.count !== 1){
+        if(orientationEntry.type !== IFD_TYPE.SHORT || orientationEntry.count !== 1){
             ambiguous = true;
+
             continue;
         }
 
-        const decoded = exifDecode(entry, exif.little);
+        const decoded = exifDecode(orientationEntry, exif.little);
         const value   = (decoded.kind === 'numeric') ? decoded.values[0] : undefined;
 
         if(typeof value !== 'number' || value < 1 || value > 8){

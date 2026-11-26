@@ -7,7 +7,7 @@
  */
 
 import {
-    IFD, IFD_TYPE, TIFF_TAG, TYPE_BYTES, TIFF_MAGIC,
+    IFD, IFD_TYPE, TIFF_TAG, EXIF_TAG, TYPE_BYTES, TIFF_MAGIC,
     TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES,
     LITTLE_ENDIAN_BYTE_ORDER, BIG_ENDIAN_BYTE_ORDER
 } from './exif-constants.js';
@@ -26,11 +26,12 @@ import {
  * @property {boolean} little - TIFFがリトルエンディアンなら `true`。
  * @property {Map<string, Map<number, ExifEntry>>} directories - IFD名ごとのエントリ。内側のキーはタグID。
  * @property {string[]} issues - 範囲の重複など、読み取れたがGPS削除時の再構築を妨げる問題。
+ * @property {{issue: string, start: number, end: number}[]} issueRanges - 問題を検出したTIFF相対の範囲。開始位置を含み、終了位置を含まない。
  * @property {Uint8Array | null} thumbnail - IFD1の参照範囲とJPEGの開始・終了マーカーを確認した候補。入力とメモリを共有し、復号は行わない。候補がなければ `null`。
  */
 
 /**
- * TIFFヘッダとIFD0を同期解析し、参照があればExif IFD・GPS IFD・IFD1も読む。
+ * TIFFヘッダとIFD0を同期解析し、参照があればExif IFD・GPS IFD・IFD1・Interoperability IFDも読む。
  * 領域の重複、値のパディングや未参照領域にある非ゼロバイトは `issues` に記録する。
  *
  * @param {Uint8Array} tiff - Exif識別子の直後から始まるTIFFデータ。オフセットの基準はこのビューの先頭。
@@ -38,16 +39,32 @@ import {
  * @throws {Error} ヘッダや参照範囲が不正、IFD参照が重複・循環、制限超過、または未対応の型や構造がある場合。
  */
 export function readExif(tiff){
-    const view        = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
-    const order       = tiff[0] << 8 | tiff[1];
+    const view  = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
+    const order = tiff[0] << 8 | tiff[1];
+
     // TIFFの先頭2バイトで "II" (リトルエンディアン) "MM" (ビッグエンディアン) を判定
-    const little      = (order === LITTLE_ENDIAN_BYTE_ORDER);
+    const little = (order === LITTLE_ENDIAN_BYTE_ORDER);
+
     const ranges      = [{ start: 0, end: TIFF_HEADER_BYTES }];
     const directories = new Map();
     const offsets     = new Set();
+
     const issues      = new Set();
+    const issueRanges = [];
 
     let tagCount = 0;
+
+    /**
+     * 問題のメッセージを `issues` に重複なく登録し、検出箇所を `issueRanges` に呼び出しごとに追加する。
+     *
+     * @param {string} issue - 記録する問題のメッセージ。
+     * @param {number} start - TIFFヘッダ先頭を基準とした範囲の開始位置（バイト、範囲に含む）。
+     * @param {number} end - TIFFヘッダ先頭を基準とした範囲の直後の位置（バイト、範囲に含まない）。
+     */
+    function recordIssue(issue, start, end){
+        issues.add(issue);
+        issueRanges.push({ issue, start, end });
+    }
 
     /**
      * 指定範囲が8バイトのTIFFヘッダより後ろにあり、ペイロード内に収まることを確認する。
@@ -75,8 +92,9 @@ export function readExif(tiff){
 
         const end = start + size;
 
-        if(ranges.some((range) => (range.start < end && start < range.end))){
-            issues.add('overlapping TIFF ranges');
+        const overlap = ranges.find((range) => (range.start < end && start < range.end));
+        if(overlap){
+            recordIssue('overlapping TIFF ranges', Math.max(start, overlap.start), Math.min(end, overlap.end));
         }
 
         ranges.push({ start, end });
@@ -133,7 +151,7 @@ export function readExif(tiff){
             if(size > IFD_INLINE_VALUE_BYTES){
                 claim(dataStart, size);
             } else if(tiff.subarray(valueField + size, valueField + IFD_INLINE_VALUE_BYTES).some(Boolean)){
-                issues.add('nonzero TIFF value padding');
+                recordIssue('nonzero TIFF value padding', valueField + size, valueField + IFD_INLINE_VALUE_BYTES);
             }
 
             entries.set(tag, {
@@ -197,6 +215,17 @@ export function readExif(tiff){
         }
     }
 
+    const exif = directories.get(IFD.EXIF);
+
+    // InteroperabilityIFDPointer
+    if(exif){
+        const offset = pointer(exif, EXIF_TAG.InteroperabilityIFDPointer);
+
+        if(offset !== null && readDirectory(IFD.INTEROPERABILITY, offset)){
+            throw new Error('Additional Exif directory chains are unsupported.');
+        }
+    }
+
     const thumbnail = directories.get(IFD.THUMBNAIL);
 
     let thumbnailJpeg = null;
@@ -214,7 +243,8 @@ export function readExif(tiff){
 
             const end = start + size;
             if(
-                !issues.has('overlapping TIFF ranges') && size >= 4
+                !issues.has('overlapping TIFF ranges')
+                && size >= 4
                 && tiff[start] === 0xff && tiff[start + 1] === 0xd8
                 && tiff[end - 2] === 0xff && tiff[end - 1] === 0xd9
             ){
@@ -226,21 +256,24 @@ export function readExif(tiff){
     let end = 0;
 
     for(const range of ranges.sort((a, b) => a.start - b.start)){
+        // ここまでに参照した範囲の末尾から、次の参照範囲の先頭までに非ゼロのバイトがあるか調査
         if(tiff.subarray(end, range.start).some(Boolean)){
-            issues.add('unreferenced TIFF data');
+            recordIssue('unreferenced TIFF data', end, range.start);
         }
 
         end = Math.max(end, range.end);
     }
 
+    // 最後の参照範囲より後ろから、TIFFペイロードの末尾までに非ゼロのバイトがあるか調査
     if(tiff.subarray(end).some(Boolean)){
-        issues.add('unreferenced TIFF data');
+        recordIssue('unreferenced TIFF data', end, tiff.length);
     }
 
     return {
         little,
         directories,
         issues: [...issues],
+        issueRanges,
         thumbnail: thumbnailJpeg
     };
 }

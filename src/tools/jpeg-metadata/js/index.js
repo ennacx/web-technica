@@ -145,14 +145,25 @@ function renderInspection(jpeg, inspections){
         if(exif.directories.get(IFD.EXIF)?.has(EXIF_TAG.MakerNote)){
             opaque.add('MakerNote');
         }
-        if(exif.directories.get(IFD.EXIF)?.has(EXIF_TAG.InteroperabilityIFDPointer)){
-            opaque.add('Interoperability IFD');
-        }
         if(exif.directories.get(IFD.PRIMARY)?.has(TIFF_TAG.SubIFDs)){
             opaque.add('additional SubIFDs');
         }
         if(exif.issues.length && notes.length < 8){
-            notes.push(`Exif at byte ${segment.offset}: ${exif.issues.join(', ')}.`);
+            const locations = exif.issueRanges.slice(0, 4).map(
+                ({ issue, start, end }) => `${issue} at TIFF offset ${start} (${end - start} B)`
+            );
+
+            if(exif.issueRanges.length > locations.length){
+                locations.push(`${exif.issueRanges.length - locations.length} more affected range(s)`);
+            }
+
+            const makerNote = exif.directories.get(IFD.EXIF)?.get(EXIF_TAG.MakerNote);
+
+            if(makerNote){
+                locations.push(`MakerNote value at TIFF offset ${makerNote.dataOffset} (${makerNote.data.length} B)`);
+            }
+
+            notes.push(`Exif at JPEG byte ${segment.offset}: ${locations.join('; ')}.`);
         }
 
         const display = createExifDisplayModel(exif);

@@ -5,6 +5,7 @@
 export const IFD = Object.freeze({
     PRIMARY: 'IFD0',
     EXIF: 'Exif SubIFD',
+    INTEROPERABILITY: 'Interoperability IFD',
     GPS: 'GPS IFD',
     THUMBNAIL: 'IFD1'
 });
@@ -128,11 +129,13 @@ export const GPS_TAG = Object.freeze({
 });
 
 const tiffTagNames = new Map(Object.entries(TIFF_TAG).map(([name, tag]) => [tag, name]));
+const exifTagNames = new Map(Object.entries(EXIF_TAG).map(([name, tag]) => [tag, name]));
 
 export const TAG_NAMES = {
     [IFD.PRIMARY]: tiffTagNames,
     [IFD.THUMBNAIL]: tiffTagNames,
-    [IFD.EXIF]: new Map(Object.entries(EXIF_TAG).map(([name, tag]) => [tag, name]))
+    [IFD.EXIF]: exifTagNames,
+    [IFD.INTEROPERABILITY]: new Map([[0x0001, 'InteroperabilityIndex']])
 };
 
 export const FLASH_BITS = Object.freeze({

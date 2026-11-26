@@ -80,6 +80,44 @@ const app1 = (tiff) => marker(0xe1, Buffer.concat([ascii('Exif\0\0'), tiff]));
 const inspect = (bytes) => inspectJpeg(bytes, parseJpeg(bytes));
 const scanBytes = (bytes) => parseJpeg(bytes).scans.map(({ offset, end }) => Buffer.from(bytes.subarray(offset, end)));
 
+function exifWithInteroperability(little){
+    const tiff = Buffer.concat([exifFixture(little, { extraTag: 0xa005, orientation: 1 }), Buffer.alloc(30)]);
+    const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
+    view.setUint32(86, 200, little);
+    view.setUint16(200, 2, little);
+    view.setUint16(202, 1, little);
+    view.setUint16(204, 2, little);
+    view.setUint32(206, 4, little);
+    tiff.write('R98\0', 210);
+    view.setUint16(214, 2, little);
+    view.setUint16(216, 7, little);
+    view.setUint32(218, 4, little);
+    tiff.write('0100', 222);
+    return tiff;
+}
+
+test('follows the Interoperability IFD pointer and accounts for its 30-byte range', () => {
+    for(const little of [true, false]){
+        const tiff = exifWithInteroperability(little);
+        const exif = readExif(tiff);
+        assert.deepEqual(exif.issues, []);
+        const index = exif.directories.get(IFD.INTEROPERABILITY).get(1);
+        assert.equal(previewExifEntry(index, little, IFD.INTEROPERABILITY).value, 'R98');
+        const input = jpeg([app1(tiff)]);
+        assert.equal(cleanJpeg(input, 'metadata').warning, '');
+        assert.throws(() => cleanJpeg(input, 'location'), /0xa005/);
+
+        const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
+        view.setUint32(86, tiff.length, little);
+        assert.throws(() => readExif(tiff), /outside/);
+        view.setUint32(86, 64, little);
+        assert.throws(() => readExif(tiff), /circular/);
+        view.setUint32(86, 200, little);
+        view.setUint16(80, 3, little);
+        assert.throws(() => readExif(tiff), /directory pointer/);
+    }
+});
+
 test('distinguishes rotation and reflection from invalid Exif Orientation', () => {
     const warning = (tiff) => cleanJpeg(jpeg([app1(tiff)]), 'metadata').warning;
     for(const [orientation, expected] of [[1, 'Normal'], [3, 'Rotate 180°'], [6, 'Rotate 90° CW'], [8, 'Rotate 270° CW'], [9, '9']]){
@@ -292,7 +330,6 @@ test('location cleanup refuses opaque metadata without falling back to general r
     const makerNote = jpeg([app1(exifFixture(true, { extraTag: 0x927c }))]);
     assert.throws(() => cleanJpeg(makerNote, 'location'), /MakerNote/);
     assert.ok(cleanJpeg(makerNote, 'metadata').bytes);
-    assert.throws(() => cleanJpeg(jpeg([app1(exifFixture(false, { extraTag: 0xa005 }))]), 'location'), /0xa005/);
 });
 
 test('unsupported JPEG containers are inspectable and refuse both cleanup modes', () => {
@@ -335,7 +372,12 @@ test('Exif offset, cycle, duplicate, count and alias checks protect location-onl
     alias.writeUInt32LE(168, 18);
     assert.throws(() => cleanJpeg(jpeg([app1(alias)]), 'location'), /overlapping TIFF ranges/);
     const orphan = exifFixture(true);
+    orphan[62] = 1;
     orphan[199] = 42;
+    assert.deepEqual(readExif(orphan).issueRanges, [
+        { issue: 'unreferenced TIFF data', start: 62, end: 64 },
+        { issue: 'unreferenced TIFF data', start: 192, end: 200 }
+    ]);
     assert.throws(() => cleanJpeg(jpeg([app1(orphan)]), 'location'), /unreferenced TIFF data/);
 });
 
