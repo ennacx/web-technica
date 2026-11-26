@@ -35,7 +35,12 @@ export function decode(entry, little, { maxTextBytes = Infinity, maxElements = I
 
     if(type === IFD_TYPE.ASCII){
         const bytes = data.subarray(0, Math.min(data.length, maxTextBytes));
-        return { kind: 'text', text: new TextDecoder().decode(bytes), truncated: bytes.length < data.length };
+
+        return {
+            kind: 'text',
+            text: new TextDecoder().decode(bytes),
+            truncated: (bytes.length < data.length)
+        };
     }
 
     const view   = new DataView(data.buffer, data.byteOffset, data.byteLength);
@@ -78,9 +83,16 @@ export function decode(entry, little, { maxTextBytes = Infinity, maxElements = I
                 break;
 
             default:
-                return { kind: 'binary', bytes: data };
+                return {
+                    kind: 'binary',
+                    bytes: data
+                };
         }
     }
 
-    return { kind: 'numeric', values, truncated: values.length < count };
+    return {
+        kind: 'numeric',
+        values,
+        truncated: (values.length < count)
+    };
 }

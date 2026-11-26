@@ -10,6 +10,7 @@ import { readExif } from './exif-reader.js';
 
 /**
  * CIPA DC-X008-2019 日本語版 §4.6.3 (Exif固有のIFD)、§4.6.6 表15 (GPSタグ)、§4.7.2 (APP1)
+ *
  * @see https://www.cipa.jp/std/documents/j/DC-X008-2019-J.pdf
  */
 
@@ -102,6 +103,7 @@ function isRelocatableTag(directory, { tag, type, count }){
 /**
  * GPSポインタとGPS IFDの値を除き、保持するIFDと値を新しいAPP1に書き出す。
  * 出力TIFFを再解析し、GPSがなく、保持したタグの型・要素数・値が一致することを確認する。
+ *
  * @param {import('./exif-reader.js').ExifData} exif - 元のExif APP1を解析した結果。
  * @returns {Uint8Array | null} マーカーと長さ欄を含むExif APP1全体。保持対象の検査を通り、GPS IFDがなければ `null`。
  * @throws {Error} 未対応のタグや構造、APP1のサイズ超過、または再構築結果の検証失敗。
@@ -146,6 +148,9 @@ export function rebuildWithoutGps(exif){
     if([...gps.values()].some(({ tag, type }) => (GPS_TYPES[tag] !== type))){
         throw new Error('Location-only cleanup cannot verify unfamiliar GPS tags or value types.');
     }
+
+    // GPSInfoIFDPointerの削除だけでは参照先のGPSデータが物理的に残存する。
+    // そのため保持対象のみを新しいTIFF領域に再構築する。
 
     const offsets = new Map();
 

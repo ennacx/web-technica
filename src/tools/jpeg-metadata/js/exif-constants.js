@@ -3,11 +3,11 @@
  * @see https://www.cipa.jp/std/documents/j/DC-X008-2019-J.pdf
  */
 export const IFD = Object.freeze({
-    PRIMARY: 'IFD0',
-    EXIF: 'Exif SubIFD',
+    PRIMARY:          'IFD0',
+    EXIF:             'Exif SubIFD',
     INTEROPERABILITY: 'Interoperability IFD',
-    GPS: 'GPS IFD',
-    THUMBNAIL: 'IFD1'
+    GPS:              'GPS IFD',
+    THUMBNAIL:        'IFD1'
 });
 
 /** TIFFのIFDエントリで使う型名と型番号の対応。 */
@@ -128,23 +128,29 @@ export const GPS_TAG = Object.freeze({
     Altitude:     6,
 });
 
+export const INTEROPERABILITY_TAG = Object.freeze({
+    InteroperabilityIndex:   0x0001,
+    InteroperabilityVersion: 0x0002
+});
+
 const tiffTagNames = new Map(Object.entries(TIFF_TAG).map(([name, tag]) => [tag, name]));
 const exifTagNames = new Map(Object.entries(EXIF_TAG).map(([name, tag]) => [tag, name]));
+const interoperabilityTagNames = new Map(Object.entries(INTEROPERABILITY_TAG).map(([name, tag]) => [tag, name]));
 
-export const TAG_NAMES = {
+export const TAG_NAMES = Object.freeze({
     [IFD.PRIMARY]: tiffTagNames,
     [IFD.THUMBNAIL]: tiffTagNames,
     [IFD.EXIF]: exifTagNames,
-    [IFD.INTEROPERABILITY]: new Map([[0x0001, 'InteroperabilityIndex']])
-};
+    [IFD.INTEROPERABILITY]: interoperabilityTagNames,
+});
 
 export const FLASH_BITS = Object.freeze({
-    FIRED: 0x01,
-    RETURN_SHIFT: 1,
+    FIRED:           0x01,
+    RETURN_SHIFT:    1,
     RESERVED_RETURN: 1,
-    MODE_SHIFT: 3,
-    FIELD_MASK: 0x03,
-    NO_FUNCTION: 0x20,
-    RED_EYE: 0x40,
-    RESERVED_MASK: 0xff80
+    MODE_SHIFT:      3,
+    FIELD_MASK:      0x03,
+    NO_FUNCTION:     0x20,
+    RED_EYE:         0x40,
+    RESERVED_MASK:   0xff80
 });

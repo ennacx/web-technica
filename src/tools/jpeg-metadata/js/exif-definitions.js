@@ -17,8 +17,12 @@ const SHORT_VALUES = Object.freeze({
         [TIFF_TAG.ResolutionUnit]: resolutionUnits,
         [TIFF_TAG.Orientation]: {
             1: 'Normal',
+            2: 'Mirror horizontal',
             3: 'Rotate 180°',
+            4: 'Mirror vertical',
+            5: 'Transpose', // Mirror horizontal + Rotate 270° CW
             6: 'Rotate 90° CW',
+            7: 'Transverse', // Mirror horizontal + Rotate 90° CW
             8: 'Rotate 270° CW',
         },
     },

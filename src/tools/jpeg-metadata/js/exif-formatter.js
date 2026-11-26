@@ -23,6 +23,7 @@ export function formatExifEntry(source, entry, little){
         definition?.format
         && (definition.type === undefined || definition.type === entry.type)
         && (definition.count === undefined || definition.count === entry.count)
+        && !(decoded?.truncated ?? false)
     ){
         const formatted = definition.format(decoded);
 

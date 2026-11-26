@@ -6,6 +6,29 @@
  * @see https://printtechnologies.org/standards/files/tiff-v6.pdf
  */
 
+/**
+ * TIFF / IFD構造解析
+ *
+ * TIFF Header (8 bytes)
+ * ├─ Byte Order       (2 bytes)
+ * ├─ Magic Number     (2 bytes)
+ * └─ IFD0 Offset      (4 bytes)
+ *         ↓
+ * IFD
+ * ├─ Entry Count      (2 bytes)
+ * ├─ Entries          (12 bytes × Count)
+ * │   ├─ Tag          (2 bytes)
+ * │   ├─ Type         (2 bytes)
+ * │   ├─ Count        (4 bytes)
+ * │   └─ Value/Offset (4 bytes)
+ * └─ Next IFD Offset  (4 bytes)
+ *
+ * すべてのTIFFオフセットはTIFFヘッダ先頭を基準とする。
+ *
+ * 本モジュールは構造解析のみを担当し、
+ * 値の意味解釈・表示・再構築は行わない。
+ */
+
 import {
     IFD, IFD_TYPE, TIFF_TAG, EXIF_TAG, TYPE_BYTES, TIFF_MAGIC,
     TIFF_HEADER_BYTES, IFD_ENTRY_BYTES, IFD_DIRECTORY_OVERHEAD, IFD_INLINE_VALUE_BYTES,
@@ -92,7 +115,14 @@ export function readExif(tiff){
 
         const end = start + size;
 
-        const overlap = ranges.find((range) => (range.start < end && start < range.end));
+        let overlap = false;
+        for(const range of ranges){
+            if(range.start >= end || start >= range.end){
+                overlap = true;
+                break;
+            }
+        }
+
         if(overlap){
             recordIssue('overlapping TIFF ranges', Math.max(start, overlap.start), Math.min(end, overlap.end));
         }
@@ -146,7 +176,10 @@ export function readExif(tiff){
 
             const size       = TYPE_BYTES[type] * elements;
             const valueField = start + 8;
-            const dataStart  = (size <= IFD_INLINE_VALUE_BYTES) ? valueField : view.getUint32(valueField, little);
+
+            // 4バイト以下の値はエントリ内に格納され、
+            // 4バイトを超える場合は値フィールドをTIFFヘッダ先頭からの相対オフセットとして扱う。
+            const dataStart = (size <= IFD_INLINE_VALUE_BYTES) ? valueField : view.getUint32(valueField, little);
 
             if(size > IFD_INLINE_VALUE_BYTES){
                 claim(dataStart, size);
