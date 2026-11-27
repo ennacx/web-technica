@@ -22,6 +22,22 @@
         "tags": ["URL", "Query", "Encode", "Decode"]
     },
     {
+        "name": "JPEG Metadata Inspector",
+        "slug": "jpeg-metadata",
+        "url": "/jpeg-metadata/",
+        "description": "Inspect and remove JPEG metadata locally without re-encoding the image.",
+        "offline": "ready",
+        "category": "Inspect",
+        "icon": "layers",
+        "status": "develop",
+        "tags": [
+            "JPEG",
+            "Exif",
+            "GPS",
+            "Metadata"
+        ]
+    },
+    {
         "name": "Regex Tester",
         "slug": "regex-tester",
         "url": "/regex-tester/",

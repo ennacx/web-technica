@@ -37,10 +37,6 @@ main.sri-hasher {
   margin-block-start: 12px;
 }
 
-.sri-hasher input[type=file] {
-  max-width: 100%;
-  font-size: 13px;
-}
 .sri-hasher input::file-selector-button {
   margin-inline-end: 12px;
   padding: 4px 8px;

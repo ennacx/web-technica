@@ -361,6 +361,10 @@ input::placeholder, textarea::placeholder {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.input[type=file] {
+  max-width: 100%;
+  font-size: 13px;
+}
 
 .checkbox {
   display: flex;
