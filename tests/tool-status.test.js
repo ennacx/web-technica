@@ -6,7 +6,7 @@ import toolData from '../src/tools/tools.11tydata.js';
 
 const sample = { name: 'Sample Tool', slug: 'sample', url: '/sample/', category: 'Inspect', icon: 'link', description: 'Sample description.', tags: [] };
 const env = new nunjucks.Environment(new nunjucks.FileSystemLoader('src/_includes'), { autoescape: true });
-env.addFilter('url', (url) => '/web-technica' + url);
+env.addFilter('url', (url) => '/preview' + url);
 env.addFilter('isToolAvailable', isToolAvailable);
 env.addFilter('groupAvailableTools', groupAvailableTools);
 
@@ -34,8 +34,8 @@ test('status drives badges and links consistently in cards, tool headings and he
         const heading = env.render('layouts/tool.njk', context);
         const header = env.render('components/header.njk', context);
         const available = status === 'published' || status === 'develop';
-        assert.equal(card.includes('href="/web-technica/sample/"'), available, status);
-        assert.equal(header.includes('href="/web-technica/sample/"'), available, status);
+        assert.equal(card.includes('href="/preview/sample/"'), available, status);
+        assert.equal(header.includes('href="/preview/sample/"'), available, status);
         assert.equal(toolData.eleventyComputed.noindex(context), status !== 'published');
         if(status === 'published'){
             for(const html of [card, heading, header]){ assert.doesNotMatch(html, /data-tool-status=/); }

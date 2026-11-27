@@ -7,7 +7,7 @@ import path from 'node:path';
 import { copyReleaseSources } from '../scripts/verify-release.mjs';
 
 test('release snapshot includes working changes but excludes dependencies and even tracked generated files', (t) => {
-    const temporary = mkdtempSync(path.join(tmpdir(), 'web-technica-snapshot-test-'));
+    const temporary = mkdtempSync(path.join(tmpdir(), 'wexmetrica-snapshot-test-'));
     t.after(() => rmSync(temporary, { recursive: true, force: true }));
     const repository = path.join(temporary, 'repository');
     const snapshot = path.join(temporary, 'snapshot');

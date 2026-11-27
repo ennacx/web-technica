@@ -49,7 +49,7 @@ export function buildServiceWorker({ outputDirectory, results, passthrough, path
 
     const prefix = `/${pathPrefix.split('/').filter(Boolean).join('/')}/`;
     const scope = (prefix === '//') ? '/' : prefix;
-    const cachePrefix = `web-technica:${encodeURIComponent(scope)}:`;
+    const cachePrefix = `wexmetrica:${encodeURIComponent(scope)}:`;
     const output = path.resolve(outputDirectory);
 
     const files = new Set(results.map((result) => path.resolve(result.outputPath)));

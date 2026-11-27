@@ -1,5 +1,5 @@
 {
-    "name": "web-technica",
+    "name": "wexmetrica",
     "version": "0.7.0",
     "private": true,
     "description": "Lightweight, privacy-friendly web utilities for developers.",
@@ -12,10 +12,10 @@
         "node": ">=24"
     },
     "scripts": {
-        "dev": "eleventy --serve --port=18080 --pathprefix=/web-technica/",
-        "build:keygen": "npm run build --workspace @web-technica/keygen",
+        "dev": "eleventy --serve --port=18080",
+        "build:keygen": "npm run build --workspace @wexmetrica/keygen",
         "build": "eleventy",
-        "build:pages": "eleventy --pathprefix=/web-technica/",
+        "build:pages": "eleventy --pathprefix=/",
         "test": "node --test",
         "verify:release": "node scripts/verify-release.mjs"
     },

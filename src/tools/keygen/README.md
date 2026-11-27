@@ -2,7 +2,7 @@
 
 Generate cryptographic key pairs and export public and private keys locally in your browser.
 
-[Open Keypair Generator](https://ennacx.github.io/web-technica/keygen/) · [All tools and site information](../../../README.md)
+[Open Keypair Generator](https://wexmetrica.com/keygen/) · [All tools and site information](../../../README.md)
 
 ## Generate a key pair
 
@@ -85,4 +85,4 @@ The long-term goal is a browser-based alternative to PuTTYgen. Planned import fe
 
 ## License
 
-Part of Web-Technica, licensed under [MIT](../../../LICENSE). The browser bundle includes third-party cryptographic libraries; their license texts are available from [Third-party licenses](https://ennacx.github.io/web-technica/keygen/js/THIRD-PARTY-LICENSES.txt).
+Part of Wexmetrica, licensed under [MIT](../../../LICENSE). The browser bundle includes third-party cryptographic libraries; their license texts are available from [Third-party licenses](https://wexmetrica.com/keygen/js/THIRD-PARTY-LICENSES.txt).

@@ -1,6 +1,6 @@
 # Regex Tester
 
-[Open Regex Tester](https://ennacx.github.io/web-technica/regex-tester/) · [Web-Technica overview](../../../README.md)
+[Open Regex Tester](https://wexmetrica.com/regex-tester/) · [Wexmetrica overview](../../../README.md)
 
 Test JavaScript regular expressions in a dedicated module Worker. Inspect whole matches and captures in the results list while match highlights appear directly behind the editable test text. This initial implementation remains **In development**; PCRE2 and Python engines are planned and are not selectable yet.
 

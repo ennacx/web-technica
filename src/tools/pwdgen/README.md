@@ -2,7 +2,7 @@
 
 Generate random passwords, hexadecimal strings, or version 4 UUIDs locally in your browser.
 
-[Open Password Generator](https://ennacx.github.io/web-technica/pwdgen/) · [All tools and site information](../../../README.md)
+[Open Password Generator](https://wexmetrica.com/pwdgen/) · [All tools and site information](../../../README.md)
 
 ## Generate a password
 
@@ -66,4 +66,4 @@ All generation features work offline after the site's initial online load and su
 
 ## License
 
-Part of Web-Technica, licensed under [MIT](../../../LICENSE).
+Part of Wexmetrica, licensed under [MIT](../../../LICENSE).

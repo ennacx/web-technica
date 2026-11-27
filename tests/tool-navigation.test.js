@@ -8,20 +8,20 @@ import { groupAvailableTools } from '../scripts/tool-status.mjs';
 test('mobile navigation groups available tools and preserves prefixed links and current tool', () => {
     const tools = JSON.parse(readFileSync('src/_data/tools.json', 'utf8'));
     const env = new nunjucks.Environment(new nunjucks.FileSystemLoader('src/_includes'), { autoescape: true });
-    env.addFilter('url', (url) => '/web-technica' + url);
+    env.addFilter('url', (url) => '/preview' + url);
     env.addFilter('groupAvailableTools', groupAvailableTools);
     const html = env.render('components/header.njk', { tools, tool: tools[1], page: { url: tools[1].url }, site: {} });
     const mobile = html.split('data-mobile-tool-navigation')[1].split('class="site-nav-category"')[0];
     assert.match(mobile, />Tools\s+<svg/);
-    assert.match(html, /href="\/web-technica\/#tools"[^>]*>All Tools/);
-    assert.doesNotMatch(mobile, /href="\/web-technica\/#tools"/);
+    assert.match(html, /href="\/preview\/#tools"[^>]*>All Tools/);
+    assert.doesNotMatch(mobile, /href="\/preview\/#tools"/);
     for(const { name, tools: members } of groupAvailableTools(tools)){
         assert.ok(mobile.includes(String(env.getFilter('escape')(name))), name);
         for(const tool of members){
-            assert.ok(mobile.includes(`href="/web-technica${tool.url}"`), tool.name);
+            assert.ok(mobile.includes(`href="/preview${tool.url}"`), tool.name);
         }
     }
-    assert.match(mobile, /href="\/web-technica\/url-inspector\/" aria-current="page"/);
+    assert.match(mobile, /href="\/preview\/url-inspector\/" aria-current="page"/);
     const hasDevelopTool = groupAvailableTools(tools).some(({ tools: members }) => members.some((tool) => tool.status === 'develop'));
     assert.equal(mobile.includes('data-tool-status="develop"'), hasDevelopTool);
 });

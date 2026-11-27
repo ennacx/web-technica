@@ -179,7 +179,7 @@ export function verifyRelease(){
     assert((path.isAbsolute(relative) || relative === '..' || relative.startsWith('..' + path.sep)),
         'The OS temp directory must be outside the repository');
 
-    const temporary = mkdtempSync(path.join(temporaryBase, 'web-technica-release-'));
+    const temporary = mkdtempSync(path.join(temporaryBase, 'wexmetrica-release-'));
     const project = path.join(temporary, 'project');
     const environment = { ...process.env };
 
@@ -216,10 +216,13 @@ export function verifyRelease(){
         npm(['ci', '--include=dev', '--no-audit', '--no-fund', '--cache', path.join(temporary, 'npm-cache')]);
         npm(['test']);
 
-        for(const [command, prefix] of [['build', '/'], ['build:pages', '/web-technica/']]){
+        for(const [prefix, args] of [
+            ['/', ['run', 'build:pages']],
+            ['/preview/', ['run', 'build', '--', '--pathprefix=/preview/']]
+        ]){
             // テストが独自にアセットを生成する場合があるが、どちらのビルドもそれらを再利用することはできない。
             clearGenerated(project);
-            npm(['run', command]);
+            npm(args);
             verifyReleaseOutput(project, prefix);
         }
 
@@ -227,7 +230,7 @@ export function verifyRelease(){
     } finally{
         // Only remove the directory minted by mkdtemp above, never a caller-supplied path.
         assert.equal(path.dirname(temporary), temporaryBase);
-        assert((path.basename(temporary).startsWith('web-technica-release-')));
+        assert((path.basename(temporary).startsWith('wexmetrica-release-')));
         assert.equal(realpathSync(temporary), temporary);
 
         rmSync(temporary, { recursive: true, force: true, maxRetries: 3 });

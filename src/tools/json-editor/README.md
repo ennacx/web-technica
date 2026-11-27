@@ -2,7 +2,7 @@
 
 Edit, format, minify, validate, and naturally sort JSON keys locally in your browser.
 
-[Open JSON Editor](https://ennacx.github.io/web-technica/json-editor/) · [All tools and site information](../../../README.md)
+[Open JSON Editor](https://wexmetrica.com/json-editor/) · [All tools and site information](../../../README.md)
 
 The editor includes a read-only Tree viewer alongside the single-document code editor. Tree editing and advanced editing features are future work, described in the [roadmap](#roadmap).
 
@@ -165,4 +165,4 @@ Diff has lower priority and will be reconsidered when needed. It may become a se
 
 ## License
 
-Part of Web-Technica, licensed under [MIT](../../../LICENSE).
+Part of Wexmetrica, licensed under [MIT](../../../LICENSE).

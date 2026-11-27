@@ -36,7 +36,7 @@ export function buildSocialImage(pathPrefix = '/'){
 
     // Resvg フォントファミリーを読み込めない場合は通知しないで除外
     for(const family of new Set([...svg.matchAll(/font-family="([^"]+)"/g)].map((match) => match[1]))){
-        const probe = new Resvg(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"><text y="50" font-size="24" font-family="${escapeXml(family)}">Web-Technica</text></svg>`, options);
+        const probe = new Resvg(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"><text y="50" font-size="24" font-family="${escapeXml(family)}">Wexmetrica</text></svg>`, options);
 
         assert((probe.innerBBox()?.width > 0), `Cannot render social image font: ${family}`);
     }

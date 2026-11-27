@@ -9,8 +9,9 @@ const siteData = JSON.parse(readFileSync('src/_data/site.json', 'utf8'));
 const metadata = (html) => Object.fromEntries([...html.matchAll(/<meta (?:name|property)="([^"]+)" content="([^"]*)">/g)]
     .map(([, key, value]) => [key, value]));
 
-test('all pages have page-specific social metadata and absolute root/Pages URLs with a generated PNG', () => {
-    for(const prefix of ['/', '/web-technica/']){
+test('all pages have page-specific social metadata and absolute root and prefixed URLs with a generated PNG', () => {
+    assert.equal(siteData.url, 'https://wexmetrica.com');
+    for(const prefix of ['/', '/preview/']){
         // Match separate CLI builds; Eleventy caches template state within a process.
         const pages = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', `
             import Eleventy from '@11ty/eleventy';
@@ -49,14 +50,14 @@ test('all pages have page-specific social metadata and absolute root/Pages URLs 
 
 test('social tags escape quotes and markup and fall back to the site title and description', () => {
     const env = new nunjucks.Environment(new nunjucks.FileSystemLoader('src/_includes'), { autoescape: false });
-    env.addFilter('absoluteUrl', (url, origin) => new URL('/web-technica' + url, origin).href);
+    env.addFilter('absoluteUrl', (url, origin) => new URL(url, origin).href);
     const context = { site: siteData, page: { url: '/' } };
     const defaults = metadata(env.render('components/social-meta.njk', context));
     assert.equal(defaults['og:title'], siteData.name);
     assert.equal(defaults['og:description'], siteData.description);
     const html = env.render('components/social-meta.njk', { ...context,
         title: 'Tool "quoted" <unsafe> & more', description: 'Try "x" & <b>text</b>' });
-    assert.ok(html.includes('Tool &quot;quoted&quot; &lt;unsafe&gt; &amp; more | Web-Technica'));
+    assert.ok(html.includes('Tool &quot;quoted&quot; &lt;unsafe&gt; &amp; more | Wexmetrica'));
     assert.ok(html.includes('Try &quot;x&quot; &amp; &lt;b&gt;text&lt;/b&gt;'));
     assert.ok(!html.includes('<unsafe>') && !html.includes('<b>'));
 });

@@ -2,7 +2,7 @@
 
 Inspect, edit, and rebuild URLs and query parameters locally in your browser.
 
-[Open URL Inspector](https://ennacx.github.io/web-technica/url-inspector/) · [All tools and site information](../../../README.md)
+[Open URL Inspector](https://wexmetrica.com/url-inspector/) · [All tools and site information](../../../README.md)
 
 The current version is an interactive mockup with `develop` status. The shared tool heading, homepage card, and header menu show an **In development** badge based on `src/_data/tools.json`. Non-published tool pages use `noindex`. Additional editing features are future work, described in the [roadmap](#roadmap).
 
@@ -143,4 +143,4 @@ Shortened URL expansion and redirect tracking are outside this tool's planned sc
 
 ## License
 
-Part of Web-Technica, licensed under [MIT](../../../LICENSE).
+Part of Wexmetrica, licensed under [MIT](../../../LICENSE).

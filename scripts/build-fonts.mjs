@@ -41,5 +41,5 @@ export async function buildWebFonts(directory = 'src/assets/fonts'){
         `===== ${family} (${filename}) =====\n\n${readFileSync(path.join('src/assets/fonts', filename), 'utf8')}`
     ).join('\n\n');
     writeIfChanged(path.join(directory, 'THIRD-PARTY-LICENSES.txt'),
-        `Web-Technica — Third-party font licenses\n\n${licenses}\n`);
+        `Wexmetrica — Third-party font licenses\n\n${licenses}\n`);
 }

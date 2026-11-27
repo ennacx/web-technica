@@ -6,7 +6,7 @@ const status = querySel('#pwa-update-status');
 if(settings && 'serviceWorker' in navigator && window.isSecureContext){
     const workerURL = new URL(settings.dataset.pwa, location.href);
     const scope = new URL('./', workerURL);
-    const cachePrefix = `web-technica:${encodeURIComponent(scope.pathname)}:`;
+    const cachePrefix = `wexmetrica:${encodeURIComponent(scope.pathname)}:`;
 
     async function initialize(){
         if(settings.dataset.enabled !== 'true'){
@@ -29,7 +29,7 @@ if(settings && 'serviceWorker' in navigator && window.isSecureContext){
 
         function notifyUpdate(){
             if(registration.waiting && registration.active && status){
-                status.textContent = 'An update is ready. Close all Web-Technica tabs and app windows, then reopen to apply it.';
+                status.textContent = 'An update is ready. Close all Wexmetrica tabs and app windows, then reopen to apply it.';
                 status.hidden = false;
             }
         }

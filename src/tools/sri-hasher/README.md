@@ -2,7 +2,7 @@
 
 Generate Subresource Integrity values and HTML tags for JavaScript and CSS resources using SHA-256, SHA-384, or SHA-512.
 
-[Open SRI Hasher](https://ennacx.github.io/web-technica/sri-hasher/) · [All tools and site information](../../../README.md)
+[Open SRI Hasher](https://wexmetrica.com/sri-hasher/) · [All tools and site information](../../../README.md)
 
 ## Hash a CDN resource
 
@@ -63,4 +63,4 @@ Editing the resource settings clears the old result so it is not confused with a
 
 ## License
 
-Part of Web-Technica, licensed under [MIT](../../../LICENSE).
+Part of Wexmetrica, licensed under [MIT](../../../LICENSE).

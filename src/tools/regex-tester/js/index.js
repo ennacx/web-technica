@@ -44,7 +44,7 @@ const sample = {
     text: [
         'Contact the team:',
         '  alice@example.com — Product',
-        '  bob@web-technica.dev — Engineering',
+        '  bob@example.com — Engineering',
         '  support@example.org — Support'
     ].join('\n'),
     flags: 'gi'

@@ -10,7 +10,7 @@ import { buildWebFonts, fontSources } from '../scripts/build-fonts.mjs';
 const tools = JSON.parse(readFileSync('src/_data/tools.json', 'utf8'));
 
 test('TTF sources generate the browser fonts referenced by CSS and allowlisted with licenses', async (t) => {
-    const directory = mkdtempSync(path.join(tmpdir(), 'web-technica-font-test-'));
+    const directory = mkdtempSync(path.join(tmpdir(), 'wexmetrica-font-test-'));
     t.after(() => rmSync(directory, { recursive: true, force: true }));
     await buildWebFonts(directory);
     const plan = createAssetPlan(tools);

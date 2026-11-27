@@ -4,7 +4,7 @@ Inspect the marker structure and Exif metadata of one JPEG, then prepare a clean
 
 ## Open the tool
 
-The tool path is [`/web-technica/jpeg-metadata/`](https://ennacx.github.io/web-technica/jpeg-metadata/) on GitHub Pages and `/jpeg-metadata/` in a root build. Public availability depends on deployment. See the [site README](../../../README.md) for the tool list and offline setup.
+Open [JPEG Metadata Inspector](https://wexmetrica.com/jpeg-metadata/) or see the [site README](../../../README.md) for the tool list and offline setup.
 
 ## Inspect and clean
 

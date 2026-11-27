@@ -492,7 +492,7 @@ sampleButton.addEventListener('click', () => {
         return;
     }
 
-    const sample = '{\n  "name": "Web-Technica",\n  "tools": ["pwdgen", "keygen", "sri-hasher"],\n  "offline": true,\n  "version": 1,\n  "description": null\n}';
+    const sample = '{\n  "name": "Wexmetrica",\n  "tools": ["pwdgen", "keygen", "sri-hasher"],\n  "offline": true,\n  "version": 1,\n  "description": null\n}';
     editorDocument.setSource(prettyPrintJson(sample, editorDocument.editIndent));
     treeRenderer.reset();
     input.value = editorDocument.source;
