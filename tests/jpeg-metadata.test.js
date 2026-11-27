@@ -1,7 +1,7 @@
 ﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MAX_FILE_BYTES, parseJpeg } from '../src/tools/jpeg-metadata/js/jpeg-parser.js';
-import { EXIF_TAG, IFD, IFD_TYPE } from '../src/tools/jpeg-metadata/js/exif-constants.js';
+import { EXIF_TAG, IFD, IFD_TYPE, TAG_NAMES } from '../src/tools/jpeg-metadata/js/exif-constants.js';
 import { createExifDisplayModel, getExifThumbnail, inspectJpeg } from '../src/tools/jpeg-metadata/js/exif-inspector.js';
 import { decode } from '../src/tools/jpeg-metadata/js/exif-decoder.js';
 import { previewExifEntry } from '../src/tools/jpeg-metadata/js/exif-formatter.js';
@@ -101,8 +101,14 @@ test('follows the Interoperability IFD pointer and accounts for its 30-byte rang
         const tiff = exifWithInteroperability(little);
         const exif = readExif(tiff);
         assert.deepEqual(exif.issues, []);
-        const index = exif.directories.get(IFD.INTEROPERABILITY).get(1);
-        assert.equal(previewExifEntry(index, little, IFD.INTEROPERABILITY).value, 'R98');
+        const entries = exif.directories.get(IFD.INTEROPERABILITY);
+        const names = TAG_NAMES[IFD.INTEROPERABILITY];
+        assert.equal(names.get(1), 'InteroperabilityIndex');
+        assert.equal(names.get(2), 'InteroperabilityVersion');
+        assert.equal(previewExifEntry(entries.get(1), little, IFD.INTEROPERABILITY).value, 'R98');
+        assert.deepEqual(previewExifEntry(entries.get(2), little, IFD.INTEROPERABILITY), {
+            typeName: 'UNDEFINED', value: '30 31 30 30 │ 0100'
+        });
         const input = jpeg([app1(tiff)]);
         assert.equal(cleanJpeg(input, 'metadata').warning, '');
         assert.throws(() => cleanJpeg(input, 'location'), /0xa005/);
@@ -120,14 +126,20 @@ test('follows the Interoperability IFD pointer and accounts for its 30-byte rang
 
 test('distinguishes rotation and reflection from invalid Exif Orientation', () => {
     const warning = (tiff) => cleanJpeg(jpeg([app1(tiff)]), 'metadata').warning;
-    for(const [orientation, expected] of [[1, 'Normal'], [3, 'Rotate 180°'], [6, 'Rotate 90° CW'], [8, 'Rotate 270° CW'], [9, '9']]){
+    const cases = [
+        [1, 'Normal'], [2, 'Mirror horizontal'], [3, 'Rotate 180°'], [4, 'Mirror vertical'],
+        [5, 'Transpose'], [6, 'Rotate 90° CW'], [7, 'Transverse'], [8, 'Rotate 270° CW'],
+        [0, '0'], [9, '9']
+    ];
+    for(const [orientation, expected] of cases){
         const exif = readExif(exifFixture(true, { orientation }));
         const { fields } = createExifDisplayModel(exif);
         assert.equal(fields.find(({ label }) => label === 'Orientation').value, expected);
+        const message = warning(exifFixture(false, { orientation }));
+        if(orientation === 1) assert.equal(message, '');
+        else if(orientation >= 2 && orientation <= 8) assert.match(message, /rotate or mirror/);
+        else assert.match(message, /malformed or ambiguous/);
     }
-    assert.equal(warning(exifFixture(false, { orientation: 1 })), '');
-    assert.match(warning(exifFixture(false, { orientation: 8 })), /rotate or mirror/);
-    assert.match(warning(exifFixture(true, { orientation: 9 })), /malformed or ambiguous/);
     const wrongType = exifFixture(true, { orientation: 1 });
     wrongType.writeUInt16LE(4, 24);
     assert.match(warning(wrongType), /malformed or ambiguous/);
@@ -251,6 +263,39 @@ test('previews unlabelled Exif values with TIFF-relative offsets and bounded bin
     const inline = directories.get('IFD0').get(0x0112);
     assert.equal(inline.dataOffset, 30);
     assert.deepEqual(previewExifEntry(inline, little), { typeName: 'SHORT', value: '6' });
+});
+
+test('reads unsigned TIFF IFD values in both byte orders and bounds their numeric preview', () => {
+    const offsets = [0x80000000, 0xffffffff, ...Array.from({ length: 11 }, (_, i) => 200 + i * 4)];
+    for(const little of [true, false]){
+        const tiff = Buffer.concat([exifFixture(little, { extraTag: 0xcafe }), Buffer.alloc(offsets.length * 4)]);
+        const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
+        view.setUint16(80, 13, little);
+        view.setUint32(82, offsets.length, little);
+        view.setUint32(86, 200, little);
+        offsets.forEach((offset, i) => view.setUint32(200 + i * 4, offset, little));
+
+        const exif = readExif(tiff);
+        const entry = exif.directories.get(IFD.EXIF).get(0xcafe);
+        assert.deepEqual(exif.issues, []);
+        assert.equal(entry.dataOffset, 200);
+        assert.deepEqual(decode(entry, little), { kind: 'numeric', values: offsets, truncated: false });
+        assert.deepEqual(previewExifEntry(entry, little, IFD.EXIF), {
+            typeName: 'IFD', value: `${offsets.slice(0, 12).join(', ')}, …`
+        });
+        assert.throws(() => cleanJpeg(jpeg([app1(tiff)]), 'location'), /0xcafe/i);
+    }
+});
+
+test('bounds long Exif text previews and marks omitted bytes', () => {
+    const prefix = 'A'.repeat(512);
+    const tiff = Buffer.concat([exifFixture(true), ascii(`${prefix}omitted\0`)]);
+    tiff.fill(0, 140, 155);
+    tiff.writeUInt32LE(tiff.length - 200, 14);
+    tiff.writeUInt32LE(200, 18);
+
+    const { fields } = createExifDisplayModel(readExif(tiff));
+    assert.equal(fields.find(({ label }) => label === 'Camera make').value, `${prefix}…`);
 });
 
 test('formats Exif date and focal lengths and preserves the equivalent focal length during GPS cleanup', () => {
@@ -381,6 +426,25 @@ test('Exif offset, cycle, duplicate, count and alias checks protect location-onl
     assert.throws(() => cleanJpeg(jpeg([app1(orphan)]), 'location'), /unreferenced TIFF data/);
 });
 
+test('reports every TIFF range overlapped by one value and refuses location-only cleanup', () => {
+    const issue = 'overlapping TIFF ranges';
+    for(const little of [true, false]){
+        const tiff = exifFixture(little);
+        const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
+        // Point the GPS latitude across the camera make and exposure time ranges.
+        view.setUint32(118, 148, little);
+        tiff.fill(0, 168, 192);
+
+        const exif = readExif(tiff);
+        assert.deepEqual(exif.issues, [issue]);
+        assert.deepEqual(exif.issueRanges, [
+            { issue, start: 148, end: 155 },
+            { issue, start: 156, end: 164 }
+        ]);
+        assert.throws(() => cleanJpeg(jpeg([app1(tiff)]), 'location'), /overlapping TIFF ranges/);
+    }
+});
+
 test('UI keeps hostile text literal, downloads a verified Blob, and ignores stale file reads', async () => {
     await import('./helpers/register-utils.js');
     const { readFileSync } = await import('node:fs');
@@ -431,6 +495,11 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         assert.equal(blob.type, 'image/jpeg');
         assert.deepEqual(Buffer.from(await blob.arrayBuffer()), input);
         const originalPreview = preview.src;
+        assert.equal(get('file-details').hidden, false);
+        assert.equal(get('structure').hidden, false);
+        assert.equal(get('segments').open, true);
+        assert.equal(get('issues').hidden, true);
+        assert.equal(get('segment-rows').children[0].children[0].children[0].textContent, 'SOI');
         assert.equal(get('inspect').hidden, false);
         assert.ok(get('exif-fields').children.some((entry) => entry.textContent === '<img src=x>Cam'));
         const pointer = get('tag-list').children.find((entry) => entry.children[0].textContent === '0x8769 · IFD0 · ExifIFDPointer');
@@ -455,16 +524,29 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         assert.match(get('clean-status').textContent, /Cleanup stopped.*XMP/);
         assert.equal(get('download').hidden, true);
 
+        const orphan = exifFixture(true);
+        orphan[199] = 42;
+        const restricted = jpeg([app1(orphan), marker(0xe2, ascii('MPF\0'))]);
+        file.files = [new File([restricted], 'restricted.jpg')];
+        await file.fire('change');
+        assert.equal(get('issues').hidden, false);
+        assert.match(get('issue-list').children[0].textContent, /Cleanup unavailable.*MPF/);
+        assert.match(get('issue-list').children[1].textContent, /unreferenced TIFF data at TIFF offset 192 \(8 B\)/);
+        assert.equal(get('clean').disabled, true);
+
         const delayed = Promise.withResolvers();
         file.files = [{ name: 'old.jpg', size: input.length, arrayBuffer: () => delayed.promise }];
         const old = file.fire('change');
         assert.equal(preview.hidden, true);
+        assert.equal(get('structure').hidden, true);
         assert.ok(revoked.includes(originalPreview));
         file.files = [new File([jpeg()], 'new.jpg')];
         await file.fire('change');
         delayed.resolve(Uint8Array.from(input).buffer);
         await old;
         assert.equal(get('file-info').children[1].textContent, 'new.jpg');
+        assert.equal(get('issues').hidden, true);
+        assert.deepEqual(get('issue-list').children, []);
         assert.match(get('exif-summary').textContent, /No Exif segments/);
         await get('clean').fire('click');
         assert.match(get('clean-status').textContent, /No matching metadata/);
@@ -532,6 +614,12 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         file.files = [{ name: 'oversized.jpg', size: MAX_FILE_BYTES + 1 }];
         await file.fire('change');
         assert.match(get('file-status').textContent, /too large/i);
+
+        file.files = [];
+        await file.fire('change');
+        assert.equal(get('file-details').hidden, true);
+        assert.equal(get('structure').hidden, true);
+        assert.deepEqual(get('file-info').children, []);
     } finally{
         delete globalThis.document;
     }

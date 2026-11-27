@@ -38,11 +38,6 @@ main.sri-hasher {
 }
 
 .sri-hasher {
-    input[type="file"] {
-        max-width: 100%;
-        font-size: 13px;
-    }
-
     input::file-selector-button {
         margin-inline-end: 12px;
         padding: 4px 8px;
@@ -64,7 +59,18 @@ main.sri-hasher {
     margin-block: 16px 24px;
 }
 
-.sri-result-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-block: 24px 12px; h3 { font-size: 14px; } }
+.sri-result-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-block: 24px 12px;
+
+    h3 {
+        font-size: 14px;
+    }
+}
 
 .sri-help {
     margin-block-start: 28px;

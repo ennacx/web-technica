@@ -14,7 +14,10 @@ const get = (id) => getById(`jpeg-${id}`, document);
 const fileInput = get('file');
 const fileStatus = get('file-status');
 const fileInfo = get('file-info');
+const fileDetails = get('file-details');
 const preview = get('preview');
+const structure = get('structure');
+const issues = get('issues');
 const inspect = get('inspect');
 const gps = get('gps');
 const otherTags = get('other-tags');
@@ -211,8 +214,7 @@ function renderInspection(jpeg, inspections){
         (inspections.length) ? `${inspections.length} Exif segment(s).` : 'No Exif segments.',
         (gpsCount) ? `GPS directory found in ${gpsCount} segment(s).` : ((incomplete) ? 'GPS presence could not be determined.' : 'No Exif GPS directory detected.'),
         ([fields, coordinates, rawTags].some((list) => (list.length >= LIST_VIEW_LIMIT))) ? `Tag display is limited to ${LIST_VIEW_LIMIT} entries per list.` : '',
-        (opaque.size) ? `Detected without decoding: ${[...opaque].join(', ')}.` : '',
-        ...notes
+        (opaque.size) ? `Detected without decoding: ${[...opaque].join(', ')}.` : ''
     ];
 
     get('exif-summary').textContent = summary.filter(Boolean).join(' ');
@@ -241,6 +243,12 @@ function renderInspection(jpeg, inspections){
 
     get('segment-rows').replaceChildren(rows);
 
+    if(jpeg.restrictions.length){
+        notes.unshift(`Cleanup unavailable: ${jpeg.restrictions.join(', ')}.`);
+    }
+    get('issue-list').replaceChildren(...notes.map((note) => node('li', note)));
+    issues.hidden = !notes.length;
+    structure.hidden = false;
     inspect.hidden = false;
 }
 
@@ -253,12 +261,12 @@ fileInput.addEventListener('change', async () => {
     clearOutput();
     clearPreview();
 
-    inspect.hidden = true;
+    structure.hidden = issues.hidden = inspect.hidden = true;
     gps.open = false;
     otherTags.open = false;
-    segments.open = false;
+    segments.open = true;
 
-    for(const id of ['exif-summary', 'exif-fields', 'gps-fields', 'tag-list', 'segment-rows']){
+    for(const id of ['file-info', 'issue-list', 'exif-summary', 'exif-fields', 'gps-fields', 'tag-list', 'segment-rows']){
         get(id).replaceChildren();
     }
 
@@ -266,7 +274,7 @@ fileInput.addEventListener('change', async () => {
 
     updateOrientation();
 
-    fileInfo.hidden = (!file);
+    fileDetails.hidden = !file;
 
     if(!file){
         fileStatus.textContent = 'Choose a JPEG to inspect.';
@@ -317,7 +325,7 @@ fileInput.addEventListener('change', async () => {
         updateOrientation();
 
         fileStatus.textContent = (jpeg.restrictions.length) ?
-            `JPEG markers inspected. Cleanup unavailable: ${jpeg.restrictions.join(', ')}.` :
+            'JPEG markers inspected. See Issues for cleanup restrictions.' :
             'JPEG marker structure inspected.';
 
         options.disabled = cleanButton.disabled = Boolean(jpeg.restrictions.length);

@@ -16,17 +16,41 @@ javascriptNotice: Enable JavaScript to inspect and clean JPEG files.
 {% from "components/icons.njk" import icon %}
 
 <div class="jpeg-workspace">
-    <section class="jpeg-panel" aria-labelledby="jpeg-file-title">
-        <h2 id="jpeg-file-title"><label for="jpeg-file">JPEG file</label></h2>
-        <input id="jpeg-file" type="file" accept=".jpg,.jpeg,image/jpeg" aria-describedby="jpeg-file-help jpeg-file-status" disabled>
-        <p id="jpeg-file-help" class="field-help">One JPEG up to 32 MiB.</p>
-
-        <div class="jpeg-file-details">
+    <div class="jpeg-file-layout">
+        <section class="jpeg-panel jpeg-upload" aria-labelledby="jpeg-file-title">
+            <div class="jpeg-upload-controls">
+                <h2 id="jpeg-file-title"><label for="jpeg-file">JPEG file</label></h2>
+                <input id="jpeg-file" type="file" class="input" accept=".jpg,.jpeg,image/jpeg" aria-describedby="jpeg-file-help jpeg-file-status" disabled>
+                <p id="jpeg-file-help" class="field-help">One JPEG up to 32 MiB.</p>
+                <p id="jpeg-file-status" role="status">Choose a JPEG to inspect.</p>
+            </div>
             <img id="jpeg-preview" class="jpeg-preview" alt="Preview of the selected JPEG" decoding="async" hidden>
-            <dl id="jpeg-file-info" class="jpeg-facts" hidden></dl>
+        </section>
+
+        <section id="jpeg-file-details" class="jpeg-panel jpeg-file-details" aria-labelledby="jpeg-file-details-title" hidden>
+            <h2 id="jpeg-file-details-title">File details</h2>
+
+            <dl id="jpeg-file-info" class="jpeg-facts"></dl>
+        </section>
+    </div>
+
+    <section id="jpeg-structure" class="jpeg-panel jpeg-structure" aria-labelledby="jpeg-structure-title" hidden>
+        <h2 id="jpeg-structure-title">JPEG structure</h2>
+        <div id="jpeg-issues" class="jpeg-issues" hidden>
+            <h3>Issues</h3>
+
+            <ul id="jpeg-issue-list"></ul>
         </div>
 
-        <p id="jpeg-file-status" role="status">Choose a JPEG to inspect.</p>
+        <details id="jpeg-segments" open>
+            <summary>JPEG markers</summary>
+            <div class="jpeg-table" tabindex="0" role="region" aria-label="JPEG marker table">
+                <table>
+                    <thead><tr><th scope="col">Marker</th><th scope="col">Offset</th><th scope="col">Bytes</th><th scope="col">Payload</th></tr></thead>
+                    <tbody id="jpeg-segment-rows"></tbody>
+                </table>
+            </div>
+        </details>
     </section>
 
     <section id="jpeg-inspect" class="jpeg-panel" aria-labelledby="jpeg-inspect-title" hidden>
@@ -38,22 +62,14 @@ javascriptNotice: Enable JavaScript to inspect and clean JPEG files.
 
         <details id="jpeg-gps" hidden>
             <summary>GPS tag values</summary>
+
             <dl id="jpeg-gps-fields" class="jpeg-facts jpeg-facts-divided"></dl>
         </details>
 
         <details id="jpeg-other-tags" hidden>
             <summary>Other Exif tags</summary>
-            <ul id="jpeg-tag-list" class="ifd-tag-list" role="list"></ul>
-        </details>
 
-        <details id="jpeg-segments">
-            <summary>JPEG segments</summary>
-            <div class="jpeg-table" tabindex="0" role="region" aria-label="JPEG segment table">
-                <table>
-                    <thead><tr><th scope="col">Marker</th><th scope="col">Offset</th><th scope="col">Bytes</th><th scope="col">Payload</th></tr></thead>
-                    <tbody id="jpeg-segment-rows"></tbody>
-                </table>
-            </div>
+            <ul id="jpeg-tag-list" class="ifd-tag-list" role="list"></ul>
         </details>
     </section>
 
@@ -62,8 +78,10 @@ javascriptNotice: Enable JavaScript to inspect and clean JPEG files.
 
         <fieldset id="jpeg-options" disabled>
             <legend>Cleanup mode</legend>
+
             <label><input type="radio" name="jpeg-mode" value="metadata" aria-describedby="jpeg-metadata-help" checked> Remove metadata</label>
             <p id="jpeg-metadata-help" class="field-help">Removes Exif, XMP, Photoshop/IPTC and comments. Keeps ICC color profiles, JFIF (including possible thumbnails) and Adobe color information.</p>
+
             <label><input type="radio" name="jpeg-mode" value="location" aria-describedby="jpeg-location-help"> Remove location only</label>
             <p id="jpeg-location-help" class="field-help">Rebuilds supported Exif without its GPS directory. Files with XMP, IPTC, ICC, comments, embedded previews or unfamiliar Exif tags may be inspected, but location-only cleanup refuses them.</p>
         </fieldset>
