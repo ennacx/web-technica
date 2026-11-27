@@ -6,10 +6,6 @@
     <meta name="description" content="{{ (description or site.description) | escape }}">
     <meta name="theme-color" content="#151a20">
 
-    {% if site.googleSiteVerification %}
-        <meta name="google-site-verification" content="{{ site.googleSiteVerification }}">
-    {% endif %}
-
     {% if noindex %}
         <meta name="robots" content="noindex">
     {% else %}
