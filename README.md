@@ -14,7 +14,7 @@ The table follows the [tool registry](src/_data/tools.json). Each guide covers u
 |---|---|---|---|---|
 | [Password Generator](src/tools/pwdgen/README.md) | Cryptographic passwords, hexadecimal strings, and UUID v4 | `published` | [Open](https://ennacx.github.io/web-technica/pwdgen/) | Offline ready |
 | [URL Inspector](src/tools/url-inspector/README.md) | Inspect, edit, and rebuild URLs and query parameters | `published` | [Open](https://ennacx.github.io/web-technica/url-inspector/) | Offline ready |
-| [JPEG Metadata Inspector](src/tools/jpeg-metadata/README.md) | Inspect JPEG metadata, strip supported metadata, or remove GPS data from supported Exif | `develop` | [Development build path](src/tools/jpeg-metadata/README.md#open-the-tool) | Offline ready |
+| [JPEG Metadata Inspector](src/tools/jpeg-metadata/README.md) | Inspect JPEG metadata, strip supported metadata, or remove GPS data from supported Exif | `develop` | [Development](https://ennacx.github.io/web-technica/jpeg-metadata/) | Offline ready |
 | [Regex Tester](src/tools/regex-tester/README.md) | JavaScript regex matching, captures, and highlighting with Auto / Manual execution | `published` | [Open](https://ennacx.github.io/web-technica/regex-tester/) | Offline ready |
 | [JSON Editor](src/tools/json-editor/README.md) | Edit, format, minify, validate, naturally sort JSON, and explore a read-only tree | `published` | [Open](https://ennacx.github.io/web-technica/json-editor/) | Offline ready |
 | [Keypair Generator](src/tools/keygen/README.md) | Generate key pairs and export PEM, OpenSSH, or PPK | `published` | [Open](https://ennacx.github.io/web-technica/keygen/) | Offline ready |
