@@ -2,10 +2,9 @@
  * JPEGのメタデータ削除、Exif GPS削除、出力検証を担当するライブラリ。
  */
 
-import { IFD, IFD_TYPE, TIFF_TAG } from './exif-constants.js';
-import { decode as exifDecode } from './exif-decoder.js';
+import { IFD, TIFF_TAG } from './exif-constants.js';
 import { parseJpeg } from './jpeg-parser.js';
-import { inspectJpeg } from './exif-inspector.js';
+import { inspectJpeg, readOrientation } from './exif-inspector.js';
 import { rebuildWithoutGps } from './gps-cleaner.js';
 
 /**
@@ -48,16 +47,9 @@ export function orientationWarning(inspections){
             continue;
         }
 
-        if(orientationEntry.type !== IFD_TYPE.SHORT || orientationEntry.count !== 1){
-            ambiguous = true;
+        const value = readOrientation(exif);
 
-            continue;
-        }
-
-        const decoded = exifDecode(orientationEntry, exif.little);
-        const value   = (decoded.kind === 'numeric') ? decoded.values[0] : undefined;
-
-        if(typeof value !== 'number' || value < 1 || value > 8){
+        if(value === undefined){
             ambiguous = true;
         } else if(value !== 1){
             return 'Removing Exif Orientation may rotate or mirror the displayed image.';

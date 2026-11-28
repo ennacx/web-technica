@@ -40,6 +40,21 @@ export function querySelAll(selector, root = globalThis.document) {
     return root.querySelectorAll(selector);
 }
 
-export function create(tag, root = globalThis.document) {
-    return root.createElement(tag);
+/**
+ * HTML要素を生成し、指定されたテキストを設定する。
+ *
+ * @template {keyof HTMLElementTagNameMap} K
+ * @param {K} tag - HTMLタグ名
+ * @param {string|null} [value=null] - HTMLとして解釈しないテキスト
+ * @param {Document} [root=globalThis.document] - 要素を生成するDocument
+ * @returns {HTMLElementTagNameMap[K]}
+ */
+export function createElem(tag, value = null, root = globalThis.document) {
+    const item = root.createElement(tag);
+
+    if(value){
+        item.textContent = value;
+    }
+
+    return item;
 }

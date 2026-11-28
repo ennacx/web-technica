@@ -1,15 +1,17 @@
-﻿import { getById } from '#utils/dom.js';
+﻿import { getById, createElem } from '#utils/dom.js';
 import { downloadBlob } from '#utils/download.js';
 import { IFD, TIFF_TAG, EXIF_TAG, TAG_NAMES } from './exif-constants.js';
+import { formatAspectRatio, getDisplayDimensions } from './image-geometry.js';
 import { MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg } from './jpeg-parser.js';
 import { previewExifEntry } from './exif-formatter.js';
-import { createExifDisplayModel, inspectJpeg, getExifThumbnail } from './exif-inspector.js';
+import { createExifDisplayModel, inspectJpeg, getExifThumbnail, getOrientation, readOrientation } from './exif-inspector.js';
 import { cleanedFilename, cleanJpeg, orientationWarning } from './jpeg-cleaner.js';
 
 // 表示上限数
 const LIST_VIEW_LIMIT = 100;
 
 const get = (id) => getById(`jpeg-${id}`, document);
+const node = (tag, value) => createElem(tag, value, document);
 
 const fileInput = get('file');
 const fileStatus = get('file-status');
@@ -50,7 +52,8 @@ function clearPreview(){
 }
 
 /**
- * Exifサムネイルを優先し、復号できなければ元JPEGを表示する。
+ * 向きが通常と確認できる場合だけExifサムネイルを使い、それ以外は元JPEGを表示する。
+ * 元JPEGのOrientationはブラウザーに適用させ、CSSでの二重回転を避ける。
  *
  * @param {File} file - 選択したJPEG。
  * @param {import('./exif-inspector.js').ExifInspection[]} inspections - Exif APP1ごとの解析結果。
@@ -58,7 +61,10 @@ function clearPreview(){
  * @returns {Promise<void>}
  */
 async function showPreview(file, inspections, current){
-    const thumbnail = getExifThumbnail(inspections);
+    const normal = inspections.every(({ exif, error }) => !error && exif &&
+        [IFD.PRIMARY, IFD.THUMBNAIL].every((directory) =>
+            !exif.directories.get(directory)?.has(TIFF_TAG.Orientation) || readOrientation(exif, directory) === 1));
+    const thumbnail = normal ? getExifThumbnail(inspections) : null;
 
     for(const embedded of ((thumbnail) ? [true, false] : [false])){
         try{
@@ -87,16 +93,35 @@ async function showPreview(file, inspections, current){
     }
 }
 
-function node(tag, value){
-    const item = document.createElement(tag);
-
-    item.textContent = value;
-
-    return item;
-}
-
+/**
+ * ラベル・値を分離し、dt/ddタグに変換する。
+ *
+ * @param container
+ * @param entries
+ */
 function facts(container, entries){
     container.replaceChildren(...entries.flatMap(([label, value]) => [node('dt', label), node('dd', value)]));
+}
+
+/**
+ * ラベル・参照元・値を分離し、同じマーカー内のタグを追いやすくする。
+ *
+ * @param container
+ * @param entries
+ */
+function inspectionFacts(container, entries){
+    container.replaceChildren(...entries.flatMap(({ label, source, value, marker, kind, offset }) => {
+        const term     = node('dt');
+        const badge    = node('span', source);
+        const location = node('span', `${marker}${(kind) ? ' ('+ kind +')' : ''} offset: ${offset} bytes`);
+
+        badge.className    = 'badge';
+        location.className = 'jpeg-field-offset';
+
+        term.append(node('span', label), badge, location);
+
+        return [term, node('dd', value)];
+    }));
 }
 
 function mode(){
@@ -118,6 +143,12 @@ function updateOrientation(){
     orientation.hidden = (!orientation.textContent);
 }
 
+/**
+ * インスペクションのレンダリングをする。
+ *
+ * @param {import('./jpeg-parser.js').JpegInspection} jpeg
+ * @param {import('./exif-inspector.js').ExifInspection[]} inspections
+ */
 function renderInspection(jpeg, inspections){
     const fields      = [];
     const coordinates = [];
@@ -176,7 +207,14 @@ function renderInspection(jpeg, inspections){
             const target = (source === IFD.GPS) ? coordinates : fields;
 
             if(target.length < LIST_VIEW_LIMIT){
-                target.push([`${label} · ${source} @ ${segment.offset}`, value]);
+                target.push({
+                    label,
+                    source,
+                    value,
+                    marker: segment.name,
+                    kind: segment.kind,
+                    offset: segment.offset,
+                });
             }
         }
 
@@ -189,22 +227,41 @@ function renderInspection(jpeg, inspections){
             const entry = exif.directories.get(source).get(tag);
             const { typeName, value } = previewExifEntry(entry, exif.little, source);
 
-            const id      = `0x${tag.toString(16).padStart(4, '0')}`;
-            const item    = document.createElement('li');
-            const details = document.createElement('dl');
+            const id = `0x${tag.toString(16).padStart(4, '0')}`;
 
-            details.className = 'jpeg-facts';
+            const item         = node('li');
+            const details      = node('dl');
+            const content      = node('div');
+            const valueDetails = node('dl');
+            const heading      = node('div');
+            const tagId        = node('code', id);
+            const badge        = node('span', source);
+
+            details.className      = 'jpeg-facts';
+            content.className      = 'ifd-tag-content';
+            valueDetails.className = 'jpeg-facts ifd-tag-value';
+            heading.className      = 'ifd-tag-heading';
+            badge.className        = 'ifd-tag-source badge';
 
             facts(details, [
-                ['Type and size', `${typeName} × ${entry.count} · ${entry.data.length} B`],
-                ['JPEG APP1 offset', String(segment.offset)],
-                ['TIFF value offset', String(entry.dataOffset)],
-                ['Value', value || '(empty)']
+                ['Type and size', `${typeName} × ${entry.count} · ${entry.data.length} Byte(s)`],
+                [`JPEG ${segment.name}${(segment.kind) ? ' ('+ segment.kind +')' : ''} offset`, String(segment.offset)],
+                ['TIFF value offset', String(entry.dataOffset)]
             ]);
+            facts(valueDetails, [['Value', value || '(empty)']]);
 
             const name = TAG_NAMES[source]?.get(tag);
 
-            item.append(node('strong', (name) ? `${id} · ${source} · ${name}` : `${id} · ${source}`), details);
+            heading.append(tagId);
+            if(name){
+                heading.append(node('strong', name));
+            }
+            heading.append(badge);
+
+            content.append(details, valueDetails);
+
+            item.append(heading, content);
+
             rawTags.push(item);
         }
     }
@@ -215,12 +272,12 @@ function renderInspection(jpeg, inspections){
         (gpsCount) ? `GPS directory found in ${gpsCount} segment(s).` : ((incomplete) ? 'GPS presence could not be determined.' : 'No Exif GPS directory detected.'),
         ([fields, coordinates, rawTags].some((list) => (list.length >= LIST_VIEW_LIMIT))) ? `Tag display is limited to ${LIST_VIEW_LIMIT} entries per list.` : '',
         (opaque.size) ? `Detected without decoding: ${[...opaque].join(', ')}.` : ''
-    ];
+    ].filter(Boolean);
 
-    get('exif-summary').textContent = summary.filter(Boolean).join(' ');
+    get('exif-summary').textContent = summary.join(' ');
 
-    facts(get('exif-fields'), fields);
-    facts(get('gps-fields'), coordinates);
+    inspectionFacts(get('exif-fields'), fields);
+    inspectionFacts(get('gps-fields'), coordinates);
 
     gps.hidden = (!coordinates.length);
 
@@ -232,7 +289,7 @@ function renderInspection(jpeg, inspections){
 
     // セグメント
     for(const { name, offset, end, kind } of jpeg.segments){
-        const row = document.createElement('tr');
+        const row = node('tr');
 
         for(const value of [name, String(offset), String(end - offset), kind || "—"]){
             row.append(node('td', value));
@@ -247,9 +304,10 @@ function renderInspection(jpeg, inspections){
         notes.unshift(`Cleanup unavailable: ${jpeg.restrictions.join(', ')}.`);
     }
     get('issue-list').replaceChildren(...notes.map((note) => node('li', note)));
-    issues.hidden = !notes.length;
+
+    issues.hidden    = (!notes.length);
     structure.hidden = false;
-    inspect.hidden = false;
+    inspect.hidden   = false;
 }
 
 fileInput.addEventListener('change', async () => {
@@ -261,20 +319,24 @@ fileInput.addEventListener('change', async () => {
     clearOutput();
     clearPreview();
 
-    structure.hidden = issues.hidden = inspect.hidden = true;
-    gps.open = false;
+    structure.hidden = true;
+    issues.hidden    = true;
+    inspect.hidden   = true;
+
+    gps.open       = false;
     otherTags.open = false;
-    segments.open = true;
+    segments.open  = true;
 
     for(const id of ['file-info', 'issue-list', 'exif-summary', 'exif-fields', 'gps-fields', 'tag-list', 'segment-rows']){
         get(id).replaceChildren();
     }
 
-    options.disabled = cleanButton.disabled = true;
+    options.disabled     = true;
+    cleanButton.disabled = true;
 
     updateOrientation();
 
-    fileDetails.hidden = !file;
+    fileDetails.hidden = (!file);
 
     if(!file){
         fileStatus.textContent = 'Choose a JPEG to inspect.';
@@ -317,10 +379,24 @@ fileInput.addEventListener('change', async () => {
         const jpeg        = parseJpeg(bytes);
         const inspections = inspectJpeg(bytes, jpeg);
 
-        facts(fileInfo, [...details, ['Format', 'JPEG'], ['Dimensions', `${jpeg.width} × ${jpeg.height} px`]]);
+        const { width, height } = jpeg;
+        const display = getDisplayDimensions(width, height, getOrientation(inspections));
+        const dimensions = (w, h) => `${w} × ${h} px (${formatAspectRatio(w, h)})`;
+
+        facts(fileInfo, [
+            ...details,
+            ['Format', 'JPEG'],
+            ['Display dimensions', dimensions(display.width, display.height)],
+            ...((display.width !== width || display.height !== height) ?
+                [['Stored dimensions', dimensions(width, height)]] : []),
+        ]);
         renderInspection(jpeg, inspections);
 
-        input = { bytes, name: file.name, orientation: orientationWarning(inspections) };
+        input = {
+            bytes,
+            name: file.name,
+            orientation: orientationWarning(inspections),
+        };
 
         updateOrientation();
 

@@ -1,4 +1,4 @@
-import { getById } from '#utils/dom.js';
+import { getById, createElem } from '#utils/dom.js';
 import { bindCopyButton } from '#components/copy-button.js';
 import { createNotice } from '#components/notice.js';
 import { componentNames, UrlInspectorDocument } from './document.js';
@@ -7,6 +7,7 @@ import { componentFieldValue, componentUrlValue, hasHierarchicalPath, pathSegmen
 const state = new UrlInspectorDocument();
 
 const get = (id) => getById(`url-${id}`, document);
+const node = (tag, value) => createElem(tag, value, document);
 
 const current = get('current');
 const rowsElement = get('query-rows');
@@ -78,23 +79,21 @@ function renderPathSegments(){
     get('path-preview').hidden = (segments.length === 0);
 
     segments.forEach((segment, index) => {
-        const item = document.createElement('li');
+        const item = node('li');
 
         if(index > 0){
-            const separator = document.createElement('span');
+            const separator = node('span', '›');
 
             separator.className = 'url-path-separator';
-            separator.textContent = '›';
             separator.setAttribute('aria-hidden', 'true');
 
             item.append(separator);
         }
 
-        const label = document.createElement('code');
+        const label = node('code', (segment === '') ? '(empty)' : segment);
 
         label.className = 'url-path-segment';
-        label.textContent = (segment === '') ? '(empty)' : segment;
-        label.title = (index === 0) ? 'Root' : `Segment ${index}${(segment === '') ? ': empty' : ''}`;
+        label.title     = (index === 0) ? 'Root' : `Segment ${index}${(segment === '') ? ': empty' : ''}`;
 
         if(index === 0){
             label.textContent = 'Root /';
@@ -116,15 +115,15 @@ function renderPathSegments(){
 }
 
 function makeButton(label, text, action, id){
-    const button = document.createElement('button');
+    const button = node('button', text);
 
-    button.type = 'button';
-    button.className = 'button';
-    button.textContent = text;
-    button.setAttribute('aria-label', label);
-    button.title = label;
+    button.type           = 'button';
+    button.className      = 'button';
+    button.title          = label;
     button.dataset.action = action;
-    button.dataset.id = id;
+    button.dataset.id     = id;
+
+    button.setAttribute('aria-label', label);
 
     return button;
 }
@@ -133,45 +132,46 @@ function renderRows(){
     const fragment = document.createDocumentFragment();
 
     state.rows.forEach((row, index) => {
-        const tr = document.createElement('tr');
+        const tr = node('tr');
 
         for(const name of ['key', 'value']){
-            const td = document.createElement('td');
-            const input = document.createElement('input');
+            const td    = node('td');
+            const input = node('input');
 
-            input.className = 'input';
-            input.value = row[name];
-            input.spellcheck = false;
-            input.autocomplete = 'off';
+            input.className     = 'input';
+            input.value         = row[name];
+            input.spellcheck    = false;
+            input.autocomplete  = 'off';
+            input.dataset.id    = row.id;
+            input.dataset.field = name;
+
             input.setAttribute('autocapitalize', 'off');
             input.setAttribute('aria-label', `${(name === 'key') ? 'Key' : 'Value'} for parameter ${index + 1}`);
-            input.dataset.id = row.id;
-            input.dataset.field = name;
 
             td.append(input);
             tr.append(td);
         }
 
-        const orderCell = document.createElement('td');
-        const order = document.createElement('div');
+        const orderCell = node('td');
+        const order     = node('div');
 
         order.className = 'url-row-order';
 
-        const up = makeButton(`Move parameter ${index + 1} up`, '↑', 'up', row.id);
+        const up   = makeButton(`Move parameter ${index + 1} up`, '↑', 'up', row.id);
         const down = makeButton(`Move parameter ${index + 1} down`, '↓', 'down', row.id);
 
-        up.disabled = (index === 0);
+        up.disabled   = (index === 0);
         down.disabled = (index === state.rows.length - 1);
 
         order.append(up, down);
         orderCell.append(order);
 
-        const deleteCell = document.createElement('td');
         const remove = makeButton(`Delete parameter ${index + 1}`, '×', 'delete', row.id);
-
         remove.classList.add('url-row-delete');
 
+        const deleteCell = node('td');
         deleteCell.append(remove);
+
         tr.append(orderCell, deleteCell);
         fragment.append(tr);
     });

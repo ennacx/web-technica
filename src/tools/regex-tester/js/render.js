@@ -1,14 +1,10 @@
-import { getById, create } from '#utils/dom.js';
+import { getById, createElem } from '#utils/dom.js';
 import { LIMITS } from './result.js';
 
 export function createRenderer(root){
     const get = (name) => getById(`regex-${name}`, root);
     const make = (tag, { text, className } = {}) => {
-        const node = create(tag, root);
-
-        if(text !== undefined){
-            node.textContent = text;
-        }
+        const node = createElem(tag, text, root);
 
         if(className){
             node.className = className;

@@ -7,6 +7,28 @@ import { decode } from '../src/tools/jpeg-metadata/js/exif-decoder.js';
 import { previewExifEntry } from '../src/tools/jpeg-metadata/js/exif-formatter.js';
 import { readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
 import { cleanedFilename, cleanJpeg } from '../src/tools/jpeg-metadata/js/jpeg-cleaner.js';
+import { getOrientation } from '../src/tools/jpeg-metadata/js/exif-inspector.js';
+import { getAspectRatio, getDisplayDimensions, formatAspectRatio } from '../src/tools/jpeg-metadata/js/image-geometry.js';
+
+test('computes oriented dimensions and handles approximate, unusual and invalid ratios', () => {
+    for(let orientation = 1; orientation <= 8; orientation++){
+        assert.deepEqual(getDisplayDimensions(6000, 4000, orientation), orientation >= 5 ?
+            { width: 4000, height: 6000 } : { width: 6000, height: 4000 });
+        for(const little of [true, false]){
+            assert.equal(getOrientation(inspect(jpeg([app1(exifFixture(little, { orientation }))]))), orientation);
+        }
+    }
+    assert.equal(getOrientation(inspect(jpeg([app1(exifFixture(true, { orientation: 9 }))]))), undefined);
+    assert.equal(formatAspectRatio(6000, 4000), '3:2');
+    assert.equal(formatAspectRatio(4000, 6000), '2:3');
+    assert.equal(formatAspectRatio(1920, 1088), '≈ 16:9');
+    assert.equal(formatAspectRatio(1234, 1000), '617:500');
+    for(const size of [0, -1, NaN, Infinity]){
+        assert.equal(getAspectRatio(size, 100), null);
+        assert.equal(getAspectRatio(100, size), null);
+    }
+    assert.equal(getAspectRatio(100, 100, NaN), null);
+});
 
 const ascii = (value) => Buffer.from(value, 'ascii');
 const marker = (id, data) => {
@@ -145,8 +167,8 @@ test('distinguishes rotation and reflection from invalid Exif Orientation', () =
     assert.match(warning(wrongType), /malformed or ambiguous/);
 });
 
-function exifWithThumbnail(thumbnail){
-    const tiff = Buffer.concat([exifFixture(true), Buffer.alloc(30), thumbnail]);
+function exifWithThumbnail(thumbnail, orientation = 6){
+    const tiff = Buffer.concat([exifFixture(true, { orientation }), Buffer.alloc(30), thumbnail]);
     tiff.writeUInt32LE(200, 58);
     tiff.writeUInt16LE(2, 200);
     tiff.writeUInt16LE(0x0201, 202);
@@ -210,6 +232,28 @@ test('maps standard shooting tags by directory and type and preserves unknown nu
 
     tiff.writeUInt16BE(0x80, 234);
     assert.equal(createExifDisplayModel(readExif(tiff)).fields.find(({ label }) => label === 'Flash').value, '128');
+});
+
+test('marks rounded exposure times as approximate and leaves exact exposure times unmarked', () => {
+    const number = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, useGrouping: false });
+    const cases = [
+        { numerator: 19999992, denominator: 1000000000, expected: `≈ 1/${number.format(50)} s` },
+        { numerator: 1234, denominator: 1000, expected: `≈ ${number.format(1.23)} s` },
+        { numerator: 1, denominator: 50, expected: `1/${number.format(50)} s` }
+    ];
+
+    for(const little of [true, false]){
+        for(const { numerator, denominator, expected } of cases){
+            const tiff = exifFixture(little);
+            const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
+            view.setUint32(156, numerator, little);
+            view.setUint32(160, denominator, little);
+
+            const { fields } = createExifDisplayModel(readExif(tiff));
+            assert.equal(fields.find(({ label }) => label === 'Exposure time').value, expected,
+                `${numerator}/${denominator} seconds (${little ? 'II' : 'MM'})`);
+        }
+    }
 });
 
 test('displays standard Exif exposure compensation as signed EV', () => {
@@ -329,7 +373,7 @@ for(const little of [true, false]){
         const source = Buffer.from(input);
         const [{ exif }] = inspect(input);
         const { fields } = createExifDisplayModel(exif);
-        assert.deepEqual(fields.map(({ value }) => value), ['<img src=x>Cam', 'Rotate 90° CW', '1/125', 'N', '37/1, 14/1, 72345/1000']);
+        assert.deepEqual(fields.map(({ value }) => value), ['<img src=x>Cam', 'Rotate 90° CW', '1/125 s', 'N', '37/1, 14/1, 72345/1000']);
         const { bytes, removed, retained, warning } = cleanJpeg(input, 'location');
         const [after] = inspect(bytes);
         assert.equal(after.exif.little, little);
@@ -502,13 +546,18 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         assert.equal(get('segment-rows').children[0].children[0].children[0].textContent, 'SOI');
         assert.equal(get('inspect').hidden, false);
         assert.ok(get('exif-fields').children.some((entry) => entry.textContent === '<img src=x>Cam'));
-        const pointer = get('tag-list').children.find((entry) => entry.children[0].textContent === '0x8769 · IFD0 · ExifIFDPointer');
-        assert.deepEqual(pointer.children[1].children.map((entry) => entry.textContent), [
-            'Type and size', 'LONG × 1 · 4 B',
-            'JPEG APP1 offset', String(parseJpeg(input).segments.find(({ kind }) => kind === 'Exif').offset),
-            'TIFF value offset', '42',
-            'Value', '64'
+        const fieldSource = get('exif-fields').children[0].children;
+        assert.equal(fieldSource[1].className, 'badge');
+        assert.equal(fieldSource[1].textContent, 'IFD0');
+        assert.equal(fieldSource[2].textContent, `APP1 (Exif) offset: ${parseJpeg(input).segments.find(({ kind }) => kind === 'Exif').offset} bytes`);
+        const pointer = get('tag-list').children.find((entry) => entry.children[0].children[0].textContent === '0x8769');
+        assert.deepEqual(pointer.children[0].children.map((entry) => entry.textContent), ['0x8769', 'ExifIFDPointer', 'IFD0']);
+        assert.deepEqual(pointer.children[1].children[0].children.map((entry) => entry.textContent), [
+            'Type and size', 'LONG × 1 · 4 Byte(s)',
+            'JPEG APP1 (Exif) offset', String(parseJpeg(input).segments.find(({ kind }) => kind === 'Exif').offset),
+            'TIFF value offset', '42'
         ]);
+        assert.deepEqual(pointer.children[1].children[1].children.map((entry) => entry.textContent), ['Value', '64']);
         assert.match(get('orientation').textContent, /rotate or mirror/);
         await get('clean').fire('click');
         assert.equal(get('download').hidden, false);
@@ -552,7 +601,14 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         assert.match(get('clean-status').textContent, /No matching metadata/);
 
         const embedded = jpeg();
-        const withThumbnail = jpeg([app1(exifWithThumbnail(embedded))]);
+        for(let orientation = 2; orientation <= 8; orientation++){
+            const oriented = jpeg([app1(exifWithThumbnail(embedded, orientation))]);
+            file.files = [new File([oriented], 'oriented.jpg')];
+            await file.fire('change');
+            assert.equal(preview.alt, 'Preview of the selected JPEG');
+            assert.deepEqual(Buffer.from(await blob.arrayBuffer()), oriented);
+        }
+        const withThumbnail = jpeg([app1(exifWithThumbnail(embedded, 1))]);
         file.files = [new File([withThumbnail], 'embedded.jpg')];
         await file.fire('change');
         assert.equal(preview.hidden, false);

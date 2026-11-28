@@ -1,4 +1,5 @@
 /** Exif表示用のタグ定義と項目固有のフォーマット。 */
+
 import {
     IFD, IFD_TYPE,
     EXIF_TAG, GPS_TAG, TIFF_TAG,
@@ -118,7 +119,19 @@ const FLASH_RETURN = [
  * @type {Intl.DateTimeFormat}
  */
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium', timeStyle: 'medium', timeZone: 'UTC'
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+    timeZone: 'UTC',
+});
+
+/**
+ * シャッタースピードまわりのフォーマット
+ *
+ * @type {Intl.NumberFormat}
+ */
+const exposureTimeFormat = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 2,
+    useGrouping: false,
 });
 
 /**
@@ -127,7 +140,7 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
  * @type {Intl.NumberFormat}
  */
 const focalLengthFormat = new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 3
+    maximumFractionDigits: 3,
 });
 
 /**
@@ -137,7 +150,7 @@ const focalLengthFormat = new Intl.NumberFormat(undefined, {
  */
 const exposureCompensationFormat = new Intl.NumberFormat(undefined, {
     maximumFractionDigits: 2,
-    signDisplay: 'exceptZero'
+    signDisplay: 'exceptZero',
 });
 
 /**
@@ -244,6 +257,36 @@ function formatLensSpecification(decoded){
     return `${focalLength} mm, ${aperture}`;
 }
 
+/**
+ * シャッタースピードを表示する。
+ *
+ * @param {number} value - シャッタースピードの秒数
+ * @returns {string|undefined}
+ */
+function formatExposureTime(value){
+    if(!Number.isFinite(value) || value <= 0){
+        return undefined;
+    }
+
+    const isExact = (v) => {
+        const digits = exposureTimeFormat.resolvedOptions().maximumFractionDigits;
+
+        return (Number(v.toFixed(digits)) === v);
+    };
+
+    // 0.5秒以上ならそのまま
+    if(value >= 0.5){
+        const formattedValue = exposureTimeFormat.format(value);
+
+        return `${(isExact(value)) ? '' : '≈ '}${formattedValue} s`;
+    }
+
+    const reciprocal = 1 / value;
+    const formattedReciprocal = exposureTimeFormat.format(reciprocal);
+
+    return `${(isExact(reciprocal)) ? '' : '≈ '}1/${formattedReciprocal} s`;
+}
+
 /** @typedef {import('./exif-decoder.js').DecodedExifValue} DecodedExifValue */
 
 /**
@@ -267,6 +310,7 @@ const date = (value) => value.kind === 'text' && value.text.endsWith('\0')
  */
 function shortChoice(source, tag, label){
     const choices = SHORT_VALUES[source][tag];
+
     return {
         label,
         type: IFD_TYPE.SHORT,
@@ -340,6 +384,9 @@ export const EXIF_DEFINITIONS = Object.freeze({
 
         [EXIF_TAG.ExposureTime]: {
             label: 'Exposure time',
+            type: IFD_TYPE.RATIONAL,
+            count: 1,
+            format: formatQuotient(formatExposureTime),
         },
         [EXIF_TAG.FNumber]: {
             label: 'F-number',

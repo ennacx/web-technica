@@ -100,6 +100,7 @@
     width: min(100%, 9rem);
     height: 7rem;
     object-fit: contain;
+    image-orientation: from-image;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -146,6 +147,42 @@
     }
 }
 
+.jpeg-inspection-fields {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+
+    dt {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: baseline;
+        gap: 4px 12px;
+
+        .badge {
+            justify-self: start;
+        }
+    }
+
+    .jpeg-field-offset {
+        grid-column: 1 / -1;
+        font-size: 0.875rem;
+        font-family: var(--font-mono);
+    }
+
+    @include mixin.mobile {
+        grid-template-columns: minmax(0, 1fr);
+
+        dt {
+            grid-template-columns: minmax(0, 1fr) auto;
+            padding-inline-end: 0;
+            padding-block-end: 4px;
+            border-bottom: 0;
+        }
+
+        dd {
+            padding-block-start: 0;
+        }
+    }
+}
+
 .ifd-tag-list {
     padding-inline-start: 0;
     list-style: none;
@@ -157,13 +194,47 @@
     }
 
     .jpeg-facts {
-        grid-template-columns: min(45%, 10rem) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        align-content: start;
+        align-items: baseline;
         margin-block: 4px 0;
+
+        > * {
+            min-width: 0;
+        }
     }
 
-    dt:last-of-type,
-    dd:last-of-type {
-        grid-column: 1 / -1;
+    .ifd-tag-value {
+        grid-template-columns: minmax(0, 1fr);
+        align-content: start;
+    }
+}
+
+.ifd-tag-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+
+    code {
+        font-family: var(--font-mono);
+        font-size: inherit;
+        font-weight: 600;
+    }
+}
+
+.ifd-tag-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 8px 24px;
+
+    & > * {
+        min-width: 0;
+    }
+
+    @include mixin.mobile {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
