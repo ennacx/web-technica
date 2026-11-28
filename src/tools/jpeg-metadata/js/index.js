@@ -92,6 +92,27 @@ function facts(container, entries){
     container.replaceChildren(...entries.flatMap(([label, value]) => [node('dt', label), node('dd', value)]));
 }
 
+/**
+ * ラベル・参照元・値を分離し、同じマーカー内のタグを追いやすくする。
+ *
+ * @param container
+ * @param entries
+ */
+function inspectionFacts(container, entries){
+    container.replaceChildren(...entries.flatMap(({ label, source, value, marker, kind, offset }) => {
+        const term     = node('dt');
+        const badge    = node('span', source);
+        const location = node('span', `${marker}${(kind) ? ' ('+ kind +')' : ''} offset: ${offset} bytes`);
+
+        badge.className    = 'badge';
+        location.className = 'jpeg-field-offset';
+
+        term.append(node('span', label), badge, location);
+
+        return [term, node('dd', value)];
+    }));
+}
+
 function mode(){
     return options.querySelector('input:checked').value;
 }
@@ -111,6 +132,12 @@ function updateOrientation(){
     orientation.hidden = (!orientation.textContent);
 }
 
+/**
+ * インスペクションのレンダリングをする。
+ *
+ * @param {JpegInspection} jpeg
+ * @param {ExifInspection[]} inspections
+ */
 function renderInspection(jpeg, inspections){
     const fields      = [];
     const coordinates = [];
@@ -169,7 +196,14 @@ function renderInspection(jpeg, inspections){
             const target = (source === IFD.GPS) ? coordinates : fields;
 
             if(target.length < LIST_VIEW_LIMIT){
-                target.push([`${label} · ${source} @ ${segment.offset}`, value]);
+                target.push({
+                    label,
+                    source,
+                    value,
+                    marker: segment.name,
+                    kind: segment.kind,
+                    offset: segment.offset,
+                });
             }
         }
 
@@ -182,24 +216,25 @@ function renderInspection(jpeg, inspections){
             const entry = exif.directories.get(source).get(tag);
             const { typeName, value } = previewExifEntry(entry, exif.little, source);
 
-            const id      = `0x${tag.toString(16).padStart(4, '0')}`;
-            const item    = node('li');
-            const details = node('dl');
-            const content = node('div');
+            const id = `0x${tag.toString(16).padStart(4, '0')}`;
+
+            const item         = node('li');
+            const details      = node('dl');
+            const content      = node('div');
             const valueDetails = node('dl');
             const heading      = node('div');
-            const tagId = node('code', id);
-            const badge = node('span', source);
+            const tagId        = node('code', id);
+            const badge        = node('span', source);
 
             details.className      = 'jpeg-facts';
             content.className      = 'ifd-tag-content';
             valueDetails.className = 'jpeg-facts ifd-tag-value';
             heading.className      = 'ifd-tag-heading';
-            badge.className        = 'ifd-tag-source';
+            badge.className        = 'ifd-tag-source badge';
 
             facts(details, [
-                ['Type and size', `${typeName} × ${entry.count} · ${entry.data.length} B`],
-                ['JPEG APP1 offset', String(segment.offset)],
+                ['Type and size', `${typeName} × ${entry.count} · ${entry.data.length} Byte(s)`],
+                [`JPEG ${segment.name}${(segment.kind) ? ' ('+ segment.kind +')' : ''} offset`, String(segment.offset)],
                 ['TIFF value offset', String(entry.dataOffset)]
             ]);
             facts(valueDetails, [['Value', value || '(empty)']]);
@@ -226,12 +261,12 @@ function renderInspection(jpeg, inspections){
         (gpsCount) ? `GPS directory found in ${gpsCount} segment(s).` : ((incomplete) ? 'GPS presence could not be determined.' : 'No Exif GPS directory detected.'),
         ([fields, coordinates, rawTags].some((list) => (list.length >= LIST_VIEW_LIMIT))) ? `Tag display is limited to ${LIST_VIEW_LIMIT} entries per list.` : '',
         (opaque.size) ? `Detected without decoding: ${[...opaque].join(', ')}.` : ''
-    ];
+    ].filter(Boolean);
 
-    get('exif-summary').textContent = summary.filter(Boolean).join(' ');
+    get('exif-summary').textContent = summary.join(' ');
 
-    facts(get('exif-fields'), fields);
-    facts(get('gps-fields'), coordinates);
+    inspectionFacts(get('exif-fields'), fields);
+    inspectionFacts(get('gps-fields'), coordinates);
 
     gps.hidden = (!coordinates.length);
 

@@ -8,6 +8,10 @@ Open [JPEG Metadata Inspector](https://wexmetrica.com/jpeg-metadata/) or see the
 
 ## Inspect and clean
 
+In **Other Exif tags**, long segment labels wrap within the details column. Details and value previews align at the top independently, so a long value does not spread out the detail rows.
+
+Recognized Exif fields and GPS tag values separate the label, directory badge, and value. **APP1 offset** gives the byte offset from the start of the JPEG to the containing Exif APP1 marker, rather than the individual tag's location. Several fields can share the same offset.
+
 Inspect follows the Exif Interoperability IFD pointer and shows the directory's tags under **Other Exif tags**. The **Issues** list in **JPEG structure** shows cleanup restrictions and Exif structure issues, including the TIFF-relative offset and byte length of affected ranges. If the Exif segment contains a MakerNote, its value range is shown alongside those details.
 
 1. Choose a JPEG up to 32 MiB. The preview uses the embedded Exif JPEG thumbnail when available and decodable, and otherwise shows the full image scaled to fit. An embedded preview may differ from the main image. **File details** shows the file name, size, format, and dimensions. **JPEG markers** shows marker names, byte offsets, lengths, and recognized payloads. **Inspect** shows Exif fields and their sources and the presence of a GPS directory. Expand **GPS tag values** to see the stored references and fractions.

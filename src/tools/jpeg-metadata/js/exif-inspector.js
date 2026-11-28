@@ -27,9 +27,16 @@ export function createExifDisplayModel(exif){
             const label = EXIF_DEFINITIONS[source]?.[entry.tag]?.label;
 
             if(label){
-                fields.push({ source, label, value: formatExifEntry(source, entry, exif.little) });
+                fields.push({
+                    source,
+                    label,
+                    value: formatExifEntry(source, entry, exif.little),
+                });
             } else{
-                otherTags.push({ source, tag: entry.tag });
+                otherTags.push({
+                    source,
+                    tag: entry.tag,
+                });
             }
         }
     }
@@ -56,9 +63,15 @@ export function createExifDisplayModel(exif){
 export function inspectJpeg(bytes, jpeg){
     return jpeg.segments.filter(({ kind }) => kind === 'Exif').map((segment) => {
         try{
-            return { segment, exif: readExif(bytes.subarray(segment.payload + 6, segment.end)) };
+            return {
+                segment,
+                exif: readExif(bytes.subarray(segment.payload + 6, segment.end)),
+            };
         } catch(error){
-            return { segment, error: error.message };
+            return {
+                segment,
+                error: error.message,
+            };
         }
     });
 }
