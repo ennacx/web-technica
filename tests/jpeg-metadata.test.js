@@ -502,13 +502,14 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         assert.equal(get('segment-rows').children[0].children[0].children[0].textContent, 'SOI');
         assert.equal(get('inspect').hidden, false);
         assert.ok(get('exif-fields').children.some((entry) => entry.textContent === '<img src=x>Cam'));
-        const pointer = get('tag-list').children.find((entry) => entry.children[0].textContent === '0x8769 · IFD0 · ExifIFDPointer');
-        assert.deepEqual(pointer.children[1].children.map((entry) => entry.textContent), [
+        const pointer = get('tag-list').children.find((entry) => entry.children[0].children[0].textContent === '0x8769');
+        assert.deepEqual(pointer.children[0].children.map((entry) => entry.textContent), ['0x8769', 'ExifIFDPointer', 'IFD0']);
+        assert.deepEqual(pointer.children[1].children[0].children.map((entry) => entry.textContent), [
             'Type and size', 'LONG × 1 · 4 B',
             'JPEG APP1 offset', String(parseJpeg(input).segments.find(({ kind }) => kind === 'Exif').offset),
-            'TIFF value offset', '42',
-            'Value', '64'
+            'TIFF value offset', '42'
         ]);
+        assert.deepEqual(pointer.children[1].children[1].children.map((entry) => entry.textContent), ['Value', '64']);
         assert.match(get('orientation').textContent, /rotate or mirror/);
         await get('clean').fire('click');
         assert.equal(get('download').hidden, false);
