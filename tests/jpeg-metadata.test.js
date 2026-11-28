@@ -234,6 +234,28 @@ test('maps standard shooting tags by directory and type and preserves unknown nu
     assert.equal(createExifDisplayModel(readExif(tiff)).fields.find(({ label }) => label === 'Flash').value, '128');
 });
 
+test('marks rounded exposure times as approximate and leaves exact exposure times unmarked', () => {
+    const number = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, useGrouping: false });
+    const cases = [
+        { numerator: 19999992, denominator: 1000000000, expected: `≈ 1/${number.format(50)} s` },
+        { numerator: 1234, denominator: 1000, expected: `≈ ${number.format(1.23)} s` },
+        { numerator: 1, denominator: 50, expected: `1/${number.format(50)} s` }
+    ];
+
+    for(const little of [true, false]){
+        for(const { numerator, denominator, expected } of cases){
+            const tiff = exifFixture(little);
+            const view = new DataView(tiff.buffer, tiff.byteOffset, tiff.byteLength);
+            view.setUint32(156, numerator, little);
+            view.setUint32(160, denominator, little);
+
+            const { fields } = createExifDisplayModel(readExif(tiff));
+            assert.equal(fields.find(({ label }) => label === 'Exposure time').value, expected,
+                `${numerator}/${denominator} seconds (${little ? 'II' : 'MM'})`);
+        }
+    }
+});
+
 test('displays standard Exif exposure compensation as signed EV', () => {
     const formatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, signDisplay: 'exceptZero' });
 
@@ -351,7 +373,7 @@ for(const little of [true, false]){
         const source = Buffer.from(input);
         const [{ exif }] = inspect(input);
         const { fields } = createExifDisplayModel(exif);
-        assert.deepEqual(fields.map(({ value }) => value), ['<img src=x>Cam', 'Rotate 90° CW', '1/125', 'N', '37/1, 14/1, 72345/1000']);
+        assert.deepEqual(fields.map(({ value }) => value), ['<img src=x>Cam', 'Rotate 90° CW', '1/125 s', 'N', '37/1, 14/1, 72345/1000']);
         const { bytes, removed, retained, warning } = cleanJpeg(input, 'location');
         const [after] = inspect(bytes);
         assert.equal(after.exif.little, little);

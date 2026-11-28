@@ -91,7 +91,7 @@ export function formatAspectRatio(width, height){
     const ratio = getAspectRatio(width, height);
 
     if(ratio){
-        return `${ratio.exact ? '' : '≈ '}${ratio.width}:${ratio.height}`;
+        return `${(ratio.exact) ? '' : '≈ '}${ratio.width}:${ratio.height}`;
     }
 
     let a = width;
