@@ -1,17 +1,23 @@
-.idea/
-.npm-cache/
-node_modules/
-dist/
+/.idea/
+/.npm-cache/
+/node_modules/
+/dist/
+
+# Generated stylesheets and source maps
+/src/assets/css/*.css
+/src/assets/css/*.css.map
+/src/tools/*/css/*.css
+/src/tools/*/css/*.css.map
 
 # Images
-src/assets/img/brand/social-card.png
+/src/assets/img/brand/social-card.png
 
 # Fonts
-src/assets/fonts/*.woff2
-src/assets/fonts/THIRD-PARTY-LICENSES.txt
+/src/assets/fonts/*.woff2
+/src/assets/fonts/THIRD-PARTY-LICENSES.txt
 
 # keygen
-src/tools/keygen/js/app.js
-src/tools/keygen/js/app.js.map
-src/tools/keygen/js/app.js.LEGAL.txt
-src/tools/keygen/js/THIRD-PARTY-LICENSES.txt
+/src/tools/keygen/js/app.js
+/src/tools/keygen/js/app.js.map
+/src/tools/keygen/js/app.js.LEGAL.txt
+/src/tools/keygen/js/THIRD-PARTY-LICENSES.txt
