@@ -1,9 +1,10 @@
 ﻿import { getById, createElem } from '#utils/dom.js';
 import { downloadBlob } from '#utils/download.js';
 import { IFD, TIFF_TAG, EXIF_TAG, TAG_NAMES } from './exif-constants.js';
+import { formatAspectRatio, getDisplayDimensions } from './image-geometry.js';
 import { MAX_FILE_BYTES, MAX_FILE_MEGABYTE, parseJpeg } from './jpeg-parser.js';
 import { previewExifEntry } from './exif-formatter.js';
-import { createExifDisplayModel, inspectJpeg, getExifThumbnail } from './exif-inspector.js';
+import { createExifDisplayModel, inspectJpeg, getExifThumbnail, getOrientation, readOrientation } from './exif-inspector.js';
 import { cleanedFilename, cleanJpeg, orientationWarning } from './jpeg-cleaner.js';
 
 // 表示上限数
@@ -51,7 +52,8 @@ function clearPreview(){
 }
 
 /**
- * Exifサムネイルを優先し、復号できなければ元JPEGを表示する。
+ * 向きが通常と確認できる場合だけExifサムネイルを使い、それ以外は元JPEGを表示する。
+ * 元JPEGのOrientationはブラウザーに適用させ、CSSでの二重回転を避ける。
  *
  * @param {File} file - 選択したJPEG。
  * @param {import('./exif-inspector.js').ExifInspection[]} inspections - Exif APP1ごとの解析結果。
@@ -59,7 +61,10 @@ function clearPreview(){
  * @returns {Promise<void>}
  */
 async function showPreview(file, inspections, current){
-    const thumbnail = getExifThumbnail(inspections);
+    const normal = inspections.every(({ exif, error }) => !error && exif &&
+        [IFD.PRIMARY, IFD.THUMBNAIL].every((directory) =>
+            !exif.directories.get(directory)?.has(TIFF_TAG.Orientation) || readOrientation(exif, directory) === 1));
+    const thumbnail = normal ? getExifThumbnail(inspections) : null;
 
     for(const embedded of ((thumbnail) ? [true, false] : [false])){
         try{
@@ -88,6 +93,12 @@ async function showPreview(file, inspections, current){
     }
 }
 
+/**
+ * ラベル・値を分離し、dt/ddタグに変換する。
+ *
+ * @param container
+ * @param entries
+ */
 function facts(container, entries){
     container.replaceChildren(...entries.flatMap(([label, value]) => [node('dt', label), node('dd', value)]));
 }
@@ -135,8 +146,8 @@ function updateOrientation(){
 /**
  * インスペクションのレンダリングをする。
  *
- * @param {JpegInspection} jpeg
- * @param {ExifInspection[]} inspections
+ * @param {import('./jpeg-parser.js').JpegInspection} jpeg
+ * @param {import('./exif-inspector.js').ExifInspection[]} inspections
  */
 function renderInspection(jpeg, inspections){
     const fields      = [];
@@ -325,7 +336,7 @@ fileInput.addEventListener('change', async () => {
 
     updateOrientation();
 
-    fileDetails.hidden = !file;
+    fileDetails.hidden = (!file);
 
     if(!file){
         fileStatus.textContent = 'Choose a JPEG to inspect.';
@@ -368,7 +379,17 @@ fileInput.addEventListener('change', async () => {
         const jpeg        = parseJpeg(bytes);
         const inspections = inspectJpeg(bytes, jpeg);
 
-        facts(fileInfo, [...details, ['Format', 'JPEG'], ['Dimensions', `${jpeg.width} × ${jpeg.height} px`]]);
+        const { width, height } = jpeg;
+        const display = getDisplayDimensions(width, height, getOrientation(inspections));
+        const dimensions = (w, h) => `${w} × ${h} px (${formatAspectRatio(w, h)})`;
+
+        facts(fileInfo, [
+            ...details,
+            ['Format', 'JPEG'],
+            ['Display dimensions', dimensions(display.width, display.height)],
+            ...((display.width !== width || display.height !== height) ?
+                [['Stored dimensions', dimensions(width, height)]] : []),
+        ]);
         renderInspection(jpeg, inspections);
 
         input = {

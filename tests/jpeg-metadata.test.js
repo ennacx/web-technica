@@ -7,6 +7,28 @@ import { decode } from '../src/tools/jpeg-metadata/js/exif-decoder.js';
 import { previewExifEntry } from '../src/tools/jpeg-metadata/js/exif-formatter.js';
 import { readExif } from '../src/tools/jpeg-metadata/js/exif-reader.js';
 import { cleanedFilename, cleanJpeg } from '../src/tools/jpeg-metadata/js/jpeg-cleaner.js';
+import { getOrientation } from '../src/tools/jpeg-metadata/js/exif-inspector.js';
+import { getAspectRatio, getDisplayDimensions, formatAspectRatio } from '../src/tools/jpeg-metadata/js/image-geometry.js';
+
+test('computes oriented dimensions and handles approximate, unusual and invalid ratios', () => {
+    for(let orientation = 1; orientation <= 8; orientation++){
+        assert.deepEqual(getDisplayDimensions(6000, 4000, orientation), orientation >= 5 ?
+            { width: 4000, height: 6000 } : { width: 6000, height: 4000 });
+        for(const little of [true, false]){
+            assert.equal(getOrientation(inspect(jpeg([app1(exifFixture(little, { orientation }))]))), orientation);
+        }
+    }
+    assert.equal(getOrientation(inspect(jpeg([app1(exifFixture(true, { orientation: 9 }))]))), undefined);
+    assert.equal(formatAspectRatio(6000, 4000), '3:2');
+    assert.equal(formatAspectRatio(4000, 6000), '2:3');
+    assert.equal(formatAspectRatio(1920, 1088), '≈ 16:9');
+    assert.equal(formatAspectRatio(1234, 1000), '617:500');
+    for(const size of [0, -1, NaN, Infinity]){
+        assert.equal(getAspectRatio(size, 100), null);
+        assert.equal(getAspectRatio(100, size), null);
+    }
+    assert.equal(getAspectRatio(100, 100, NaN), null);
+});
 
 const ascii = (value) => Buffer.from(value, 'ascii');
 const marker = (id, data) => {
@@ -145,8 +167,8 @@ test('distinguishes rotation and reflection from invalid Exif Orientation', () =
     assert.match(warning(wrongType), /malformed or ambiguous/);
 });
 
-function exifWithThumbnail(thumbnail){
-    const tiff = Buffer.concat([exifFixture(true), Buffer.alloc(30), thumbnail]);
+function exifWithThumbnail(thumbnail, orientation = 6){
+    const tiff = Buffer.concat([exifFixture(true, { orientation }), Buffer.alloc(30), thumbnail]);
     tiff.writeUInt32LE(200, 58);
     tiff.writeUInt16LE(2, 200);
     tiff.writeUInt16LE(0x0201, 202);
@@ -557,7 +579,14 @@ test('UI keeps hostile text literal, downloads a verified Blob, and ignores stal
         assert.match(get('clean-status').textContent, /No matching metadata/);
 
         const embedded = jpeg();
-        const withThumbnail = jpeg([app1(exifWithThumbnail(embedded))]);
+        for(let orientation = 2; orientation <= 8; orientation++){
+            const oriented = jpeg([app1(exifWithThumbnail(embedded, orientation))]);
+            file.files = [new File([oriented], 'oriented.jpg')];
+            await file.fire('change');
+            assert.equal(preview.alt, 'Preview of the selected JPEG');
+            assert.deepEqual(Buffer.from(await blob.arrayBuffer()), oriented);
+        }
+        const withThumbnail = jpeg([app1(exifWithThumbnail(embedded, 1))]);
         file.files = [new File([withThumbnail], 'embedded.jpg')];
         await file.fire('change');
         assert.equal(preview.hidden, false);

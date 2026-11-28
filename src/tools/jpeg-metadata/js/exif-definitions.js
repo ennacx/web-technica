@@ -1,4 +1,5 @@
 /** Exif表示用のタグ定義と項目固有のフォーマット。 */
+
 import {
     IFD, IFD_TYPE,
     EXIF_TAG, GPS_TAG, TIFF_TAG,
@@ -267,6 +268,7 @@ const date = (value) => value.kind === 'text' && value.text.endsWith('\0')
  */
 function shortChoice(source, tag, label){
     const choices = SHORT_VALUES[source][tag];
+
     return {
         label,
         type: IFD_TYPE.SHORT,
